@@ -17,11 +17,11 @@ use crate::tools::browser::SharedBrowserHandle;
 /// individual fields to get a snapshot — cheap and contention-free.
 /// The file watcher calls `.store()` to atomically swap in new values.
 pub struct RuntimeConfig {
-    /// Instance root directory (e.g., ~/.spacebot). Immutable after startup.
+    /// Instance root directory (e.g., ~/.agentspace). Immutable after startup.
     pub instance_dir: PathBuf,
-    /// Agent workspace directory (e.g., ~/.spacebot/agents/{id}/workspace). Immutable after startup.
+    /// Agent workspace directory (e.g., ~/.agentspace/agents/{id}/workspace). Immutable after startup.
     pub workspace_dir: PathBuf,
-    /// Agent identity directory (e.g., ~/.spacebot/agents/{id}/). Identity
+    /// Agent identity directory (e.g., ~/.agentspace/agents/{id}/). Identity
     /// files (SOUL.md, IDENTITY.md, ROLE.md) live here, outside the workspace
     /// sandbox boundary. Immutable after startup.
     pub identity_dir: PathBuf,

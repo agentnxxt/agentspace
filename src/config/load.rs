@@ -300,14 +300,14 @@ fn parse_mcp_server_config(raw: TomlMcpServerConfig) -> Result<McpServerConfig> 
 }
 
 impl Config {
-    /// Resolve the instance directory from env or default (~/.spacebot).
+    /// Resolve the instance directory from env or default (~/.agentspace).
     pub fn default_instance_dir() -> PathBuf {
-        std::env::var("SPACEBOT_DIR")
+        std::env::var("AGENTSPACE_DIR")
             .map(PathBuf::from)
             .unwrap_or_else(|_| {
                 dirs::home_dir()
-                    .map(|d| d.join(".spacebot"))
-                    .unwrap_or_else(|| PathBuf::from("./.spacebot"))
+                    .map(|d| d.join(".agentspace"))
+                    .unwrap_or_else(|| PathBuf::from("./.agentspace"))
             })
     }
 
@@ -355,7 +355,7 @@ impl Config {
 
         // Check if we have any provider-specific env variables (provider.<name>.*)
         let has_provider_env_vars = std::env::vars().any(|(key, _)| {
-            key.starts_with("SPACEBOT_PROVIDER_")
+            key.starts_with("AGENTSPACE_PROVIDER_")
                 || key.starts_with("PROVIDER_")
                 || key.contains("PROVIDER") && key.contains("API_KEY")
         });
@@ -800,7 +800,7 @@ impl Config {
         // overrides.  This way users who only set OPENROUTER_API_KEY get
         // openrouter/* routing instead of the hardcoded anthropic/* default.
         let mut routing = infer_routing_from_providers(&llm.providers).unwrap_or_default();
-        if let Ok(model) = std::env::var("SPACEBOT_MODEL") {
+        if let Ok(model) = std::env::var("AGENTSPACE_MODEL") {
             routing.channel = model.clone();
             routing.branch = model.clone();
             routing.worker = model.clone();
@@ -820,13 +820,13 @@ impl Config {
             routing.compactor = compactor;
             routing.cortex = cortex;
         }
-        if let Ok(channel_model) = std::env::var("SPACEBOT_CHANNEL_MODEL") {
+        if let Ok(channel_model) = std::env::var("AGENTSPACE_CHANNEL_MODEL") {
             routing.channel = channel_model;
         }
-        if let Ok(worker_model) = std::env::var("SPACEBOT_WORKER_MODEL") {
+        if let Ok(worker_model) = std::env::var("AGENTSPACE_WORKER_MODEL") {
             routing.worker = worker_model;
         }
-        if let Ok(voice_model) = std::env::var("SPACEBOT_VOICE_MODEL") {
+        if let Ok(voice_model) = std::env::var("AGENTSPACE_VOICE_MODEL") {
             routing.voice = voice_model;
         }
 
@@ -898,13 +898,13 @@ impl Config {
                 otlp_endpoint: std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT").ok(),
                 otlp_headers: parse_otlp_headers(std::env::var("OTEL_EXPORTER_OTLP_HEADERS").ok())?,
                 service_name: std::env::var("OTEL_SERVICE_NAME")
-                    .unwrap_or_else(|_| "spacebot".into()),
+                    .unwrap_or_else(|_| "agentspace".into()),
                 sample_rate: 1.0,
             },
         })
     }
 
-    /// Validate a raw TOML string as a valid Spacebot config.
+    /// Validate a raw TOML string as a valid Agentspace config.
     /// Returns Ok(()) if the config is structurally valid, or an error describing what's wrong.
     pub fn validate_toml(content: &str) -> Result<()> {
         warn_unknown_config_keys(content);
@@ -2279,7 +2279,7 @@ impl Config {
             let service_name = std::env::var("OTEL_SERVICE_NAME")
                 .ok()
                 .or(toml.telemetry.service_name)
-                .unwrap_or_else(|| "spacebot".into());
+                .unwrap_or_else(|| "agentspace".into());
             let sample_rate = toml.telemetry.sample_rate.unwrap_or(1.0);
             TelemetryConfig {
                 otlp_endpoint,

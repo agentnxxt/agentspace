@@ -495,7 +495,7 @@ mod tests {
     fn shared_embedding_model() -> Arc<crate::memory::EmbeddingModel> {
         static MODEL: OnceLock<Arc<crate::memory::EmbeddingModel>> = OnceLock::new();
         Arc::clone(MODEL.get_or_init(|| {
-            let cache_dir = std::env::temp_dir().join("spacebot-test-embedding-cache");
+            let cache_dir = std::env::temp_dir().join("agentspace-test-embedding-cache");
             std::fs::create_dir_all(&cache_dir).expect("failed to create embedding cache dir");
             Arc::new(
                 crate::memory::EmbeddingModel::new(&cache_dir)

@@ -10,7 +10,7 @@ type SidecarState = "idle" | "starting" | "running" | "error";
 
 /**
  * Full-screen connection screen shown when the app cannot reach
- * the spacebot server. Allows changing the server URL and, in
+ * the agentspace server. Allows changing the server URL and, in
  * Tauri builds with a bundled sidecar, starting a local instance.
  */
 export function ConnectionScreen() {
@@ -42,7 +42,7 @@ export function ConnectionScreen() {
 		try {
 			// Dynamic import: this module only exists in Tauri builds
 			const { Command } = await import("@tauri-apps/plugin-shell");
-			const command = Command.sidecar("binaries/spacebot", [
+			const command = Command.sidecar("binaries/agentspace", [
 				"start",
 				"--foreground",
 			]);
@@ -105,7 +105,7 @@ export function ConnectionScreen() {
 						<div className="absolute inset-[calc(5%-10px)] z-0">
 							<img
 								src="/ball.png"
-								alt="Spacebot"
+								alt="Agentspace"
 								className="h-full w-full object-contain"
 							/>
 						</div>
@@ -120,10 +120,10 @@ export function ConnectionScreen() {
 						</div>
 					</div>
 					<h1 className="font-plex text-xl font-semibold text-ink">
-						Connect to Spacebot
+						Connect to Agentspace
 					</h1>
 					<p className="text-center text-sm text-ink-dull">
-						Enter the URL of a running Spacebot instance, or start
+						Enter the URL of a running Agentspace instance, or start
 						one locally.
 					</p>
 				</div>
@@ -188,7 +188,7 @@ export function ConnectionScreen() {
 								className="w-full"
 							>
 								{sidecarState === "starting"
-									? "Starting Spacebot..."
+									? "Starting Agentspace..."
 									: sidecarState === "running"
 										? "Server Running"
 										: "Start Local Server"}
@@ -196,7 +196,7 @@ export function ConnectionScreen() {
 
 							{sidecarState === "starting" && (
 								<p className="text-xs text-ink-faint">
-									Starting the bundled Spacebot binary. This
+									Starting the bundled Agentspace binary. This
 									may take a few seconds on first run...
 								</p>
 							)}
@@ -212,7 +212,7 @@ export function ConnectionScreen() {
 
 				{/* Footer hint */}
 				<p className="text-center text-xs text-ink-faint">
-					Spacebot runs on port 19898 by default.
+					Agentspace runs on port 19898 by default.
 					{!hasSidecar && (
 						<>
 							{" "}
@@ -222,12 +222,12 @@ export function ConnectionScreen() {
 							</span>{" "}
 							or download from{" "}
 							<a
-								href="https://spacebot.sh"
+								href="https://space.agnxxt.com"
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-accent hover:underline"
 							>
-								spacebot.sh
+								space.agnxxt.com
 							</a>
 						</>
 					)}

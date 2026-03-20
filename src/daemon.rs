@@ -44,8 +44,8 @@ pub struct DaemonPaths {
 impl DaemonPaths {
     pub fn new(instance_dir: &std::path::Path) -> Self {
         Self {
-            pid_file: instance_dir.join("spacebot.pid"),
-            socket: instance_dir.join("spacebot.sock"),
+            pid_file: instance_dir.join("agentspace.pid"),
+            socket: instance_dir.join("agentspace.sock"),
             log_dir: instance_dir.join("logs"),
         }
     }
@@ -102,13 +102,13 @@ pub fn daemonize(paths: &DaemonPaths) -> anyhow::Result<()> {
     let stdout = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(paths.log_dir.join("spacebot.out"))
+        .open(paths.log_dir.join("agentspace.out"))
         .context("failed to open stdout log")?;
 
     let stderr = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(paths.log_dir.join("spacebot.err"))
+        .open(paths.log_dir.join("agentspace.err"))
         .context("failed to open stderr log")?;
 
     let daemonize = daemonize::Daemonize::new()
@@ -134,7 +134,7 @@ pub fn init_background_tracing(
     debug: bool,
     telemetry: &TelemetryConfig,
 ) -> Option<SdkTracerProvider> {
-    let file_appender = tracing_appender::rolling::daily(&paths.log_dir, "spacebot.log");
+    let file_appender = tracing_appender::rolling::daily(&paths.log_dir, "agentspace.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
     let field_formatter = format::debug_fn(|writer, field, value| {
         let field_name = field.name();
@@ -171,7 +171,7 @@ pub fn init_background_tracing(
 
     match build_otlp_provider(telemetry) {
         Some(provider) => {
-            let tracer = provider.tracer("spacebot");
+            let tracer = provider.tracer("agentspace");
             tracing_subscriber::registry()
                 .with(filter)
                 .with(fmt_layer)
@@ -226,7 +226,7 @@ pub fn init_foreground_tracing(
 
     match build_otlp_provider(telemetry) {
         Some(provider) => {
-            let tracer = provider.tracer("spacebot");
+            let tracer = provider.tracer("agentspace");
             tracing_subscriber::registry()
                 .with(filter)
                 .with(fmt_layer)
@@ -410,7 +410,7 @@ async fn handle_ipc_connection(
 pub async fn send_command(paths: &DaemonPaths, command: IpcCommand) -> anyhow::Result<IpcResponse> {
     let stream = UnixStream::connect(&paths.socket)
         .await
-        .with_context(|| "failed to connect to spacebot daemon. is it running?")?;
+        .with_context(|| "failed to connect to agentspace daemon. is it running?")?;
 
     let (reader, mut writer) = stream.into_split();
 

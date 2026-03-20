@@ -78,7 +78,7 @@ The JSON format reflects this — a flat array of transcript steps:
 
 `action` entries come from Rig's `Message::Assistant` — they contain the model's reasoning text and/or tool calls. `tool_result` entries come from Rig's `Message::User` tool result wrappers. This flattened format strips the misleading role labels and presents the transcript as what it actually is: a sequence of agent actions and tool outputs.
 
-Tool result text is truncated to 50KB per result (same cap as `SpacebotHook` already applies to broadcast events) before serialization. Tool call args are truncated to 2KB.
+Tool result text is truncated to 50KB per result (same cap as `AgentspaceHook` already applies to broadcast events) before serialization. Tool call args are truncated to 2KB.
 
 ## Transcript Lifecycle
 

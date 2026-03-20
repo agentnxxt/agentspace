@@ -1,4 +1,4 @@
-//! SpacebotHook: Prompt hook for channels, branches, and workers.
+//! AgentspaceHook: Prompt hook for channels, branches, and workers.
 
 use crate::hooks::loop_guard::{LoopGuard, LoopGuardConfig, LoopGuardVerdict};
 use crate::tools::{MemoryPersistenceContractState, MemoryPersistenceTerminalOutcome};
@@ -31,7 +31,7 @@ impl ToolNudgePolicy {
 
 /// Hook for observing agent behavior and sending events.
 #[derive(Clone)]
-pub struct SpacebotHook {
+pub struct AgentspaceHook {
     agent_id: AgentId,
     process_id: ProcessId,
     process_type: ProcessType,
@@ -63,18 +63,18 @@ pub struct SpacebotHook {
     memory_persistence_contract: Option<Arc<MemoryPersistenceContractState>>,
 }
 
-impl SpacebotHook {
+impl AgentspaceHook {
     /// Prompt used to nudge tool-first behavior.
     pub const TOOL_NUDGE_PROMPT: &str = "You have not completed the task yet. Continue working using the available tools. \
          When you have reached a final result, call set_status with kind \"outcome\" \
          before finishing.";
     /// PromptCancelled reason used internally for tool nudge retries.
-    pub const TOOL_NUDGE_REASON: &str = "spacebot_tool_nudge_retry";
+    pub const TOOL_NUDGE_REASON: &str = "agentspace_tool_nudge_retry";
     /// PromptCancelled reason used when injected context is pending.
-    pub const CONTEXT_INJECTION_REASON: &str = "spacebot_context_injection";
+    pub const CONTEXT_INJECTION_REASON: &str = "agentspace_context_injection";
     /// PromptCancelled reason used for memory-persistence contract retries.
     pub const MEMORY_PERSISTENCE_CONTRACT_REASON: &str =
-        "spacebot_memory_persistence_contract_retry";
+        "agentspace_memory_persistence_contract_retry";
     /// Maximum nudge retries per prompt request.
     pub const TOOL_NUDGE_MAX_RETRIES: usize = 2;
     /// Maximum completion-contract retries per prompt request.
@@ -656,7 +656,7 @@ static TOOL_CALL_TIMERS: std::sync::LazyLock<
     std::sync::Mutex<std::collections::HashMap<String, std::time::Instant>>,
 > = std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
 
-impl<M> PromptHook<M> for SpacebotHook
+impl<M> PromptHook<M> for AgentspaceHook
 where
     M: CompletionModel,
 {
@@ -974,9 +974,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{SpacebotHook, ToolNudgePolicy};
+    use super::{AgentspaceHook, ToolNudgePolicy};
     use crate::ProcessEvent;
-    use crate::llm::SpacebotModel;
+    use crate::llm::AgentspaceModel;
     use crate::llm::model::RawResponse;
     use crate::tools::MemoryPersistenceContractState;
     use crate::{ProcessId, ProcessType};
@@ -986,9 +986,9 @@ mod tests {
     use rig::message::AssistantContent;
     use std::sync::Arc;
 
-    fn make_hook() -> SpacebotHook {
+    fn make_hook() -> AgentspaceHook {
         let (event_tx, _event_rx) = tokio::sync::broadcast::channel(8);
-        SpacebotHook::new(
+        AgentspaceHook::new(
             std::sync::Arc::<str>::from("agent"),
             ProcessId::Worker(uuid::Uuid::new_v4()),
             ProcessType::Worker,
@@ -997,10 +997,10 @@ mod tests {
         )
     }
 
-    fn make_memory_persistence_hook() -> (SpacebotHook, Arc<MemoryPersistenceContractState>) {
+    fn make_memory_persistence_hook() -> (AgentspaceHook, Arc<MemoryPersistenceContractState>) {
         let (event_tx, _event_rx) = tokio::sync::broadcast::channel(8);
         let contract_state = Arc::new(MemoryPersistenceContractState::default());
-        let hook = SpacebotHook::new(
+        let hook = AgentspaceHook::new(
             std::sync::Arc::<str>::from("agent"),
             ProcessId::Branch(uuid::Uuid::new_v4()),
             ProcessType::Branch,
@@ -1051,14 +1051,14 @@ mod tests {
         // Every text-only response should trigger a nudge when no outcome has
         // been signaled, regardless of how many completions have occurred.
         for i in 1..=5 {
-            let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(
+            let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(
                 &hook,
                 &prompt,
                 &[],
             )
             .await;
 
-            let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+            let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
                 &hook,
                 &prompt,
                 &text_response(&format!("text-only attempt {i}")),
@@ -1068,7 +1068,7 @@ mod tests {
                 matches!(
                     response,
                     HookAction::Terminate { ref reason }
-                    if reason == SpacebotHook::TOOL_NUDGE_REASON
+                    if reason == AgentspaceHook::TOOL_NUDGE_REASON
                 ),
                 "Expected nudge on text-only response #{i}"
             );
@@ -1083,10 +1083,10 @@ mod tests {
         hook.set_tool_nudge_request_active(true);
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
 
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &tool_call_response(),
@@ -1105,7 +1105,7 @@ mod tests {
         hook.set_tool_nudge_request_active(true);
 
         // Simulate read_skill tool call
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_call(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_call(
             &hook,
             "read_skill",
             None,
@@ -1115,7 +1115,7 @@ mod tests {
         .await;
 
         // Simulate set_status(progress) tool call
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_call(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_call(
             &hook,
             "set_status",
             None,
@@ -1126,9 +1126,9 @@ mod tests {
 
         // Now the model returns text-only — must still nudge
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("Let me create the email now..."),
@@ -1138,7 +1138,7 @@ mod tests {
             matches!(
                 response,
                 HookAction::Terminate { ref reason }
-                if reason == SpacebotHook::TOOL_NUDGE_REASON
+                if reason == AgentspaceHook::TOOL_NUDGE_REASON
             ),
             "Expected nudge after tool calls without outcome signal"
         );
@@ -1152,7 +1152,7 @@ mod tests {
         hook.set_tool_nudge_request_active(true);
 
         // Simulate some work
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_call(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_call(
             &hook,
             "shell",
             None,
@@ -1162,7 +1162,7 @@ mod tests {
         .await;
 
         // Signal outcome via set_status tool call + successful result
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_call(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_call(
             &hook,
             "set_status",
             None,
@@ -1170,7 +1170,7 @@ mod tests {
             "{\"status\":\"Email sent successfully\",\"kind\":\"outcome\"}",
         )
         .await;
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "set_status",
             None,
@@ -1182,9 +1182,9 @@ mod tests {
 
         // Now text-only response should be allowed
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("Email sent to jamie@spacedrive.com"),
@@ -1205,7 +1205,7 @@ mod tests {
 
         // set_status with kind "progress" should NOT signal outcome, even after
         // successful execution.
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_call(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_call(
             &hook,
             "set_status",
             None,
@@ -1213,7 +1213,7 @@ mod tests {
             "{\"status\":\"Working on it...\",\"kind\":\"progress\"}",
         )
         .await;
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "set_status",
             None,
@@ -1224,9 +1224,9 @@ mod tests {
         .await;
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("I'll help with that"),
@@ -1236,7 +1236,7 @@ mod tests {
             matches!(
                 response,
                 HookAction::Terminate { ref reason }
-                if reason == SpacebotHook::TOOL_NUDGE_REASON
+                if reason == AgentspaceHook::TOOL_NUDGE_REASON
             ),
             "Expected nudge — progress status is not an outcome signal"
         );
@@ -1251,7 +1251,7 @@ mod tests {
 
         // set_status without kind field — defaults to progress. Even after
         // successful execution, this should NOT signal outcome.
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_call(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_call(
             &hook,
             "set_status",
             None,
@@ -1259,7 +1259,7 @@ mod tests {
             "{\"status\":\"Working on it...\"}",
         )
         .await;
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "set_status",
             None,
@@ -1270,9 +1270,9 @@ mod tests {
         .await;
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("done"),
@@ -1282,7 +1282,7 @@ mod tests {
             matches!(
                 response,
                 HookAction::Terminate { ref reason }
-                if reason == SpacebotHook::TOOL_NUDGE_REASON
+                if reason == AgentspaceHook::TOOL_NUDGE_REASON
             ),
             "Expected nudge — status without kind is not an outcome signal"
         );
@@ -1298,7 +1298,7 @@ mod tests {
         // Simulate a set_status call with outcome kind that fails. Rig passes
         // the error string as the result, which won't parse as valid JSON with
         // success: true.
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_call(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_call(
             &hook,
             "set_status",
             None,
@@ -1306,7 +1306,7 @@ mod tests {
             "{\"status\":\"Task complete\",\"kind\":\"outcome\"}",
         )
         .await;
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "set_status",
             None,
@@ -1319,9 +1319,9 @@ mod tests {
         // Text-only response should still be nudged because the outcome tool
         // call failed.
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("All done!"),
@@ -1331,7 +1331,7 @@ mod tests {
             matches!(
                 response,
                 HookAction::Terminate { ref reason }
-                if reason == SpacebotHook::TOOL_NUDGE_REASON
+                if reason == AgentspaceHook::TOOL_NUDGE_REASON
             ),
             "Expected nudge — failed set_status should not signal outcome"
         );
@@ -1340,7 +1340,7 @@ mod tests {
     #[tokio::test]
     async fn process_scoped_policy_disables_nudge_for_branch() {
         let (event_tx, _event_rx) = tokio::sync::broadcast::channel(8);
-        let hook = SpacebotHook::new(
+        let hook = AgentspaceHook::new(
             std::sync::Arc::<str>::from("agent"),
             ProcessId::Branch(uuid::Uuid::new_v4()),
             ProcessType::Branch,
@@ -1352,9 +1352,9 @@ mod tests {
         hook.set_tool_nudge_request_active(true);
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("text-only branch response"),
@@ -1367,7 +1367,7 @@ mod tests {
     #[tokio::test]
     async fn process_scoped_policy_disables_nudge_for_channel() {
         let (event_tx, _event_rx) = tokio::sync::broadcast::channel(8);
-        let hook = SpacebotHook::new(
+        let hook = AgentspaceHook::new(
             std::sync::Arc::<str>::from("agent"),
             ProcessId::Channel(std::sync::Arc::<str>::from("channel")),
             ProcessType::Channel,
@@ -1379,9 +1379,9 @@ mod tests {
         hook.set_tool_nudge_request_active(true);
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("text-only channel response"),
@@ -1399,9 +1399,9 @@ mod tests {
         hook.set_tool_nudge_request_active(true);
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("text-only worker response"),
@@ -1419,9 +1419,9 @@ mod tests {
         hook.set_tool_nudge_request_active(true);
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("text-only worker response"),
@@ -1430,7 +1430,7 @@ mod tests {
 
         assert!(matches!(
             response,
-            HookAction::Terminate { ref reason } if reason == SpacebotHook::TOOL_NUDGE_REASON
+            HookAction::Terminate { ref reason } if reason == AgentspaceHook::TOOL_NUDGE_REASON
         ));
     }
 
@@ -1439,18 +1439,18 @@ mod tests {
         let mut history = vec![Message::from("original task")];
         let base_len = history.len();
 
-        history.push(Message::from(SpacebotHook::TOOL_NUDGE_PROMPT));
+        history.push(Message::from(AgentspaceHook::TOOL_NUDGE_PROMPT));
         history.push(Message::from(rig::message::AssistantContent::text(
             "text-only response",
         )));
-        SpacebotHook::prune_tool_nudge_retry_history(&mut history, base_len, true);
+        AgentspaceHook::prune_tool_nudge_retry_history(&mut history, base_len, true);
         assert_eq!(history.len(), base_len);
 
-        history.push(Message::from(SpacebotHook::TOOL_NUDGE_PROMPT));
+        history.push(Message::from(AgentspaceHook::TOOL_NUDGE_PROMPT));
         history.push(Message::from(rig::message::AssistantContent::text(
             "second text-only response",
         )));
-        SpacebotHook::prune_tool_nudge_retry_history(&mut history, base_len, true);
+        AgentspaceHook::prune_tool_nudge_retry_history(&mut history, base_len, true);
         assert_eq!(history.len(), base_len);
         assert!(matches!(history[0], Message::User { .. }));
     }
@@ -1465,7 +1465,7 @@ mod tests {
             "text-only response",
         )));
 
-        SpacebotHook::prune_tool_nudge_retry_history(&mut history, base_len, false);
+        AgentspaceHook::prune_tool_nudge_retry_history(&mut history, base_len, false);
 
         assert_eq!(history.len(), base_len + 1);
         assert!(matches!(history[base_len], Message::User { .. }));
@@ -1476,12 +1476,12 @@ mod tests {
         let mut history = vec![Message::from("original task")];
         let base_len = history.len();
 
-        history.push(Message::from(SpacebotHook::TOOL_NUDGE_PROMPT));
+        history.push(Message::from(AgentspaceHook::TOOL_NUDGE_PROMPT));
         history.push(Message::from(rig::message::AssistantContent::text(
             "tool execution completed",
         )));
 
-        SpacebotHook::prune_successful_tool_nudge_prompt(&mut history, base_len, true);
+        AgentspaceHook::prune_successful_tool_nudge_prompt(&mut history, base_len, true);
 
         assert_eq!(history.len(), base_len + 1);
         assert!(matches!(history[base_len], Message::Assistant { .. }));
@@ -1490,7 +1490,7 @@ mod tests {
     #[tokio::test]
     async fn channel_text_delta_emits_process_event() {
         let (event_tx, mut event_rx) = tokio::sync::broadcast::channel(8);
-        let hook = SpacebotHook::new(
+        let hook = AgentspaceHook::new(
             std::sync::Arc::<str>::from("agent"),
             ProcessId::Channel(std::sync::Arc::<str>::from("channel")),
             ProcessType::Channel,
@@ -1499,7 +1499,7 @@ mod tests {
         );
 
         let action =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_text_delta(&hook, "hi", "hi").await;
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_text_delta(&hook, "hi", "hi").await;
         assert!(matches!(action, HookAction::Continue));
 
         let event = event_rx.recv().await.expect("text delta event");
@@ -1528,7 +1528,7 @@ mod tests {
             .store(2, std::sync::atomic::Ordering::Relaxed);
 
         // A successful tool call should reset the counter
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "browser_click",
             None,
@@ -1556,7 +1556,7 @@ mod tests {
         hook.nudge_attempts
             .store(2, std::sync::atomic::Ordering::Relaxed);
 
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "shell",
             None,
@@ -1595,9 +1595,9 @@ mod tests {
         };
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let response = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let response = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &reasoning_response,
@@ -1607,7 +1607,7 @@ mod tests {
             matches!(
                 response,
                 HookAction::Terminate { ref reason }
-                if reason == SpacebotHook::TOOL_NUDGE_REASON
+                if reason == AgentspaceHook::TOOL_NUDGE_REASON
             ),
             "Expected nudge — reasoning-only response without outcome should be rejected"
         );
@@ -1629,14 +1629,14 @@ mod tests {
             .unwrap();
 
         let action =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
 
         assert!(
             matches!(
                 action,
                 HookAction::Terminate { ref reason }
-                if reason == SpacebotHook::CONTEXT_INJECTION_REASON
+                if reason == AgentspaceHook::CONTEXT_INJECTION_REASON
             ),
             "Expected termination for context injection, got {action:?}"
         );
@@ -1655,7 +1655,7 @@ mod tests {
         let prompt = prompt_message();
 
         let action =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
 
         assert!(
@@ -1676,13 +1676,13 @@ mod tests {
         inject_tx.send("third".to_string()).await.unwrap();
 
         let action =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
 
         assert!(matches!(
             action,
             HookAction::Terminate { ref reason }
-            if reason == SpacebotHook::CONTEXT_INJECTION_REASON
+            if reason == AgentspaceHook::CONTEXT_INJECTION_REASON
         ));
 
         let messages = hook.take_injected_messages();
@@ -1702,7 +1702,7 @@ mod tests {
         inject_tx.send("context".to_string()).await.unwrap();
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
 
         let first = hook.take_injected_messages();
@@ -1715,14 +1715,14 @@ mod tests {
 
     #[tokio::test]
     async fn injection_reason_detection() {
-        assert!(SpacebotHook::is_context_injection_reason(
-            SpacebotHook::CONTEXT_INJECTION_REASON
+        assert!(AgentspaceHook::is_context_injection_reason(
+            AgentspaceHook::CONTEXT_INJECTION_REASON
         ));
-        assert!(!SpacebotHook::is_context_injection_reason(
-            SpacebotHook::TOOL_NUDGE_REASON
+        assert!(!AgentspaceHook::is_context_injection_reason(
+            AgentspaceHook::TOOL_NUDGE_REASON
         ));
-        assert!(!SpacebotHook::is_tool_nudge_reason(
-            SpacebotHook::CONTEXT_INJECTION_REASON
+        assert!(!AgentspaceHook::is_tool_nudge_reason(
+            AgentspaceHook::CONTEXT_INJECTION_REASON
         ));
     }
 
@@ -1740,13 +1740,13 @@ mod tests {
 
         // No injection pending, so on_completion_call should Continue
         let action =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
         assert!(matches!(action, HookAction::Continue));
 
         // A text-only response should still trigger the nudge
         let response = text_response("some text without outcome");
-        let action = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let action = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook, &prompt, &response,
         )
         .await;
@@ -1754,7 +1754,7 @@ mod tests {
             matches!(
                 action,
                 HookAction::Terminate { ref reason }
-                if reason == SpacebotHook::TOOL_NUDGE_REASON
+                if reason == AgentspaceHook::TOOL_NUDGE_REASON
             ),
             "Nudge should still work when inject_rx is attached but empty"
         );
@@ -1767,9 +1767,9 @@ mod tests {
         hook.set_completion_contract_request_active(true);
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let action = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let action = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("Saved the memories."),
@@ -1779,7 +1779,7 @@ mod tests {
         assert!(matches!(
             action,
             HookAction::Terminate { ref reason }
-            if reason == SpacebotHook::MEMORY_PERSISTENCE_CONTRACT_REASON
+            if reason == AgentspaceHook::MEMORY_PERSISTENCE_CONTRACT_REASON
         ));
     }
 
@@ -1789,7 +1789,7 @@ mod tests {
         let prompt = prompt_message();
         hook.set_completion_contract_request_active(true);
 
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "memory_save",
             None,
@@ -1799,7 +1799,7 @@ mod tests {
         )
         .await;
 
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "memory_persistence_complete",
             None,
@@ -1815,9 +1815,9 @@ mod tests {
         );
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let action = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let action = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("Done."),
@@ -1827,7 +1827,7 @@ mod tests {
         assert!(matches!(
             action,
             HookAction::Terminate { ref reason }
-            if reason == SpacebotHook::MEMORY_PERSISTENCE_CONTRACT_REASON
+            if reason == AgentspaceHook::MEMORY_PERSISTENCE_CONTRACT_REASON
         ));
     }
 
@@ -1837,7 +1837,7 @@ mod tests {
         let prompt = prompt_message();
         hook.set_completion_contract_request_active(true);
 
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "memory_save",
             None,
@@ -1846,7 +1846,7 @@ mod tests {
             "{\"success\":true,\"memory_id\":\"mem_real_1\"}",
         )
         .await;
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "memory_save",
             None,
@@ -1856,7 +1856,7 @@ mod tests {
         )
         .await;
 
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "memory_persistence_complete",
             None,
@@ -1869,9 +1869,9 @@ mod tests {
         assert!(contract_state.has_terminal_outcome());
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let action = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let action = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("Persisted memories."),
@@ -1887,7 +1887,7 @@ mod tests {
         let prompt = prompt_message();
         hook.set_completion_contract_request_active(true);
 
-        let _ = <SpacebotHook as PromptHook<SpacebotModel>>::on_tool_result(
+        let _ = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_tool_result(
             &hook,
             "memory_persistence_complete",
             None,
@@ -1900,9 +1900,9 @@ mod tests {
         assert!(contract_state.has_terminal_outcome());
 
         let _ =
-            <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_call(&hook, &prompt, &[])
+            <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_call(&hook, &prompt, &[])
                 .await;
-        let action = <SpacebotHook as PromptHook<SpacebotModel>>::on_completion_response(
+        let action = <AgentspaceHook as PromptHook<AgentspaceModel>>::on_completion_response(
             &hook,
             &prompt,
             &text_response("No memories persisted."),

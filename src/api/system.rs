@@ -260,7 +260,7 @@ pub(super) async fn backup_export(
         (header::CONTENT_TYPE, "application/zip"),
         (
             header::CONTENT_DISPOSITION,
-            "attachment; filename=spacebot-backup.zip",
+            "attachment; filename=agentspace-backup.zip",
         ),
     ];
 

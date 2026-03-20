@@ -1,34 +1,34 @@
-//! Read embedded Spacebot docs, AGENTS guide, and changelog notes.
+//! Read embedded Agentspace docs, AGENTS guide, and changelog notes.
 
 use rig::completion::ToolDefinition;
 use rig::tool::Tool;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// Tool for reading Spacebot's embedded self-documentation.
+/// Tool for reading Agentspace's embedded self-documentation.
 #[derive(Debug, Clone)]
-pub struct SpacebotDocsTool;
+pub struct AgentspaceDocsTool;
 
-impl SpacebotDocsTool {
+impl AgentspaceDocsTool {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for SpacebotDocsTool {
+impl Default for AgentspaceDocsTool {
     fn default() -> Self {
         Self::new()
     }
 }
 
-/// Error type for `spacebot_docs`.
+/// Error type for `agentspace_docs`.
 #[derive(Debug, thiserror::Error)]
-#[error("spacebot_docs failed: {0}")]
-pub struct SpacebotDocsError(String);
+#[error("agentspace_docs failed: {0}")]
+pub struct AgentspaceDocsError(String);
 
-/// Arguments for `spacebot_docs`.
+/// Arguments for `agentspace_docs`.
 #[derive(Debug, Deserialize, JsonSchema)]
-pub struct SpacebotDocsArgs {
+pub struct AgentspaceDocsArgs {
     /// Action to perform: `list` or `read`.
     #[serde(default = "default_action")]
     pub action: String,
@@ -58,7 +58,7 @@ fn default_max_lines() -> usize {
 
 /// Read payload for `action = "read"`.
 #[derive(Debug, Serialize)]
-pub struct SpacebotDocContent {
+pub struct AgentspaceDocContent {
     pub id: String,
     pub title: String,
     pub path: String,
@@ -70,28 +70,28 @@ pub struct SpacebotDocContent {
     pub content: String,
 }
 
-/// Output from `spacebot_docs`.
+/// Output from `agentspace_docs`.
 #[derive(Debug, Serialize)]
-pub struct SpacebotDocsOutput {
+pub struct AgentspaceDocsOutput {
     pub success: bool,
     pub action: String,
     pub message: String,
     pub error: Option<String>,
     pub docs: Vec<crate::self_awareness::EmbeddedDocSummary>,
-    pub document: Option<SpacebotDocContent>,
+    pub document: Option<AgentspaceDocContent>,
 }
 
-impl Tool for SpacebotDocsTool {
-    const NAME: &'static str = "spacebot_docs";
+impl Tool for AgentspaceDocsTool {
+    const NAME: &'static str = "agentspace_docs";
 
-    type Error = SpacebotDocsError;
-    type Args = SpacebotDocsArgs;
-    type Output = SpacebotDocsOutput;
+    type Error = AgentspaceDocsError;
+    type Args = AgentspaceDocsArgs;
+    type Output = AgentspaceDocsOutput;
 
     async fn definition(&self, _prompt: String) -> ToolDefinition {
         ToolDefinition {
             name: Self::NAME.to_string(),
-            description: crate::prompts::text::get("tools/spacebot_docs").to_string(),
+            description: crate::prompts::text::get("tools/agentspace_docs").to_string(),
             parameters: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -137,7 +137,7 @@ impl Tool for SpacebotDocsTool {
                     docs.truncate(200);
                 }
 
-                Ok(SpacebotDocsOutput {
+                Ok(AgentspaceDocsOutput {
                     success: true,
                     action,
                     message: format!(
@@ -191,13 +191,13 @@ impl Tool for SpacebotDocsTool {
                     )
                 };
 
-                Ok(SpacebotDocsOutput {
+                Ok(AgentspaceDocsOutput {
                     success: true,
                     action,
                     message,
                     error: None,
                     docs: Vec::new(),
-                    document: Some(SpacebotDocContent {
+                    document: Some(AgentspaceDocContent {
                         id: document.summary.id,
                         title: document.summary.title,
                         path: document.summary.path,
@@ -218,8 +218,8 @@ impl Tool for SpacebotDocsTool {
     }
 }
 
-fn failure_output(action: &str, error: String) -> SpacebotDocsOutput {
-    SpacebotDocsOutput {
+fn failure_output(action: &str, error: String) -> AgentspaceDocsOutput {
+    AgentspaceDocsOutput {
         success: false,
         action: action.to_string(),
         message: error.clone(),
@@ -306,8 +306,8 @@ mod tests {
 
     #[tokio::test]
     async fn read_without_doc_id_returns_structured_failure() {
-        let output = SpacebotDocsTool::new()
-            .call(SpacebotDocsArgs {
+        let output = AgentspaceDocsTool::new()
+            .call(AgentspaceDocsArgs {
                 action: "read".to_string(),
                 doc_id: None,
                 query: None,
@@ -324,8 +324,8 @@ mod tests {
 
     #[tokio::test]
     async fn invalid_action_returns_structured_failure() {
-        let output = SpacebotDocsTool::new()
-            .call(SpacebotDocsArgs {
+        let output = AgentspaceDocsTool::new()
+            .call(AgentspaceDocsArgs {
                 action: "nope".to_string(),
                 doc_id: None,
                 query: None,
@@ -342,8 +342,8 @@ mod tests {
 
     #[tokio::test]
     async fn unknown_doc_returns_structured_failure() {
-        let output = SpacebotDocsTool::new()
-            .call(SpacebotDocsArgs {
+        let output = AgentspaceDocsTool::new()
+            .call(AgentspaceDocsArgs {
                 action: "read".to_string(),
                 doc_id: Some("definitely-not-a-real-doc-id".to_string()),
                 query: None,

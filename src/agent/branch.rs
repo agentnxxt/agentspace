@@ -2,8 +2,8 @@
 
 use crate::agent::compactor::estimate_history_tokens;
 use crate::error::Result;
-use crate::hooks::SpacebotHook;
-use crate::llm::SpacebotModel;
+use crate::hooks::AgentspaceHook;
+use crate::llm::AgentspaceModel;
 use crate::llm::routing::is_context_overflow_error;
 use crate::tools::MemoryPersistenceContractState;
 use crate::{AgentDeps, BranchId, ChannelId, ProcessEvent, ProcessId, ProcessType};
@@ -24,7 +24,7 @@ pub struct Branch {
     pub channel_id: ChannelId,
     pub description: String,
     pub deps: AgentDeps,
-    pub hook: SpacebotHook,
+    pub hook: AgentspaceHook,
     /// System prompt loaded from prompts/BRANCH.md.
     pub system_prompt: String,
     /// Clone of the channel's history at fork time (Rig message format).
@@ -56,7 +56,7 @@ impl Branch {
     ) -> Self {
         let id = Uuid::new_v4();
         let process_id = ProcessId::Branch(id);
-        let mut hook = SpacebotHook::new(
+        let mut hook = AgentspaceHook::new(
             deps.agent_id.clone(),
             process_id,
             ProcessType::Branch,
@@ -106,7 +106,7 @@ impl Branch {
 
         let routing = self.deps.runtime_config.routing.load();
         let model_name = routing.resolve(ProcessType::Branch, None).to_string();
-        let model = SpacebotModel::make(&self.deps.llm_manager, &model_name)
+        let model = AgentspaceModel::make(&self.deps.llm_manager, &model_name)
             .with_context(&*self.deps.agent_id, "branch")
             .with_routing((**routing).clone());
 
@@ -150,7 +150,7 @@ impl Branch {
                 }
                 Err(rig::completion::PromptError::PromptCancelled { reason, .. })
                     if enforce_memory_contract
-                        && SpacebotHook::is_memory_persistence_contract_reason(&reason) =>
+                        && AgentspaceHook::is_memory_persistence_contract_reason(&reason) =>
                 {
                     self.hook.set_completion_contract_request_active(false);
                     if matches!(
@@ -179,7 +179,7 @@ impl Branch {
                     current_prompt = prompt_engine
                         .render_system_memory_persistence_contract_retry()
                         .unwrap_or_else(|_| {
-                            SpacebotHook::MEMORY_PERSISTENCE_CONTRACT_PROMPT.to_string()
+                            AgentspaceHook::MEMORY_PERSISTENCE_CONTRACT_PROMPT.to_string()
                         });
                 }
                 Err(rig::completion::PromptError::PromptCancelled { reason, .. }) => {

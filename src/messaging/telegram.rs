@@ -863,7 +863,7 @@ fn build_metadata(
     let mut mentions_or_replies_to_bot = false;
 
     // Check text-based @mention in message text/caption.
-    // Uses a word-boundary check so "@spacebot" doesn't match "@spacebot_extra".
+    // Uses a word-boundary check so "@agentspace" doesn't match "@agentspace_extra".
     if let Some(bot_username) = bot_username {
         let bot_lower = bot_username.to_lowercase();
         if let Some(text) = extract_text(message) {

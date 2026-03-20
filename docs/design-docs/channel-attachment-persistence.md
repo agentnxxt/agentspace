@@ -198,7 +198,7 @@ pub struct AttachmentRecallTool {
 
 - **`list`** — Returns a summary of recent saved attachments for the current channel. Output: JSON array of `{id, filename, saved_filename, mime_type, size_bytes, disk_path, created_at}`.
 
-- **`get_path`** — Returns the absolute disk path of a specific attachment (by ID or filename). This is the primary use case for delegation: the channel calls `get_path`, gets `/home/user/.spacebot/agents/mybot/workspace/saved/screenshot.png`, and includes that path in a worker task description.
+- **`get_path`** — Returns the absolute disk path of a specific attachment (by ID or filename). This is the primary use case for delegation: the channel calls `get_path`, gets `/home/user/.agentspace/agents/mybot/workspace/saved/screenshot.png`, and includes that path in a worker task description.
 
 - **`get_content`** — Re-loads the file from disk and returns it as `UserContent` (base64 for images, inline text for text files). This lets the channel re-analyze an image that was sent many turns ago. **Size limit: 10 MB.** Files larger than this return an error directing the channel to delegate to a worker instead.
 
@@ -261,9 +261,9 @@ User: "Can you analyze that screenshot I sent earlier?"
 User: "Resize that screenshot to 800x600"
   → Channel sees attachment annotation in history
   → Channel calls attachment_recall(action: "get_path", attachment_id: "a1b2c3d4")
-    → Returns: "/home/user/.spacebot/agents/mybot/workspace/saved/screenshot.png"
+    → Returns: "/home/user/.agentspace/agents/mybot/workspace/saved/screenshot.png"
   → Channel calls spawn_worker with task:
-    "Resize the image at /home/user/.spacebot/agents/mybot/workspace/saved/screenshot.png to 800x600.
+    "Resize the image at /home/user/.agentspace/agents/mybot/workspace/saved/screenshot.png to 800x600.
      Save the result in the same directory."
   → Worker has file tool access to the workspace, can read/write the file
 ```

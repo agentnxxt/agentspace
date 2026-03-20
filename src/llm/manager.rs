@@ -395,7 +395,7 @@ impl LlmManager {
             extra_headers: vec![
                 (
                     "user-agent".to_string(),
-                    format!("spacebot/{}", env!("CARGO_PKG_VERSION")),
+                    format!("agentspace/{}", env!("CARGO_PKG_VERSION")),
                 ),
                 (
                     "editor-version".to_string(),

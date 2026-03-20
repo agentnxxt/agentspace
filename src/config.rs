@@ -61,10 +61,10 @@ mod tests {
         fn new() -> Self {
             // NOTE: Keep in sync with provider env vars that affect test behavior
             const KEYS: [&str; 27] = [
-                "SPACEBOT_DIR",
-                "SPACEBOT_DEPLOYMENT",
-                "SPACEBOT_CRON_TIMEZONE",
-                "SPACEBOT_USER_TIMEZONE",
+                "AGENTSPACE_DIR",
+                "AGENTSPACE_DEPLOYMENT",
+                "AGENTSPACE_CRON_TIMEZONE",
+                "AGENTSPACE_USER_TIMEZONE",
                 "ANTHROPIC_API_KEY",
                 "ANTHROPIC_BASE_URL",
                 "ANTHROPIC_OAUTH_TOKEN",
@@ -102,7 +102,7 @@ mod tests {
             }
 
             let unique = format!(
-                "spacebot-config-tests-{}-{}",
+                "agentspace-config-tests-{}-{}",
                 std::process::id(),
                 std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
@@ -113,7 +113,7 @@ mod tests {
             std::fs::create_dir_all(&test_dir).expect("failed to create test dir");
 
             unsafe {
-                std::env::set_var("SPACEBOT_DIR", &test_dir);
+                std::env::set_var("AGENTSPACE_DIR", &test_dir);
             }
 
             Self { vars, test_dir }
@@ -330,9 +330,9 @@ openrouter_key = "legacy-openrouter-key"
                 .find(|(key, _)| key == name)
                 .map(|(_, value)| value.as_str())
         };
-        assert_eq!(find_header("HTTP-Referer"), Some("https://spacebot.sh/"));
-        assert_eq!(find_header("X-Title"), Some("Spacebot"));
-        assert_eq!(find_header("X-OpenRouter-Title"), Some("Spacebot"));
+        assert_eq!(find_header("HTTP-Referer"), Some("https://space.agnxxt.com/"));
+        assert_eq!(find_header("X-Title"), Some("Agentspace"));
+        assert_eq!(find_header("X-OpenRouter-Title"), Some("Agentspace"));
         assert_eq!(
             find_header("X-OpenRouter-Categories"),
             Some("cloud-agent,cli-agent")
@@ -399,9 +399,9 @@ name = "My OpenRouter"
                 .find(|(key, _)| key == name)
                 .map(|(_, value)| value.as_str())
         };
-        assert_eq!(find_header("HTTP-Referer"), Some("https://spacebot.sh/"));
-        assert_eq!(find_header("X-Title"), Some("Spacebot"));
-        assert_eq!(find_header("X-OpenRouter-Title"), Some("Spacebot"));
+        assert_eq!(find_header("HTTP-Referer"), Some("https://space.agnxxt.com/"));
+        assert_eq!(find_header("X-Title"), Some("Agentspace"));
+        assert_eq!(find_header("X-OpenRouter-Title"), Some("Agentspace"));
         assert_eq!(
             find_header("X-OpenRouter-Categories"),
             Some("cloud-agent,cli-agent")
@@ -491,7 +491,7 @@ name = "My OpenRouter"
         let _env = EnvGuard::new();
 
         unsafe {
-            std::env::set_var("SPACEBOT_DEPLOYMENT", "hosted");
+            std::env::set_var("AGENTSPACE_DEPLOYMENT", "hosted");
         }
 
         let toml = r#"
@@ -511,7 +511,7 @@ bind = "127.0.0.1"
         let _env = EnvGuard::new();
 
         unsafe {
-            std::env::set_var("SPACEBOT_DEPLOYMENT", "hosted");
+            std::env::set_var("AGENTSPACE_DEPLOYMENT", "hosted");
         }
 
         let config = Config::load_from_env(&Config::default_instance_dir())
@@ -526,7 +526,7 @@ bind = "127.0.0.1"
         let _env = EnvGuard::new();
 
         unsafe {
-            std::env::set_var("SPACEBOT_DEPLOYMENT", "docker");
+            std::env::set_var("AGENTSPACE_DEPLOYMENT", "docker");
         }
 
         let toml = r#"
@@ -546,7 +546,7 @@ bind = "127.0.0.1"
         let _env = EnvGuard::new();
 
         unsafe {
-            std::env::set_var("SPACEBOT_DEPLOYMENT", "docker");
+            std::env::set_var("AGENTSPACE_DEPLOYMENT", "docker");
         }
 
         let config = Config::load_from_env(&Config::default_instance_dir())

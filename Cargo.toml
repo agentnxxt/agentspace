@@ -1,8 +1,8 @@
 [package]
-name = "spacebot"
+name = "agentspace"
 version = "0.3.3"
 edition = "2024"
-default-run = "spacebot"
+default-run = "agentspace"
 
 [dependencies]
 # Core async runtime

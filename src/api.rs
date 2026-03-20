@@ -1,4 +1,4 @@
-//! HTTP API server for the Spacebot control interface.
+//! HTTP API server for the Agentspace control interface.
 //!
 //! Serves the embedded frontend assets and provides a JSON API for
 //! managing agents, viewing status, and interacting with the system.

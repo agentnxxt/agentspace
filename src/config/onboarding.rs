@@ -4,7 +4,7 @@ use anyhow::Context as _;
 
 use super::Config;
 
-/// Interactive first-run onboarding. Creates ~/.spacebot with a minimal config.
+/// Interactive first-run onboarding. Creates ~/.agentspace with a minimal config.
 ///
 /// Returns `Some(path)` if the CLI wizard created a config file, or `None` if
 /// the user chose to set up via the embedded UI (setup mode).
@@ -13,7 +13,7 @@ pub fn run_onboarding() -> anyhow::Result<Option<PathBuf>> {
     use std::io::Write;
 
     println!();
-    println!("  Welcome to Spacebot");
+    println!("  Welcome to Agentspace");
     println!("  -------------------");
     println!();
     println!("  No configuration found. Let's set things up.");

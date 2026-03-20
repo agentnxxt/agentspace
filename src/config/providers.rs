@@ -36,9 +36,9 @@ pub(super) const GITHUB_COPILOT_DEFAULT_BASE_URL: &str = "https://api.individual
 /// the app listing (title, etc.).
 pub(super) fn openrouter_extra_headers() -> Vec<(String, String)> {
     vec![
-        ("HTTP-Referer".into(), "https://spacebot.sh/".into()),
-        ("X-Title".into(), "Spacebot".into()),
-        ("X-OpenRouter-Title".into(), "Spacebot".into()),
+        ("HTTP-Referer".into(), "https://space.agnxxt.com/".into()),
+        ("X-Title".into(), "Agentspace".into()),
+        ("X-OpenRouter-Title".into(), "Agentspace".into()),
         (
             "X-OpenRouter-Categories".into(),
             "cloud-agent,cli-agent".into(),

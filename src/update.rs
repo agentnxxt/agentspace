@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 /// GitHub repository for release checks.
-const GITHUB_REPO: &str = "spacedriveapp/spacebot";
+const GITHUB_REPO: &str = "agentnxxt/agentspace";
 
 /// Current binary version from Cargo.toml.
 pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -18,12 +18,12 @@ pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Default check interval (1 hour).
 const CHECK_INTERVAL: Duration = Duration::from_secs(3600);
 
-/// Deployment environment, detected from SPACEBOT_DEPLOYMENT env var.
+/// Deployment environment, detected from AGENTSPACE_DEPLOYMENT env var.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Deployment {
     Docker,
-    /// Hosted on the Spacebot platform. Updates are managed by the platform
+    /// Hosted on the Agentspace platform. Updates are managed by the platform
     /// via image rollouts — the instance itself cannot self-update.
     Hosted,
     Native,
@@ -31,7 +31,7 @@ pub enum Deployment {
 
 impl Deployment {
     pub fn detect() -> Self {
-        match std::env::var("SPACEBOT_DEPLOYMENT").as_deref() {
+        match std::env::var("AGENTSPACE_DEPLOYMENT").as_deref() {
             Ok("docker") => Deployment::Docker,
             Ok("hosted") => Deployment::Hosted,
             _ if is_running_in_container() => Deployment::Docker,
@@ -193,7 +193,7 @@ async fn fetch_latest_release() -> anyhow::Result<GitHubRelease> {
     );
 
     let client = reqwest::Client::builder()
-        .user_agent(format!("spacebot/{}", CURRENT_VERSION))
+        .user_agent(format!("agentspace/{}", CURRENT_VERSION))
         .timeout(Duration::from_secs(15))
         .build()?;
 
@@ -358,7 +358,7 @@ pub async fn apply_docker_update(status: &SharedUpdateStatus) -> anyhow::Result<
         .to_string();
 
     // Resolve the target image: same base name, new version tag.
-    // e.g. ghcr.io/spacedriveapp/spacebot:v0.1.0 -> ghcr.io/spacedriveapp/spacebot:v0.2.0
+    // e.g. ghcr.io/agentnxxt/agentspace:v0.1.0 -> ghcr.io/agentnxxt/agentspace:v0.2.0
     let target_image = resolve_target_image(&current_image, latest_version);
 
     tracing::info!(
@@ -391,7 +391,7 @@ pub async fn apply_docker_update(status: &SharedUpdateStatus) -> anyhow::Result<
                     || error_text.contains("pull access denied")
                 {
                     anyhow::bail!(
-                        "image pull failed for {target_image}. this image does not have Spacebot release tags; rebuild and redeploy manually"
+                        "image pull failed for {target_image}. this image does not have Agentspace release tags; rebuild and redeploy manually"
                     );
                 }
                 anyhow::bail!("image pull failed: {}", error);
@@ -549,9 +549,9 @@ fn get_own_container_id() -> anyhow::Result<String> {
 /// Given a current image reference and a new version, produce the target image tag.
 ///
 /// Examples:
-///   - `ghcr.io/spacedriveapp/spacebot:v0.1.0` + `0.2.0` -> `ghcr.io/spacedriveapp/spacebot:v0.2.0`
-///   - `ghcr.io/spacedriveapp/spacebot:latest` + `0.2.0` -> `ghcr.io/spacedriveapp/spacebot:v0.2.0`
-///   - `ghcr.io/spacedriveapp/spacebot:v0.1.0-full` + `0.2.0` -> `ghcr.io/spacedriveapp/spacebot:v0.2.0`
+///   - `ghcr.io/agentnxxt/agentspace:v0.1.0` + `0.2.0` -> `ghcr.io/agentnxxt/agentspace:v0.2.0`
+///   - `ghcr.io/agentnxxt/agentspace:latest` + `0.2.0` -> `ghcr.io/agentnxxt/agentspace:v0.2.0`
+///   - `ghcr.io/agentnxxt/agentspace:v0.1.0-full` + `0.2.0` -> `ghcr.io/agentnxxt/agentspace:v0.2.0`
 ///
 /// Legacy `-slim`/`-full` suffixes are stripped during migration to the unified image.
 fn resolve_target_image(current_image: &str, new_version: &str) -> String {
@@ -589,33 +589,33 @@ mod tests {
     fn test_resolve_target_image() {
         // Versioned tag
         assert_eq!(
-            resolve_target_image("ghcr.io/spacedriveapp/spacebot:v0.1.0", "0.2.0"),
-            "ghcr.io/spacedriveapp/spacebot:v0.2.0"
+            resolve_target_image("ghcr.io/agentnxxt/agentspace:v0.1.0", "0.2.0"),
+            "ghcr.io/agentnxxt/agentspace:v0.2.0"
         );
         // Latest tag
         assert_eq!(
-            resolve_target_image("ghcr.io/spacedriveapp/spacebot:latest", "0.2.0"),
-            "ghcr.io/spacedriveapp/spacebot:v0.2.0"
+            resolve_target_image("ghcr.io/agentnxxt/agentspace:latest", "0.2.0"),
+            "ghcr.io/agentnxxt/agentspace:v0.2.0"
         );
         // Legacy slim tag (strips variant)
         assert_eq!(
-            resolve_target_image("ghcr.io/spacedriveapp/spacebot:v0.1.0-slim", "0.2.0"),
-            "ghcr.io/spacedriveapp/spacebot:v0.2.0"
+            resolve_target_image("ghcr.io/agentnxxt/agentspace:v0.1.0-slim", "0.2.0"),
+            "ghcr.io/agentnxxt/agentspace:v0.2.0"
         );
         // Legacy full tag (strips variant)
         assert_eq!(
-            resolve_target_image("ghcr.io/spacedriveapp/spacebot:v0.1.0-full", "0.2.0"),
-            "ghcr.io/spacedriveapp/spacebot:v0.2.0"
+            resolve_target_image("ghcr.io/agentnxxt/agentspace:v0.1.0-full", "0.2.0"),
+            "ghcr.io/agentnxxt/agentspace:v0.2.0"
         );
         // Custom registry with port in host
         assert_eq!(
-            resolve_target_image("registry.local:5000/spacebot", "0.2.0"),
-            "registry.local:5000/spacebot:v0.2.0"
+            resolve_target_image("registry.local:5000/agentspace", "0.2.0"),
+            "registry.local:5000/agentspace:v0.2.0"
         );
         // Digest reference
         assert_eq!(
-            resolve_target_image("ghcr.io/spacedriveapp/spacebot@sha256:abcdef", "0.2.0"),
-            "ghcr.io/spacedriveapp/spacebot:v0.2.0"
+            resolve_target_image("ghcr.io/agentnxxt/agentspace@sha256:abcdef", "0.2.0"),
+            "ghcr.io/agentnxxt/agentspace:v0.2.0"
         );
     }
 }

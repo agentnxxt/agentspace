@@ -1,6 +1,6 @@
 # Rust Style Guide
 
-Conventions for Spacebot. Follow these exactly. When in doubt, consistency with existing code wins over personal preference.
+Conventions for Agentspace. Follow these exactly. When in doubt, consistency with existing code wins over personal preference.
 
 ## Project Structure
 
@@ -356,7 +356,7 @@ where
 
 ## Async Patterns
 
-Spacebot runs on tokio. All I/O and inter-process communication is async.
+Agentspace runs on tokio. All I/O and inter-process communication is async.
 
 **`tokio::spawn` for independent concurrent work:**
 ```rust
@@ -708,7 +708,7 @@ Every LLM process is a Rig `Agent`. They differ in system prompt, tools, history
 ```rust
 let agent = AgentBuilder::new(model.clone())
     .preamble(&system_prompt)
-    .hook(SpacebotHook::new(process_id, process_type, event_tx.clone()))
+    .hook(AgentspaceHook::new(process_id, process_type, event_tx.clone()))
     .tool_server_handle(tools.clone())
     .default_max_turns(50)
     .build();
@@ -743,13 +743,13 @@ match result {
 **PromptHook implementations** observe and report. They rarely modify behavior except for budget/cancellation:
 ```rust
 #[derive(Clone)]
-pub struct SpacebotHook {
+pub struct AgentspaceHook {
     process_id: Uuid,
     process_type: ProcessType,
     event_tx: mpsc::Sender<ProcessEvent>,
 }
 
-impl PromptHook<SpacebotModel> for SpacebotHook {
+impl PromptHook<AgentspaceModel> for AgentspaceHook {
     async fn on_tool_call(&self, tool_name: &str, ..) -> ToolCallHookAction {
         self.event_tx.send(ProcessEvent::ToolStarted {
             tool_name: tool_name.to_string(),
@@ -830,7 +830,7 @@ impl std::fmt::Display for DecryptedSecret {
 }
 ```
 
-**Worker tool output is scanned** before entering LLM context. Use `SpacebotHook::on_tool_result()` for universal scan-after-execution.
+**Worker tool output is scanned** before entering LLM context. Use `AgentspaceHook::on_tool_result()` for universal scan-after-execution.
 
 **File tools reject writes** to identity/memory paths with an error directing the LLM to the correct tool.
 

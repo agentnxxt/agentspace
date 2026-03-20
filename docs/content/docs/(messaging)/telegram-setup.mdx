@@ -1,11 +1,11 @@
 ---
 title: Telegram Setup
-description: Connect Spacebot to Telegram.
+description: Connect Agentspace to Telegram.
 ---
 
 # Telegram Setup
 
-Connect Spacebot to Telegram. Takes about 2 minutes.
+Connect Agentspace to Telegram. Takes about 2 minutes.
 
 You need a **Bot Token** from Telegram's BotFather.
 
@@ -13,8 +13,8 @@ You need a **Bot Token** from Telegram's BotFather.
 
 Open Telegram and message [@BotFather](https://t.me/BotFather). Send `/newbot` and follow the prompts:
 
-- **Name**: The display name (e.g. "My Spacebot")
-- **Username**: Must end in `bot` (e.g. `my_spacebot_bot`)
+- **Name**: The display name (e.g. "My Agentspace")
+- **Username**: Must end in `bot` (e.g. `my_agentspace_bot`)
 
 BotFather replies with your **bot token**. It looks like `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`.
 
@@ -28,18 +28,18 @@ If you want the bot to see **all messages** in a group, send `/setprivacy` to Bo
 Privacy mode must be disabled **before** adding the bot to a group. If the bot is already in a group, remove it and re-add it after changing the setting.
 </Callout>
 
-## Step 3: Add Token to Spacebot
+## Step 3: Add Token to Agentspace
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
-1. Open your Spacebot dashboard
+1. Open your Agentspace dashboard
 2. Go to **Settings** → **Messaging Platforms**
 3. Click **Setup** on the Telegram card
 4. Paste your **Bot Token**
 5. Click **Save**
 
-Spacebot connects immediately — no restart needed.
+Agentspace connects immediately — no restart needed.
 
 </Tab>
 <Tab value="TOML Config">
@@ -81,8 +81,8 @@ The Telegram card on the Settings page shows a green status dot when connected. 
 
 By default the bot responds in any chat it's added to. To limit it, add chat IDs to your binding.
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Go to **Settings** → **Bindings** tab and add a chat ID to your Telegram binding.
 
@@ -104,14 +104,14 @@ Without `chat_id`, the bot responds in all chats.
 ### Finding chat IDs
 
 - **DMs**: The chat ID is the user's Telegram user ID. You can find it by messaging [@userinfobot](https://t.me/userinfobot).
-- **Groups**: Add the bot to the group, send a message, and check the Spacebot logs — the `conversation_id` will show as `telegram:<chat_id>`. Group IDs are negative numbers (e.g. `-100123456789`).
+- **Groups**: Add the bot to the group, send a message, and check the Agentspace logs — the `conversation_id` will show as `telegram:<chat_id>`. Group IDs are negative numbers (e.g. `-100123456789`).
 
 ### DM filtering
 
 By default, DMs from anyone are accepted. To restrict to specific users:
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Go to **Settings** → **Messaging Platforms** → Telegram card and add user IDs to the **DM Allowed Users** list.
 
@@ -132,8 +132,8 @@ When the list is empty (default), all DMs are accepted. Permission changes hot-r
 
 Route different Telegram chats to different agents.
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Create multiple bindings in the **Bindings** tab, each with a different chat ID and agent.
 

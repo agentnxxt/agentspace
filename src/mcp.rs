@@ -42,8 +42,8 @@ struct McpClientHandler {
 impl McpClientHandler {
     fn new(tool_list_changed: Arc<AtomicBool>) -> Self {
         let implementation =
-            rmcp::model::Implementation::new("spacebot", env!("CARGO_PKG_VERSION"))
-                .with_description("Spacebot MCP client");
+            rmcp::model::Implementation::new("agentspace", env!("CARGO_PKG_VERSION"))
+                .with_description("Agentspace MCP client");
 
         let client_info = rmcp::model::ClientInfo::new(
             rmcp::model::ClientCapabilities::default(),

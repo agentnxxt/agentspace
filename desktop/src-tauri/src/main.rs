@@ -92,5 +92,5 @@ fn main() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("error running Spacebot");
+        .expect("error running Agentspace");
 }

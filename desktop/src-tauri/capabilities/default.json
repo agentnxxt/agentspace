@@ -14,7 +14,7 @@
       "identifier": "shell:allow-execute",
       "allow": [
         {
-          "name": "binaries/spacebot",
+          "name": "binaries/agentspace",
           "sidecar": true,
           "args": ["start", "--foreground"]
         }

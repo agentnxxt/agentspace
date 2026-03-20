@@ -12,7 +12,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE: ghcr.io/${{ github.repository_owner }}/spacebot
+  IMAGE: ghcr.io/${{ github.repository_owner }}/agentspace
 
 jobs:
   verify-version:
@@ -86,7 +86,7 @@ jobs:
 
       - name: Build frontend
         env:
-          SPACEBOT_SKIP_FRONTEND_BUILD: "1"
+          AGENTSPACE_SKIP_FRONTEND_BUILD: "1"
         run: |
           cd interface && rm -f bun.lock && bun install && cd ..
           ./scripts/build-opencode-embed.sh
@@ -110,15 +110,15 @@ jobs:
       - name: Package binary
         run: |
           cd target/${{ matrix.target }}/release
-          mkdir -p spacebot-${{ steps.version.outputs.version }}-${{ matrix.target }}
-          cp spacebot spacebot-${{ steps.version.outputs.version }}-${{ matrix.target }}/
-          tar -czvf ../../../spacebot-${{ steps.version.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }} spacebot-${{ steps.version.outputs.version }}-${{ matrix.target }}
+          mkdir -p agentspace-${{ steps.version.outputs.version }}-${{ matrix.target }}
+          cp agentspace agentspace-${{ steps.version.outputs.version }}-${{ matrix.target }}/
+          tar -czvf ../../../agentspace-${{ steps.version.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }} agentspace-${{ steps.version.outputs.version }}-${{ matrix.target }}
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: spacebot-${{ matrix.target }}
-          path: spacebot-${{ steps.version.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }}
+          name: agentspace-${{ matrix.target }}
+          path: agentspace-${{ steps.version.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }}
           retention-days: 1
 
   build-docker:
@@ -215,14 +215,14 @@ jobs:
         if: github.repository_owner == 'spacedriveapp'
         run: |
           docker buildx imagetools create \
-            --tag registry.fly.io/spacebot-image:${{ needs.build-docker.outputs.version }} \
-            --tag registry.fly.io/spacebot-image:latest \
+            --tag registry.fly.io/agentspace-image:${{ needs.build-docker.outputs.version }} \
+            --tag registry.fly.io/agentspace-image:latest \
             ${{ env.IMAGE }}:latest
 
       - name: Roll out to hosted instances
         if: github.repository_owner == 'spacedriveapp'
         run: |
-          curl -sf -X POST https://api.spacebot.sh/api/admin/rollout \
+          curl -sf -X POST https://api.space.agnxxt.com/api/admin/rollout \
             -H "Content-Type: application/json" \
             -H "X-Internal-Key: ${{ secrets.PLATFORM_INTERNAL_KEY }}" \
             -d '{"image_tag": "${{ needs.build-docker.outputs.version }}"}'
@@ -243,7 +243,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: binaries
-          pattern: spacebot-*
+          pattern: agentspace-*
           merge-multiple: false
 
       - name: Flatten artifacts
@@ -276,7 +276,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: binaries
-          pattern: spacebot-*
+          pattern: agentspace-*
           merge-multiple: false
 
       - name: Compute SHA256 checksums
@@ -306,8 +306,8 @@ jobs:
           SHA_X86_LINUX="${{ steps.sha.outputs.x86_64_unknown_linux_gnu }}"
 
           # Write formula (sed strips 10 leading spaces from the YAML indentation)
-          sed 's/^          //' > tap/Formula/spacebot.rb <<RUBY
-          class Spacebot < Formula
+          sed 's/^          //' > tap/Formula/agentspace.rb <<RUBY
+          class Agentspace < Formula
             desc "Agentic LLM system with specialized processes"
             homepage "https://github.com/${REPO}"
             version "${VERSION_NUM}"
@@ -315,30 +315,30 @@ jobs:
 
             on_macos do
               if Hardware::CPU.arm?
-                url "${BASE}/spacebot-${VERSION}-aarch64-apple-darwin.tar.gz"
+                url "${BASE}/agentspace-${VERSION}-aarch64-apple-darwin.tar.gz"
                 sha256 "${SHA_ARM_MAC}"
               else
-                url "${BASE}/spacebot-${VERSION}-x86_64-apple-darwin.tar.gz"
+                url "${BASE}/agentspace-${VERSION}-x86_64-apple-darwin.tar.gz"
                 sha256 "${SHA_X86_MAC}"
               end
             end
 
             on_linux do
               if Hardware::CPU.arm?
-                url "${BASE}/spacebot-${VERSION}-aarch64-unknown-linux-gnu.tar.gz"
+                url "${BASE}/agentspace-${VERSION}-aarch64-unknown-linux-gnu.tar.gz"
                 sha256 "${SHA_ARM_LINUX}"
               else
-                url "${BASE}/spacebot-${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+                url "${BASE}/agentspace-${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
                 sha256 "${SHA_X86_LINUX}"
               end
             end
 
             def install
-              bin.install "spacebot"
+              bin.install "agentspace"
             end
 
             test do
-              assert_match "spacebot", shell_output("#{bin}/spacebot --version")
+              assert_match "agentspace", shell_output("#{bin}/agentspace --version")
             end
           end
           RUBY
@@ -346,6 +346,6 @@ jobs:
           cd tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/spacebot.rb
-          git commit -m "spacebot ${VERSION}" || echo "No changes to commit"
+          git add Formula/agentspace.rb
+          git commit -m "agentspace ${VERSION}" || echo "No changes to commit"
           git push

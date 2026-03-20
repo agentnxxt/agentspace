@@ -31,7 +31,7 @@ User identity does exist at the message level — `InboundMessage.sender_id` car
 Rather than storing raw platform IDs (`discord:123456`) on memories, we introduce a canonical user identity. A `user_identifiers` table maps platform-specific IDs to a stable internal ID. This means:
 
 - Memories reference one canonical ID regardless of which platform the user spoke on
-- When the hosted platform adds spacebot.sh accounts, it's just another platform link
+- When the hosted platform adds space.agnxxt.com accounts, it's just another platform link
 - Cross-platform identity linking (discord user X is slack user Y) is a row insert, not a data migration
 
 ### Schema
@@ -355,8 +355,8 @@ The feature is opt-in from the LLM's perspective. If prompts aren't updated to m
 
 **Community Discord servers:** An agent running in a 500-person server remembers each person individually. When Alice asks about her project, the agent recalls Alice's context without surfacing Bob's unrelated work.
 
-**Enterprise teams:** A team Spacebot remembers each engineer's preferences, current projects, and decisions. Shared decisions are global. Individual context is scoped.
+**Enterprise teams:** A team Agentspace remembers each engineer's preferences, current projects, and decisions. Shared decisions are global. Individual context is scoped.
 
-**Hosted platform (spacebot.sh):** When users have spacebot.sh accounts, a `platform: "spacebot"` link connects their canonical ID to their platform account. The dashboard can show per-user memory views, and team features can share agents across users with proper memory isolation.
+**Hosted platform (space.agnxxt.com):** When users have space.agnxxt.com accounts, a `platform: "agentspace"` link connects their canonical ID to their platform account. The dashboard can show per-user memory views, and team features can share agents across users with proper memory isolation.
 
 **Dynamic user recall:** Agents can proactively recall a user's context when they join a conversation. "Oh, JamiePine — last time we talked you were debugging that auth migration. How'd that go?" No AI system does this at the memory layer today.

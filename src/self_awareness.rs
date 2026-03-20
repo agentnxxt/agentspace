@@ -1,8 +1,8 @@
-//! Embedded Spacebot self-knowledge for introspection and diagnostics.
+//! Embedded Agentspace self-knowledge for introspection and diagnostics.
 //!
 //! This module bundles key docs into the binary and exposes helpers used by:
 //! - cortex chat prompt enrichment (AGENTS + changelog + live config snapshot)
-//! - `spacebot_docs` tool (on-demand document retrieval)
+//! - `agentspace_docs` tool (on-demand document retrieval)
 //! - `config_inspect` tool (redacted runtime config visibility)
 
 use crate::config::{McpTransport, RuntimeConfig};
@@ -598,7 +598,7 @@ fn truncate_for_prompt(content: &str, max_lines: usize, max_chars: usize, label:
 
     if truncated {
         output.push_str(&format!(
-            "\n\n_[{label} truncated in prompt; use `spacebot_docs` for full content.]_"
+            "\n\n_[{label} truncated in prompt; use `agentspace_docs` for full content.]_"
         ));
     }
 

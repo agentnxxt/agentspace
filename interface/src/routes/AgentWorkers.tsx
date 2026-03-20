@@ -736,7 +736,7 @@ function OpenCodeEmbed({
 	const hostRef = useRef<HTMLDivElement>(null);
 	const handleRef = useRef<{ dispose: () => void; navigate: (route: string) => void } | null>(null);
 
-	// Route through the Spacebot proxy so it works for hosted/Tailscale
+	// Route through the Agentspace proxy so it works for hosted/Tailscale
 	// users, not just local dev. The proxy handles forwarding to the
 	// actual OpenCode instance. In local dev the Vite proxy forwards
 	// /api/* to the Rust backend at 19898; in production it's same-origin.
@@ -903,14 +903,14 @@ function OpenCodeEmbed({
 				// Inject a copy of OpenCode's CSS into the document <head>
 				// so that Kobalte portals (dropdowns, dialogs, toasts) that
 				// escape the Shadow DOM into document.body still get styled.
-				// We scope it to avoid polluting Spacebot's own styles by
+				// We scope it to avoid polluting Agentspace's own styles by
 				// wrapping in a layer.
 				let portalStyle = document.getElementById("opencode-portal-css");
 				if (!portalStyle) {
 					portalStyle = document.createElement("style");
 					portalStyle.id = "opencode-portal-css";
 					// Use a CSS layer so OpenCode's global resets (*, html, body)
-					// don't override Spacebot's styles. Portal elements from
+					// don't override Agentspace's styles. Portal elements from
 					// Kobalte will pick up the right vars because they inherit
 					// from :root where the CSS custom properties are set.
 					portalStyle.textContent = `@layer opencode-portals {\n${cssText}\n}`;

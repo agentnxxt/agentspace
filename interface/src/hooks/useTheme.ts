@@ -36,7 +36,7 @@ export const THEMES: ThemeOption[] = [
 	},
 ];
 
-const STORAGE_KEY = "spacebot-theme";
+const STORAGE_KEY = "agentspace-theme";
 
 function getInitialTheme(): ThemeId {
 	if (typeof window === "undefined") return "default";

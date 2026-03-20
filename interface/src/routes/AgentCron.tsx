@@ -160,7 +160,7 @@ export function AgentCron({ agentId }: AgentCronProps) {
 			if (ch.platform === "portal") {
 				label = "Web Portal";
 			} else if (ch.platform === "link") {
-				// Link channels have IDs like "link:main:spacebot-engineer"
+				// Link channels have IDs like "link:main:agentspace-engineer"
 				const parts = ch.id.split(":");
 				label = parts.length >= 3 ? parts.slice(1).join(" → ") : ch.id;
 			} else {

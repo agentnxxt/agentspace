@@ -5,7 +5,7 @@ description: Tools that give LLM processes the ability to act.
 
 # Tools
 
-How Spacebot gives LLM processes the ability to act.
+How Agentspace gives LLM processes the ability to act.
 
 ## Overview
 
@@ -25,7 +25,7 @@ Core tools include:
 | `memory_save` | Write a memory to the store | Branch, Cortex, Compactor |
 | `memory_recall` | Search memories via hybrid search | Branch |
 | `channel_recall` | Retrieve transcript from another channel | Branch |
-| `spacebot_docs` | Read embedded Spacebot docs/changelog/AGENTS | Branch, Cortex Chat |
+| `agentspace_docs` | Read embedded Agentspace docs/changelog/AGENTS | Branch, Cortex Chat |
 | `email_search` | Search IMAP mailbox content directly | Branch |
 | `config_inspect` | Inspect live resolved runtime config (redacted) | Cortex Chat |
 | `set_status` | Report worker progress to the channel | Worker |
@@ -39,7 +39,7 @@ Core tools include:
 
 Rig's `ToolServer` runs as a tokio task. You register tools on it, call `.run()` to get a `ToolServerHandle`, and pass that handle to agents. The handle is `Clone` — all clones point to the same server task.
 
-Spacebot uses five ToolServer configurations:
+Agentspace uses five ToolServer configurations:
 
 ### Channel ToolServer (per-channel)
 
@@ -73,13 +73,13 @@ Each branch gets its own isolated ToolServer, created at spawn time via `create_
 ├──────────────────────────────────────────────┤
 │   memory_save      (Arc<MemorySearch>)       │
 │   memory_recall    (Arc<MemorySearch>)       │
-│   spacebot_docs    (embedded docs)            │
+│   agentspace_docs    (embedded docs)            │
 │   channel_recall   (ConversationLogger)      │
 │   email_search     (IMAP mailbox search)     │
 └──────────────────────────────────────────────┘
 ```
 
-Branch isolation ensures `memory_recall`, `channel_recall`, `spacebot_docs`, and `email_search` are never visible to the channel. All tools are registered at creation and live for the lifetime of the branch.
+Branch isolation ensures `memory_recall`, `channel_recall`, `agentspace_docs`, and `email_search` are never visible to the channel. All tools are registered at creation and live for the lifetime of the branch.
 
 ### Worker ToolServer (per-worker)
 
@@ -128,7 +128,7 @@ One per cortex-chat session context, full diagnostic/admin toolset.
 │   memory_save / memory_recall / memory_delete│
 │   channel_recall                            │
 │   task_create / task_list / task_update     │
-│   spacebot_docs / config_inspect            │
+│   agentspace_docs / config_inspect            │
 │   shell / file / exec                       │
 │   browser     (if enabled)                  │
 │   web_search  (if configured)               │
@@ -164,7 +164,7 @@ create_cortex_chat_tool_server(...) -> ToolServerHandle
 
 ### Static tools (registered at creation)
 
-`memory_save`, `memory_recall`, `channel_recall`, `spacebot_docs`, `email_search` on branch ToolServers. `shell`, `file`, `exec` on worker ToolServers. `memory_save` on cortex and compactor ToolServers. These are registered before `.run()` via the builder pattern and live for the lifetime of the ToolServer.
+`memory_save`, `memory_recall`, `channel_recall`, `agentspace_docs`, `email_search` on branch ToolServers. `shell`, `file`, `exec` on worker ToolServers. `memory_save` on cortex and compactor ToolServers. These are registered before `.run()` via the builder pattern and live for the lifetime of the ToolServer.
 
 ### Dynamic tools (added/removed at runtime)
 
@@ -181,7 +181,7 @@ create_cortex_chat_tool_server(...) -> ToolServerHandle
 
 ### Per-process tools (created and destroyed with the process)
 
-Branch and worker ToolServers are created when the process spawns and dropped when it finishes. Each branch gets `memory_save` + `memory_recall` + `channel_recall` + `spacebot_docs` + `email_search` (plus task board tools). Each worker gets `shell`, `file`, `exec`, `set_status` (bound to that worker's ID), and optionally `browser`, `web_search`, and connected `mcp_*` tools.
+Branch and worker ToolServers are created when the process spawns and dropped when it finishes. Each branch gets `memory_save` + `memory_recall` + `channel_recall` + `agentspace_docs` + `email_search` (plus task board tools). Each worker gets `shell`, `file`, `exec`, `set_status` (bound to that worker's ID), and optionally `browser`, `web_search`, and connected `mcp_*` tools.
 
 ## Tool Design Patterns
 
@@ -205,9 +205,9 @@ Shell and exec commands run inside an OS-level sandbox (bubblewrap on Linux, san
 
 Worker subprocesses also start with a clean environment -- they never inherit the parent's environment variables. System secrets (LLM API keys, messaging tokens) are never visible to workers regardless of sandbox mode. See [Sandbox](/docs/sandbox) for full details.
 
-The `file` tool independently validates all paths against the workspace boundary. Identity files (`SOUL.md`, `IDENTITY.md`, `ROLE.md`) live in the agent root directory (`~/.spacebot/agents/{id}/`), outside the workspace, so they are naturally inaccessible to worker file tools. The `exec` tool blocks dangerous environment variables (`LD_PRELOAD`, `DYLD_INSERT_LIBRARIES`, etc.) that enable library injection regardless of sandbox state.
+The `file` tool independently validates all paths against the workspace boundary. Identity files (`SOUL.md`, `IDENTITY.md`, `ROLE.md`) live in the agent root directory (`~/.agentspace/agents/{id}/`), outside the workspace, so they are naturally inaccessible to worker file tools. The `exec` tool blocks dangerous environment variables (`LD_PRELOAD`, `DYLD_INSERT_LIBRARIES`, etc.) that enable library injection regardless of sandbox state.
 
-Leak detection (via `SpacebotHook`) scans all tool output for secret patterns (API keys, tokens, PEM keys) and terminates the process if a leak is found. This includes base64-encoded, URL-encoded, and hex-encoded variants.
+Leak detection (via `AgentspaceHook`) scans all tool output for secret patterns (API keys, tokens, PEM keys) and terminates the process if a leak is found. This includes base64-encoded, URL-encoded, and hex-encoded variants.
 
 ### Status reporting
 

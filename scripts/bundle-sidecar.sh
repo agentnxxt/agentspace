@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# bundle-sidecar.sh — Build the spacebot binary and copy it into the
+# bundle-sidecar.sh — Build the agentspace binary and copy it into the
 # Tauri sidecar binaries directory with the correct target-triple suffix.
 #
 # Usage:
 #   ./scripts/bundle-sidecar.sh [--release]
 #
 # Tauri expects sidecar binaries at:
-#   desktop/src-tauri/binaries/spacebot-<target-triple>[.exe]
+#   desktop/src-tauri/binaries/agentspace-<target-triple>[.exe]
 
 set -euo pipefail
 
@@ -26,13 +26,13 @@ if [[ "${1:-}" != "--release" ]]; then
     CARGO_FLAGS=""
 fi
 
-echo "Building spacebot ($BUILD_MODE) for $TARGET_TRIPLE..."
+echo "Building agentspace ($BUILD_MODE) for $TARGET_TRIPLE..."
 if [[ "$TARGET_TRIPLE" != "$HOST_TRIPLE" ]]; then
     cargo build $CARGO_FLAGS --target "$TARGET_TRIPLE" --manifest-path "$REPO_ROOT/Cargo.toml"
-    SRC_BIN="$REPO_ROOT/target/$TARGET_TRIPLE/$BUILD_MODE/spacebot"
+    SRC_BIN="$REPO_ROOT/target/$TARGET_TRIPLE/$BUILD_MODE/agentspace"
 else
     cargo build $CARGO_FLAGS --manifest-path "$REPO_ROOT/Cargo.toml"
-    SRC_BIN="$REPO_ROOT/target/$BUILD_MODE/spacebot"
+    SRC_BIN="$REPO_ROOT/target/$BUILD_MODE/agentspace"
 fi
 
 # Destination with target triple suffix (Tauri convention)
@@ -43,7 +43,7 @@ case "$TARGET_TRIPLE" in
     *windows*) SUFFIX=".exe" ;;
 esac
 
-DEST_BIN="$BINARIES_DIR/spacebot-${TARGET_TRIPLE}${SUFFIX}"
+DEST_BIN="$BINARIES_DIR/agentspace-${TARGET_TRIPLE}${SUFFIX}"
 
 cp "$SRC_BIN${SUFFIX}" "$DEST_BIN"
 echo "Copied $SRC_BIN -> $DEST_BIN"

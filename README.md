@@ -1,8 +1,8 @@
 <p align="center">
-  <img src=".github/Ball.png" alt="Spacebot" width="120" height="120" />
+  <img src=".github/Ball.png" alt="Agentspace" width="120" height="120" />
 </p>
 
-<h1 align="center">Spacebot</h1>
+<h1 align="center">Agentspace</h1>
 
 <p align="center">
   <strong>An AI agent for teams, communities, and multi-user environments.</strong><br/>
@@ -14,29 +14,29 @@
   <a href="https://fsl.software/">
     <img src="https://img.shields.io/static/v1?label=License&message=FSL-1.1-ALv2&color=000" />
   </a>
-  <a href="https://github.com/spacedriveapp/spacebot">
+  <a href="https://github.com/agentnxxt/agentspace">
     <img src="https://img.shields.io/static/v1?label=Core&message=Rust&color=DEA584" />
   </a>
   <a href="https://discord.gg/gTaF2Z44f5">
     <img src="https://img.shields.io/discord/949090953497567312?label=Discord&color=5865F2" />
   </a>
 
-  [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/spacedriveapp/spacebot)
+  [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/agentnxxt/agentspace)
 </p>
 
 <p align="center">
-  <a href="https://spacebot.sh"><strong>spacebot.sh</strong></a> •
+  <a href="https://space.agnxxt.com"><strong>space.agnxxt.com</strong></a> •
   <a href="#how-it-works">How It Works</a> •
   <a href="#architecture">Architecture</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#tech-stack">Tech Stack</a> •
-  <a href="https://docs.spacebot.sh">Docs</a>
+  <a href="https://docs.space.agnxxt.com">Docs</a>
 </p>
 
-> **One-click deploy with [spacebot.sh](https://spacebot.sh)** — connect your Discord, Slack, Telegram, or Twitch, configure your agent, and go. No self-hosting required.
+> **One-click deploy with [space.agnxxt.com](https://space.agnxxt.com)** — connect your Discord, Slack, Telegram, or Twitch, configure your agent, and go. No self-hosting required.
 
 <p align="center">
-  <img src=".github/spacebot-ui.jpg" alt="Spacebot UI" />
+  <img src=".github/agentspace-ui.jpg" alt="Agentspace UI" />
 </p>
 
 ---
@@ -47,21 +47,21 @@ Most AI agent frameworks run everything in a single session. One LLM thread hand
 
 [OpenClaw](https://github.com/anomalyco/openclaw) _does_ have subagents, but handles them poorly and there's no enforcement to their use. The session is the bottleneck for everything.
 
-Spacebot splits the monolith into specialized processes that only do one thing, and delegate everything else.
+Agentspace splits the monolith into specialized processes that only do one thing, and delegate everything else.
 
 ---
 
 ## Built for Teams and Communities
 
-Most AI agents are built for one person in one conversation. Spacebot is built for many people working together — a Discord community with hundreds of active members, a Slack workspace with teams running parallel workstreams, a Telegram group coordinating across time zones.
+Most AI agents are built for one person in one conversation. Agentspace is built for many people working together — a Discord community with hundreds of active members, a Slack workspace with teams running parallel workstreams, a Telegram group coordinating across time zones.
 
-This is why the architecture exists. A single-threaded agent breaks the moment two people talk at once. Spacebot's delegation model means it can think about User A's question, execute a task for User B, and respond to User C's small talk — all at the same time, without any of them waiting on each other.
+This is why the architecture exists. A single-threaded agent breaks the moment two people talk at once. Agentspace's delegation model means it can think about User A's question, execute a task for User B, and respond to User C's small talk — all at the same time, without any of them waiting on each other.
 
-**For communities** — drop Spacebot into a Discord server. It handles concurrent conversations across channels and threads, remembers context about every member, and does real work (code, research, file operations) without going dark. Fifty people can interact with it simultaneously.
+**For communities** — drop Agentspace into a Discord server. It handles concurrent conversations across channels and threads, remembers context about every member, and does real work (code, research, file operations) without going dark. Fifty people can interact with it simultaneously.
 
-**For fast-moving channels** — when messages are flying in, Spacebot doesn't try to respond to every single one. A message coalescing system detects rapid-fire bursts, batches them into a single turn, and lets the LLM read the room — it picks the most interesting thing to engage with, or stays quiet if there's nothing to add. Configurable debounce timing, automatic DM bypass, and the LLM always knows which messages arrived together.
+**For fast-moving channels** — when messages are flying in, Agentspace doesn't try to respond to every single one. A message coalescing system detects rapid-fire bursts, batches them into a single turn, and lets the LLM read the room — it picks the most interesting thing to engage with, or stays quiet if there's nothing to add. Configurable debounce timing, automatic DM bypass, and the LLM always knows which messages arrived together.
 
-**For teams** — connect it to Slack. Each channel gets a dedicated conversation with shared memory. Spacebot can run long coding sessions for one engineer while answering quick questions from another. Workers handle the heavy lifting in the background while the channel stays responsive.
+**For teams** — connect it to Slack. Each channel gets a dedicated conversation with shared memory. Agentspace can run long coding sessions for one engineer while answering quick questions from another. Workers handle the heavy lifting in the background while the channel stays responsive.
 
 **For multi-agent setups** — run multiple agents on one instance. A community bot with a friendly personality on Discord, a no-nonsense dev assistant on Slack, and a research agent handling background tasks. Each with its own identity, memory, and security permissions. One binary, one deploy.
 
@@ -69,7 +69,7 @@ This is why the architecture exists. A single-threaded agent breaks the moment t
 
 | Method                                 | What You Get                                                                                |
 | -------------------------------------- | ------------------------------------------------------------------------------------------- |
-| **[spacebot.sh](https://spacebot.sh)** | One-click hosted deploy. Connect your platforms, configure your agent, done.                |
+| **[space.agnxxt.com](https://space.agnxxt.com)** | One-click hosted deploy. Connect your platforms, configure your agent, done.                |
 | **Self-hosted**                        | Single Rust binary. No Docker, no server dependencies, no microservices. Clone, build, run. |
 | **Docker**                             | Container image with everything included. Mount a volume for persistent data.               |
 
@@ -104,14 +104,14 @@ Native adapters for Discord, Slack, Telegram, Twitch, and Webchat with full plat
 
 ### Memory
 
-Not markdown files. Not _unstructured_ blocks in a vector database. Spacebot's memory is a typed, graph-connected knowledge system — and this opinionated structure is why agents are productive out of the box.
+Not markdown files. Not _unstructured_ blocks in a vector database. Agentspace's memory is a typed, graph-connected knowledge system — and this opinionated structure is why agents are productive out of the box.
 
 Every memory has a type, an importance score, and graph edges connecting it to related memories. The agent doesn't just "remember things" — it knows the difference between a fact it learned, a decision that was made, a goal it's working toward, and a preference the user expressed. This structure is what lets the cortex synthesize a useful briefing instead of dumping raw search results into context.
 
 - **Eight memory types** — Fact, Preference, Decision, Identity, Event, Observation, Goal, Todo
 - **Graph edges** — RelatedTo, Updates, Contradicts, CausedBy, PartOf
 - **Hybrid recall** — vector similarity + full-text search merged via Reciprocal Rank Fusion
-- **Memory import** — dump files into the `ingest/` folder and Spacebot extracts structured memories automatically. Supports text, markdown, and PDF files. Migrating from OpenClaw? Drop your markdown memory files in and walk away.
+- **Memory import** — dump files into the `ingest/` folder and Agentspace extracts structured memories automatically. Supports text, markdown, and PDF files. Migrating from OpenClaw? Drop your markdown memory files in and walk away.
 - **Cross-channel recall** — branches can read transcripts from other conversations
 - **Memory bulletin** — the cortex generates a periodic briefing of the agent's knowledge, injected into every conversation
 - **Warmup readiness contract** — branch/worker/cron dispatch checks `ready_for_work` (warm state + embedding ready + fresh bulletin), records cold-dispatch metrics, and triggers background forced warmup without blocking channels
@@ -202,7 +202,7 @@ Additional built-in providers include **Kilo Gateway**, **OpenCode Go**, **NVIDI
 Extensible skill system integrated with [skills.sh](https://skills.sh):
 
 - **skills.sh registry** — install any skill from the public ecosystem with one command
-- **CLI management** — `spacebot skill add owner/repo` to install, list, remove, and inspect skills
+- **CLI management** — `agentspace skill add owner/repo` to install, list, remove, and inspect skills
 - **Worker injection** — skills are injected into worker system prompts for specialized tasks
 - **Bundled resources** — scripts, references, and assets packaged with skills
 - **OpenClaw compatible** — drop in existing OpenClaw skills, or any skill from skills.sh
@@ -210,9 +210,9 @@ Extensible skill system integrated with [skills.sh](https://skills.sh):
 **Install skills from the registry:**
 
 ```bash
-spacebot skill add vercel-labs/agent-skills
-spacebot skill add anthropics/skills/pdf
-spacebot skill list
+agentspace skill add vercel-labs/agent-skills
+agentspace skill add anthropics/skills/pdf
+agentspace skill list
 ```
 
 ### MCP Integration
@@ -242,7 +242,7 @@ headers = { Authorization = "Bearer ${SENTRY_TOKEN}" }
 
 ### Security
 
-Spacebot runs autonomous LLM processes that execute arbitrary shell commands and spawn subprocesses. Security isn't an add-on — it's a layered system designed so that no single failure exposes credentials or breaks containment.
+Agentspace runs autonomous LLM processes that execute arbitrary shell commands and spawn subprocesses. Security isn't an add-on — it's a layered system designed so that no single failure exposes credentials or breaks containment.
 
 #### Credential Isolation
 
@@ -406,7 +406,7 @@ Each agent is an independent entity with its own workspace, databases, identity 
 
 ### Spacedrive Integration (Future)
 
-Spacebot is the AI counterpart to [Spacedrive](https://github.com/spacedriveapp/spacedrive) — an open source cross-platform file manager built on a virtual distributed filesystem. Both projects are independent and fully functional on their own, but complementary by design. Spacedrive indexes files across all your devices, clouds, and platforms with content-addressed identity, semantic search, and local AI analysis. Spacebot brings autonomous reasoning, memory, and task execution. Together, an agent that can think, remember, and act — backed by terabytes of queryable data across every device you own.
+Agentspace is the AI counterpart to [Spacedrive](https://github.com/spacedriveapp/spacedrive) — an open source cross-platform file manager built on a virtual distributed filesystem. Both projects are independent and fully functional on their own, but complementary by design. Spacedrive indexes files across all your devices, clouds, and platforms with content-addressed identity, semantic search, and local AI analysis. Agentspace brings autonomous reasoning, memory, and task execution. Together, an agent that can think, remember, and act — backed by terabytes of queryable data across every device you own.
 
 Read the full vision in the [roadmap](docs/content/docs/(deployment)/roadmap.mdx).
 
@@ -417,13 +417,13 @@ Read the full vision in the [roadmap](docs/content/docs/(deployment)/roadmap.mdx
 ### Prerequisites
 
 - **Rust** 1.85+ ([rustup](https://rustup.rs/))
-- An LLM API key from any supported provider (Anthropic, OpenAI, OpenRouter, Kilo Gateway, Z.ai, Groq, Together, Fireworks, DeepSeek, xAI, Mistral, NVIDIA, MiniMax, Moonshot AI, OpenCode Zen, OpenCode Go) — or use `spacebot auth login` for Anthropic OAuth
+- An LLM API key from any supported provider (Anthropic, OpenAI, OpenRouter, Kilo Gateway, Z.ai, Groq, Together, Fireworks, DeepSeek, xAI, Mistral, NVIDIA, MiniMax, Moonshot AI, OpenCode Zen, OpenCode Go) — or use `agentspace auth login` for Anthropic OAuth
 
 ### Build and Run
 
 ```bash
-git clone https://github.com/spacedriveapp/spacebot
-cd spacebot
+git clone https://github.com/agentnxxt/agentspace
+cd agentspace
 
 # Optional: build the OpenCode embedded UI (requires Node 22+ and bun)
 # Without this, OpenCode workers still work — the Workers tab shows a transcript view instead.
@@ -463,26 +463,26 @@ adapter = "ops"
 ```
 
 ```bash
-spacebot                      # start as background daemon
-spacebot start --foreground   # or run in the foreground
-spacebot stop                 # graceful shutdown
-spacebot restart              # stop + start
-spacebot status               # show pid and uptime
-spacebot auth login           # authenticate via Anthropic OAuth
+agentspace                      # start as background daemon
+agentspace start --foreground   # or run in the foreground
+agentspace stop                 # graceful shutdown
+agentspace restart              # stop + start
+agentspace status               # show pid and uptime
+agentspace auth login           # authenticate via Anthropic OAuth
 ```
 
 The binary creates all databases and directories automatically on first run. See the [quickstart guide](docs/content/docs/(getting-started)/quickstart.mdx) for more detail.
 
 ### Authentication
 
-Spacebot supports Anthropic OAuth as an alternative to static API keys. Use your Claude Pro, Max, or API Console subscription directly:
+Agentspace supports Anthropic OAuth as an alternative to static API keys. Use your Claude Pro, Max, or API Console subscription directly:
 
 ```bash
-spacebot auth login             # OAuth via Claude Pro/Max (opens browser)
-spacebot auth login --console   # OAuth via API Console
-spacebot auth status            # show credential status and expiry
-spacebot auth refresh           # manually refresh the access token
-spacebot auth logout            # remove stored credentials
+agentspace auth login             # OAuth via Claude Pro/Max (opens browser)
+agentspace auth login --console   # OAuth via API Console
+agentspace auth status            # show credential status and expiry
+agentspace auth refresh           # manually refresh the access token
+agentspace auth logout            # remove stored credentials
 ```
 
 OAuth tokens are stored in `anthropic_oauth.json` and auto-refresh transparently before each API call. When OAuth credentials are present, they take priority over a static `ANTHROPIC_API_KEY`.
@@ -538,7 +538,7 @@ No server dependencies. Single binary. All data lives in embedded databases in a
 
 ## Why Rust
 
-Spacebot isn't a chatbot — it's an orchestration layer for autonomous AI processes running concurrently, sharing memory, and delegating to each other. That's infrastructure, and infrastructure should be machine code.
+Agentspace isn't a chatbot — it's an orchestration layer for autonomous AI processes running concurrently, sharing memory, and delegating to each other. That's infrastructure, and infrastructure should be machine code.
 
 Rust's strict type system and compiler mean there's one correct way to express something. When multiple AI processes share mutable state and spawn tasks without human oversight, "the compiler won't let you do that" is a feature. The result is a single binary with no runtime dependencies, no garbage collector pauses, and predictable resource usage.
 

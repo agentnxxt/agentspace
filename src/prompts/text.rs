@@ -7,11 +7,11 @@
 //!
 //! ```rust
 //! // At startup (main.rs):
-//! spacebot::prompts::text::init("en").expect("invalid language");
+//! agentspace::prompts::text::init("en").expect("invalid language");
 //!
 //! // Anywhere:
-//! let desc = spacebot::prompts::text::get("tools/file");
-//! let prompt = spacebot::prompts::text::get("channel");
+//! let desc = agentspace::prompts::text::get("tools/file");
+//! let prompt = agentspace::prompts::text::get("channel");
 //! ```
 
 use std::sync::OnceLock;
@@ -220,8 +220,8 @@ fn lookup(lang: &str, key: &str) -> &'static str {
         ("en", "tools/skills_search") => {
             include_str!("../../prompts/en/tools/skills_search_description.md.j2")
         }
-        ("en", "tools/spacebot_docs") => {
-            include_str!("../../prompts/en/tools/spacebot_docs_description.md.j2")
+        ("en", "tools/agentspace_docs") => {
+            include_str!("../../prompts/en/tools/agentspace_docs_description.md.j2")
         }
         ("en", "tools/config_inspect") => {
             include_str!("../../prompts/en/tools/config_inspect_description.md.j2")

@@ -71,7 +71,7 @@ pub async fn exchange_github_token(
         .header("Authorization", format!("Bearer {github_pat}"))
         .header(
             "User-Agent",
-            format!("spacebot/{}", env!("CARGO_PKG_VERSION")),
+            format!("agentspace/{}", env!("CARGO_PKG_VERSION")),
         )
         .send()
         .await

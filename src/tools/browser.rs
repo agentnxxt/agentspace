@@ -1089,7 +1089,7 @@ impl BrowserContext {
             (self.config.chrome_cache_dir.join("profile"), true)
         } else {
             let dir =
-                std::env::temp_dir().join(format!("spacebot-browser-{}", uuid::Uuid::new_v4()));
+                std::env::temp_dir().join(format!("agentspace-browser-{}", uuid::Uuid::new_v4()));
             (dir, false)
         };
 

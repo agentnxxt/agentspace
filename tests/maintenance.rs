@@ -1,18 +1,18 @@
 //! Memory maintenance integration coverage.
 
-use spacebot::memory::maintenance::{run_maintenance, run_maintenance_with_cancel};
-use spacebot::memory::{MemoryStore, RelationType, maintenance::MaintenanceConfig};
+use agentspace::memory::maintenance::{run_maintenance, run_maintenance_with_cancel};
+use agentspace::memory::{MemoryStore, RelationType, maintenance::MaintenanceConfig};
 use std::sync::{Arc, OnceLock};
 use tempfile::tempdir;
 use tokio::sync::watch;
 
-fn shared_embedding_model() -> Arc<spacebot::memory::EmbeddingModel> {
-    static MODEL: OnceLock<Arc<spacebot::memory::EmbeddingModel>> = OnceLock::new();
+fn shared_embedding_model() -> Arc<agentspace::memory::EmbeddingModel> {
+    static MODEL: OnceLock<Arc<agentspace::memory::EmbeddingModel>> = OnceLock::new();
     Arc::clone(MODEL.get_or_init(|| {
-        let cache_dir = std::env::temp_dir().join("spacebot-test-embedding-cache");
+        let cache_dir = std::env::temp_dir().join("agentspace-test-embedding-cache");
         std::fs::create_dir_all(&cache_dir).expect("failed to create embedding cache dir");
         Arc::new(
-            spacebot::memory::EmbeddingModel::new(&cache_dir)
+            agentspace::memory::EmbeddingModel::new(&cache_dir)
                 .expect("failed to initialize embedding model"),
         )
     }))
@@ -20,8 +20,8 @@ fn shared_embedding_model() -> Arc<spacebot::memory::EmbeddingModel> {
 
 async fn make_memory_maintenance_fixture() -> (
     std::sync::Arc<MemoryStore>,
-    spacebot::memory::EmbeddingTable,
-    Arc<spacebot::memory::EmbeddingModel>,
+    agentspace::memory::EmbeddingTable,
+    Arc<agentspace::memory::EmbeddingModel>,
     tempfile::TempDir,
 ) {
     let options = sqlx::sqlite::SqliteConnectOptions::new()
@@ -44,7 +44,7 @@ async fn make_memory_maintenance_fixture() -> (
         .execute()
         .await
         .expect("failed to connect to lancedb");
-    let embedding_table = spacebot::memory::EmbeddingTable::open_or_create(&lance_conn)
+    let embedding_table = agentspace::memory::EmbeddingTable::open_or_create(&lance_conn)
         .await
         .expect("failed to create embedding table");
 
@@ -57,9 +57,9 @@ async fn maintenance_run_merges_duplicate_memory_and_links_updates_edge() {
         make_memory_maintenance_fixture().await;
 
     let survivor = {
-        let memory = spacebot::memory::Memory::new(
+        let memory = agentspace::memory::Memory::new(
             "phase3 maintenance survivor",
-            spacebot::memory::MemoryType::Fact,
+            agentspace::memory::MemoryType::Fact,
         )
         .with_importance(0.9);
         store
@@ -74,9 +74,9 @@ async fn maintenance_run_merges_duplicate_memory_and_links_updates_edge() {
     };
 
     let duplicate = {
-        let memory = spacebot::memory::Memory::new(
+        let memory = agentspace::memory::Memory::new(
             "phase3 maintenance survivor updated",
-            spacebot::memory::MemoryType::Fact,
+            agentspace::memory::MemoryType::Fact,
         )
         .with_importance(0.4);
         store
@@ -92,7 +92,7 @@ async fn maintenance_run_merges_duplicate_memory_and_links_updates_edge() {
 
     let related = {
         let memory =
-            spacebot::memory::Memory::new("related memory", spacebot::memory::MemoryType::Fact)
+            agentspace::memory::Memory::new("related memory", agentspace::memory::MemoryType::Fact)
                 .with_importance(0.8);
         store
             .save(&memory)
@@ -106,19 +106,19 @@ async fn maintenance_run_merges_duplicate_memory_and_links_updates_edge() {
     };
 
     store
-        .create_association(&spacebot::memory::Association::new(
+        .create_association(&agentspace::memory::Association::new(
             &duplicate.id,
             &related.id,
-            spacebot::memory::RelationType::RelatedTo,
+            agentspace::memory::RelationType::RelatedTo,
         ))
         .await
         .expect("failed to create related association");
 
     store
-        .create_association(&spacebot::memory::Association::new(
+        .create_association(&agentspace::memory::Association::new(
             &related.id,
             &duplicate.id,
-            spacebot::memory::RelationType::PartOf,
+            agentspace::memory::RelationType::PartOf,
         ))
         .await
         .expect("failed to create part-of association");

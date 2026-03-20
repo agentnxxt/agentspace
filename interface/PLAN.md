@@ -1,6 +1,6 @@
-# Spacebot Control UI
+# Agentspace Control UI
 
-A self-contained React web app living at `interface/` in the Spacebot repo, served by the Rust daemon via an embedded axum HTTP server. Copies Spacedrive's UI component library and color system. Uses spec-first OpenAPI with `openapi-fetch` + `openapi-typescript` for the data layer, TanStack Query for caching, and `rust-embed` to bake the built assets into the single binary.
+A self-contained React web app living at `interface/` in the Agentspace repo, served by the Rust daemon via an embedded axum HTTP server. Copies Spacedrive's UI component library and color system. Uses spec-first OpenAPI with `openapi-fetch` + `openapi-typescript` for the data layer, TanStack Query for caching, and `rust-embed` to bake the built assets into the single binary.
 
 ## Directory Structure
 

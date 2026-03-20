@@ -1,8 +1,8 @@
 # AGENTS.md
 
-Implementation guide for coding agents working on Spacebot. Read `RUST_STYLE_GUIDE.md` before writing any code.
+Implementation guide for coding agents working on Agentspace. Read `RUST_STYLE_GUIDE.md` before writing any code.
 
-## What Spacebot Is
+## What Agentspace Is
 
 A Rust agentic system where every LLM process has a dedicated role and delegation is the only way work gets done. It replaces the monolithic session model (one LLM thread doing conversation + thinking + tool execution + memory retrieval + compaction) with specialized processes that only do one thing.
 
@@ -12,7 +12,7 @@ Single binary. No server dependencies. Runs on tokio. All data lives in embedded
 
 ## JavaScript Tooling (Critical)
 
-- For UI work in `spacebot/interface/`, use `bun` for all JS/TS package management and scripts.
+- For UI work in `agentspace/interface/`, use `bun` for all JS/TS package management and scripts.
 - **NEVER** use `npm`, `pnpm`, or `yarn` in this repo unless the user explicitly asks for one.
 - Standard commands:
   - `bun install`
@@ -45,7 +45,7 @@ Additional rules:
 
 ## Architecture Overview
 
-Five process types. Every LLM process is a Rig `Agent<SpacebotModel, SpacebotHook>`. They differ in system prompt, tools, history, and hooks.
+Five process types. Every LLM process is a Rig `Agent<AgentspaceModel, AgentspaceHook>`. They differ in system prompt, tools, history, and hooks.
 
 ### Channels
 
@@ -67,7 +67,7 @@ Creating a branch is `let branch_history = channel_history.clone()`.
 
 The branch result is injected into the channel's history as a distinct message type. Then the branch is deleted. Multiple branches can run concurrently per channel (configurable limit). First done, first incorporated.
 
-**Tools:** memory_recall, memory_save, memory_delete, channel_recall, spacebot_docs, task_create, task_list, task_update, spawn_worker  
+**Tools:** memory_recall, memory_save, memory_delete, channel_recall, agentspace_docs, task_create, task_list, task_update, spawn_worker  
 **Context:** Clone of channel history at fork time  
 **Lifecycle:** Short-lived. Returns a conclusion, then deleted.
 
@@ -106,7 +106,7 @@ System-level observer. Primary job: generate the **memory bulletin** — a perio
 Also observes system-wide signals for future health monitoring and memory consolidation.
 
 **Tools (bulletin generation):** memory_recall, memory_save  
-**Tools (interactive cortex chat):** memory + worker tools, `spacebot_docs`, `config_inspect`, task board tools  
+**Tools (interactive cortex chat):** memory + worker tools, `agentspace_docs`, `config_inspect`, task board tools  
 **Tools (future health monitoring):** memory_consolidate, system_monitor  
 **Context:** Fresh per bulletin run. No compaction needed.
 
@@ -121,8 +121,8 @@ Database-stored scheduled tasks. Each cron job has a prompt, interval, delivery 
 ## Key Types
 
 ```
-SpacebotModel          — custom CompletionModel impl, routes through LlmManager
-SpacebotHook           — PromptHook impl for channels/branches/workers (status, usage, cancellation)
+AgentspaceModel          — custom CompletionModel impl, routes through LlmManager
+AgentspaceHook           — PromptHook impl for channels/branches/workers (status, usage, cancellation)
 CortexHook             — PromptHook impl for cortex (system observation)
 ProcessType            — enum: Channel, Branch, Worker
 ProcessEvent           — tagged enum for inter-process events
@@ -148,7 +148,7 @@ src/
 │
 ├── llm.rs              → llm/
 │   ├── manager.rs      — LlmManager: provider routing, model resolution, fallback chains
-│   ├── model.rs        — SpacebotModel: CompletionModel impl
+│   ├── model.rs        — AgentspaceModel: CompletionModel impl
 │   ├── routing.rs      — RoutingConfig: process-type defaults, task-type overrides, fallbacks
 │   └── providers.rs    — provider client init (Anthropic, OpenAI, etc.)
 │
@@ -161,7 +161,7 @@ src/
 │   └── status.rs       — StatusBlock: live status snapshot
 │
 ├── hooks.rs            → hooks/
-│   ├── spacebot.rs     — SpacebotHook: channels/branches/workers
+│   ├── agentspace.rs     — AgentspaceHook: channels/branches/workers
 │   └── cortex.rs       — CortexHook: cortex observation
 │
 ├── tools.rs            → tools/
@@ -182,7 +182,7 @@ src/
 │   ├── task_create.rs  — create task-board task (branch + cortex chat)
 │   ├── task_list.rs    — list task-board tasks (branch + cortex chat)
 │   ├── task_update.rs  — update task-board task (branch + cortex chat)
-│   ├── spacebot_docs.rs — read embedded Spacebot docs/changelog (branch + cortex chat)
+│   ├── agentspace_docs.rs — read embedded Agentspace docs/changelog (branch + cortex chat)
 │   ├── config_inspect.rs — inspect live runtime config (cortex chat)
 │   └── cron.rs         — cron management (channel only)
 │
@@ -265,7 +265,7 @@ Every LLM process is a Rig `Agent`. Key patterns:
 ```rust
 let agent = AgentBuilder::new(model.clone())
     .preamble(&system_prompt)
-    .hook(SpacebotHook::new(process_id, process_type, event_tx.clone()))
+    .hook(AgentspaceHook::new(process_id, process_type, event_tx.clone()))
     .tool_server_handle(tools.clone())
     .default_max_turns(50)
     .build();
@@ -284,13 +284,13 @@ let response = agent.prompt(&user_message)
 let branch_history = channel_history.clone();
 ```
 
-**Custom CompletionModel** — `SpacebotModel` routes through `LlmManager`. We don't use Rig's built-in provider clients.
+**Custom CompletionModel** — `AgentspaceModel` routes through `LlmManager`. We don't use Rig's built-in provider clients.
 
-**PromptHook** — `SpacebotHook` sends `ProcessEvent`s for status reporting, usage tracking, cancellation. Returns `Continue`, `Terminate`, or `Skip`.
+**PromptHook** — `AgentspaceHook` sends `ProcessEvent`s for status reporting, usage tracking, cancellation. Returns `Continue`, `Terminate`, or `Skip`.
 
 **ToolServer topology:**
 - Per-channel `ToolServer` (no memory tools, just channel action tools added per turn)
-- Per-branch `ToolServer` with memory tools (memory_save, memory_recall, memory_delete), channel recall, docs introspection (`spacebot_docs`), and task-board tools
+- Per-branch `ToolServer` with memory tools (memory_save, memory_recall, memory_delete), channel recall, docs introspection (`agentspace_docs`), and task-board tools
 - Per-worker `ToolServer` with task-specific tools (shell, file)
 - Per-cortex `ToolServer` with memory_save
 
@@ -309,7 +309,7 @@ Phase 1 — Foundation:
 1. `error.rs` — top-level Error enum
 2. `config.rs` — configuration loading
 3. `db/` — SQLite + LanceDB + redb connection setup, migrations
-4. `llm/` — SpacebotModel, LlmManager, provider init
+4. `llm/` — AgentspaceModel, LlmManager, provider init
 5. `main.rs` — startup, config loading, database init
 
 Phase 2 — Memory:
@@ -321,7 +321,7 @@ Phase 2 — Memory:
 6. `memory/maintenance.rs` — decay, prune, merge, reindex
 
 Phase 3 — Agent Core:
-1. `hooks/spacebot.rs` — SpacebotHook (ProcessEvent sending)
+1. `hooks/agentspace.rs` — AgentspaceHook (ProcessEvent sending)
 2. `agent/status.rs` — StatusBlock
 3. `tools/` — implement tools (start with memory_save, memory_recall, set_status)
 4. `agent/worker.rs` — Worker lifecycle (fire-and-forget first, interactive later)
@@ -347,7 +347,7 @@ Phase 5 — Messaging:
 Phase 6 — Hardening:
 1. `secrets/` — encrypted credential storage
 2. `settings/` — key-value settings
-3. Leak detection (scan tool output via SpacebotHook)
+3. Leak detection (scan tool output via AgentspaceHook)
 4. Workspace path guards (reject writes to identity/memory paths)
 5. Circuit breaker for cron jobs and background tasks
 
@@ -387,7 +387,7 @@ These are validated patterns from research (see `docs/research/pattern-analysis.
 
 **Hybrid search with RRF:** Vector similarity + full-text search, merged via Reciprocal Rank Fusion (`score = sum(1/(60 + rank))`). RRF works on ranks, not raw scores.
 
-**Leak detection:** Regex patterns for API keys, tokens, PEM keys. Scan in `SpacebotHook.on_tool_result()` (after execution) and before outbound HTTP (block exfiltration).
+**Leak detection:** Regex patterns for API keys, tokens, PEM keys. Scan in `AgentspaceHook.on_tool_result()` (after execution) and before outbound HTTP (block exfiltration).
 
 **Workspace path guard:** File tools reject writes to identity/memory paths with an error directing the LLM to the correct tool.
 
@@ -404,7 +404,7 @@ These are validated patterns from research (see `docs/research/pattern-analysis.
 - `README.md` — full architecture design
 - `RUST_STYLE_GUIDE.md` — coding conventions (read this first)
 - `docs/memory.md` — memory system design
-- `docs/research/rig-integration.md` — how Spacebot maps onto Rig
+- `docs/research/rig-integration.md` — how Agentspace maps onto Rig
 - `docs/research/repo-structure.md` — module layout rationale
 - `docs/research/pattern-analysis.md` — patterns to adopt/adapt/skip
 - `docs/messaging.md` — messaging system design (Discord, Telegram, webhook)

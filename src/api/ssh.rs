@@ -1,10 +1,10 @@
-//! SSH daemon management for Spacebot instances.
+//! SSH daemon management for Agentspace instances.
 //!
 //! Provides API endpoints for pushing authorized keys and toggling sshd.
 //! sshd listens on port 2222 to avoid conflicts with other services that
 //! may occupy port 22 in containerized environments.
 //!
-//! Host keys and authorized_keys are persisted under `$SPACEBOT_DIR/ssh/`
+//! Host keys and authorized_keys are persisted under `$AGENTSPACE_DIR/ssh/`
 //! so they survive container restarts.
 
 use super::state::ApiState;
@@ -25,7 +25,7 @@ const SSHD_PORT: u16 = 2222;
 const HOST_KEY_TYPES: &[&str] = &["rsa", "ecdsa", "ed25519"];
 
 /// Path to the sshd PID file used for lifecycle management.
-const PID_FILE: &str = "/run/spacebot-sshd.pid";
+const PID_FILE: &str = "/run/agentspace-sshd.pid";
 
 #[derive(Deserialize)]
 pub(super) struct AuthorizedKeyRequest {

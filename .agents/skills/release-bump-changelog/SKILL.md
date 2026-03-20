@@ -22,7 +22,7 @@ Create a version bump commit where each release section includes both:
      - `marketing_file="$(mktemp)"`
      - write markdown content to `$marketing_file`
 3. Run `cargo bump <patch|minor|major|X.Y.Z>` with marketing copy input:
-   - `SPACEBOT_RELEASE_MARKETING_COPY_FILE="$marketing_file" cargo bump <...>`
+   - `AGENTSPACE_RELEASE_MARKETING_COPY_FILE="$marketing_file" cargo bump <...>`
    - This invokes `scripts/release-tag.sh`.
    - The script generates GitHub-native notes (`gh api .../releases/generate-notes`).
    - The script upserts `CHANGELOG.md` with:
@@ -37,8 +37,8 @@ Create a version bump commit where each release section includes both:
 ## Requirements
 
 - `gh` CLI installed and authenticated (`gh auth status`).
-- `origin` remote points to GitHub, or set `SPACEBOT_RELEASE_REPO=<owner/repo>`.
-- Marketing copy is required unless explicitly bypassed with `SPACEBOT_SKIP_MARKETING_COPY=1`.
+- `origin` remote points to GitHub, or set `AGENTSPACE_RELEASE_REPO=<owner/repo>`.
+- Marketing copy is required unless explicitly bypassed with `AGENTSPACE_SKIP_MARKETING_COPY=1`.
 
 ## Release Story Format
 

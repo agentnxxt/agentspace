@@ -1,11 +1,11 @@
 ---
 title: Architecture
-description: System-level overview of how Spacebot's processes, databases, and messaging layer fit together.
+description: System-level overview of how Agentspace's processes, databases, and messaging layer fit together.
 ---
 
 # Architecture
 
-Spacebot is a single binary that runs multiple concurrent AI processes, each with a dedicated role. There's no server to install, no message broker, no external database. Everything is embedded -- the LLM orchestration, the databases, the messaging adapters, the control API, and the web UI all run inside one process.
+Agentspace is a single binary that runs multiple concurrent AI processes, each with a dedicated role. There's no server to install, no message broker, no external database. Everything is embedded -- the LLM orchestration, the databases, the messaging adapters, the control API, and the web UI all run inside one process.
 
 This page is the system-level view. It explains how the pieces connect. For deep dives into individual subsystems, see the linked pages throughout.
 
@@ -18,11 +18,11 @@ Most AI agent systems use a single LLM session for everything -- conversation, t
 - **No specialization:** The same prompt and model handle tasks that have very different requirements.
 - **No concurrency:** One thing happens at a time.
 
-Spacebot's architecture is designed around one principle: **delegation is the only way work gets done.**
+Agentspace's architecture is designed around one principle: **delegation is the only way work gets done.**
 
 ## Process Model
 
-Five process types, each implemented as a Rig `Agent<SpacebotModel, SpacebotHook>`. They differ in system prompt, available tools, history management, and hooks.
+Five process types, each implemented as a Rig `Agent<AgentspaceModel, AgentspaceHook>`. They differ in system prompt, available tools, history management, and hooks.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -136,8 +136,8 @@ Workers set their own status via the `set_status` tool. Short branches (< 3 seco
 Three embedded databases, each purpose-built. No server processes, no network connections. Everything lives in the agent's data directory.
 
 ```
-~/.spacebot/agents/{agent_id}/data/
-├── spacebot.db          # SQLite — relational data
+~/.agentspace/agents/{agent_id}/data/
+├── agentspace.db          # SQLite — relational data
 ├── lancedb/             # LanceDB — vector embeddings, full-text search
 ├── config.redb          # redb — key-value settings
 ├── settings.redb        # redb — runtime settings
@@ -188,7 +188,7 @@ Separated from SQLite so credentials can be managed and backed up independently.
 
 ## Messaging Layer
 
-Spacebot connects to multiple messaging platforms simultaneously. All adapters implement the same `Messaging` trait and feed into a unified inbound message stream.
+Agentspace connects to multiple messaging platforms simultaneously. All adapters implement the same `Messaging` trait and feed into a unified inbound message stream.
 
 ```
 Discord ─┐
@@ -245,11 +245,11 @@ When a message arrives, the binding resolver matches the conversation ID against
 
 ## LLM Integration
 
-Spacebot uses [Rig](https://github.com/0xPlaygrounds/rig) as the agentic loop framework. Every process is a Rig `Agent` with a custom `CompletionModel` implementation that routes through Spacebot's `LlmManager`.
+Agentspace uses [Rig](https://github.com/0xPlaygrounds/rig) as the agentic loop framework. Every process is a Rig `Agent` with a custom `CompletionModel` implementation that routes through Agentspace's `LlmManager`.
 
 ### Custom Model Layer
 
-Spacebot doesn't use Rig's built-in provider clients. Instead, `SpacebotModel` implements `CompletionModel` and delegates to `LlmManager`, which handles:
+Agentspace doesn't use Rig's built-in provider clients. Instead, `AgentspaceModel` implements `CompletionModel` and delegates to `LlmManager`, which handles:
 
 - **Provider routing** — resolving model names to provider clients (Anthropic, OpenAI, Google, etc.)
 - **Process-type defaults** — different models for channels, branches, workers, compactor, cortex
@@ -258,7 +258,7 @@ Spacebot doesn't use Rig's built-in provider clients. Instead, `SpacebotModel` i
 
 ```
 Channel LLM call
-  → SpacebotModel.completion(messages, tools)
+  → AgentspaceModel.completion(messages, tools)
     → LlmManager.resolve_model("anthropic/claude-sonnet-4-20250514")
       → Anthropic client
         → API call with prompt caching, custom parameters
@@ -271,7 +271,7 @@ See [Routing](/docs/routing) for the full routing configuration.
 ```rust
 let agent = AgentBuilder::new(model.clone())
     .preamble(&system_prompt)
-    .hook(SpacebotHook::new(process_id, process_type, event_tx.clone()))
+    .hook(AgentspaceHook::new(process_id, process_type, event_tx.clone()))
     .tool_server_handle(tools.clone())
     .default_max_turns(50)
     .build();
@@ -281,7 +281,7 @@ let agent = AgentBuilder::new(model.clone())
 
 Two hook implementations control process behavior:
 
-**`SpacebotHook`** (channels, branches, workers) — sends `ProcessEvent`s for real-time status, tracks token usage, enforces cancellation signals, implements tool nudging (prompts the LLM to use tools if it responds with text instead of tool calls in early iterations), and runs leak detection on tool outputs.
+**`AgentspaceHook`** (channels, branches, workers) — sends `ProcessEvent`s for real-time status, tracks token usage, enforces cancellation signals, implements tool nudging (prompts the LLM to use tools if it responds with text instead of tool calls in early iterations), and runs leak detection on tool outputs.
 
 **`CortexHook`** (cortex only) — lighter implementation for system observation, no tool nudging.
 
@@ -291,7 +291,7 @@ For profile synthesis, cortex uses Rig structured output (`prompt_typed`) so pro
 
 ### Max Turns
 
-Rig defaults to 0 (single call). Spacebot sets explicit limits per process type:
+Rig defaults to 0 (single call). Agentspace sets explicit limits per process type:
 
 | Process | Max Turns | Rationale |
 |---------|-----------|-----------|

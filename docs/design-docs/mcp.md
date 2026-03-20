@@ -1,6 +1,6 @@
 # MCP Client Integration
 
-Connect Spacebot to external MCP (Model Context Protocol) servers so workers get access to arbitrary tools — databases, APIs, SaaS products, custom integrations — without building native Rust implementations for each one.
+Connect Agentspace to external MCP (Model Context Protocol) servers so workers get access to arbitrary tools — databases, APIs, SaaS products, custom integrations — without building native Rust implementations for each one.
 
 ## Context
 
@@ -8,7 +8,7 @@ MCP is a JSON-RPC 2.0 protocol that standardizes how AI applications connect to 
 
 ## Decisions
 
-- **Client only.** Spacebot connects TO MCP servers. Exposing Spacebot AS an MCP server is a separate feature.
+- **Client only.** Agentspace connects TO MCP servers. Exposing Agentspace AS an MCP server is a separate feature.
 - **Workers only.** MCP tools are task-execution tools, workers are where tasks run. Channels delegate, they don't execute.
 - **Per-agent config.** Each agent configures its own MCP servers, consistent with existing per-agent isolation.
 - **Both transports.** stdio (subprocess) for local tools, streamable HTTP for remote servers.
@@ -60,7 +60,7 @@ The bridge piece is `McpToolAdapter` — implements Rig's `Tool` trait by proxyi
 
 ## What we get for free
 
-- **Leak detection** — `SpacebotHook` scans all tool args/results, MCP tools included
+- **Leak detection** — `AgentspaceHook` scans all tool args/results, MCP tools included
 - **Event broadcasting** — `ProcessEvent::ToolStarted/ToolCompleted` fires for MCP tools
 - **Output truncation** — `MAX_TOOL_OUTPUT_BYTES` limit applies
 - **Cancellation** — worker cancellation kills the agent loop, MCP calls with it
@@ -287,7 +287,7 @@ rmcp = { version = "0.16", features = [
 
 ## Out of Scope
 
-- MCP server mode (Spacebot as an MCP server)
+- MCP server mode (Agentspace as an MCP server)
 - MCP resources and prompts (only tools)
 - MCP sampling and elicitation
 - Per-tool enable/disable within a server

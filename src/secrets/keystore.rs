@@ -15,7 +15,7 @@ use crate::error::SecretsError;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Service name used for Keychain/keyring identification.
-const SERVICE_NAME: &str = "sh.spacebot.master-key";
+const SERVICE_NAME: &str = "sh.agentspace.master-key";
 
 /// Whether the kernel keyring `keyctl` syscall is available on this system.
 /// Set once at startup by `probe_keyring_support()`. When `false`, the

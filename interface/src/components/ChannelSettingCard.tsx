@@ -39,10 +39,10 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 };
 
 const DOC_LINKS: Partial<Record<Platform, string>> = {
-	discord: "https://docs.spacebot.sh/discord-setup",
-	slack: "https://docs.spacebot.sh/slack-setup",
-	telegram: "https://docs.spacebot.sh/telegram-setup",
-	twitch: "https://docs.spacebot.sh/twitch-setup",
+	discord: "https://docs.space.agnxxt.com/discord-setup",
+	slack: "https://docs.space.agnxxt.com/slack-setup",
+	telegram: "https://docs.space.agnxxt.com/telegram-setup",
+	twitch: "https://docs.space.agnxxt.com/twitch-setup",
 };
 
 // --- Platform Catalog (Left Column) ---

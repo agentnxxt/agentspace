@@ -10,33 +10,33 @@
 #[test]
 fn tool_nudge_reason_constant_is_valid() {
     assert_eq!(
-        spacebot::hooks::SpacebotHook::TOOL_NUDGE_REASON,
-        "spacebot_tool_nudge_retry"
+        agentspace::hooks::AgentspaceHook::TOOL_NUDGE_REASON,
+        "agentspace_tool_nudge_retry"
     );
     // Prompt should instruct the worker to continue and signal outcome.
     assert!(
-        spacebot::hooks::SpacebotHook::TOOL_NUDGE_PROMPT.contains("set_status"),
+        agentspace::hooks::AgentspaceHook::TOOL_NUDGE_PROMPT.contains("set_status"),
         "Nudge prompt should reference set_status for outcome signaling"
     );
-    assert_eq!(spacebot::hooks::SpacebotHook::TOOL_NUDGE_MAX_RETRIES, 2);
+    assert_eq!(agentspace::hooks::AgentspaceHook::TOOL_NUDGE_MAX_RETRIES, 2);
 }
 
 /// Test that is_tool_nudge_reason correctly identifies nudge reasons.
 #[test]
 fn is_tool_nudge_reason_detects_nudge() {
-    assert!(spacebot::hooks::SpacebotHook::is_tool_nudge_reason(
-        "spacebot_tool_nudge_retry"
+    assert!(agentspace::hooks::AgentspaceHook::is_tool_nudge_reason(
+        "agentspace_tool_nudge_retry"
     ));
-    assert!(!spacebot::hooks::SpacebotHook::is_tool_nudge_reason(
+    assert!(!agentspace::hooks::AgentspaceHook::is_tool_nudge_reason(
         "some_other_reason"
     ));
-    assert!(!spacebot::hooks::SpacebotHook::is_tool_nudge_reason(""));
+    assert!(!agentspace::hooks::AgentspaceHook::is_tool_nudge_reason(""));
 }
 
 /// Test ToolNudgePolicy enum values and display.
 #[test]
 fn tool_nudge_policy_enum_values() {
-    use spacebot::hooks::ToolNudgePolicy;
+    use agentspace::hooks::ToolNudgePolicy;
 
     // Test that the enum variants exist and can be matched
     let enabled = ToolNudgePolicy::Enabled;
@@ -53,20 +53,20 @@ fn tool_nudge_policy_enum_values() {
 /// Test that ToolNudgePolicy::for_process returns correct defaults.
 #[test]
 fn tool_nudge_policy_for_process_defaults() {
-    use spacebot::hooks::ToolNudgePolicy;
+    use agentspace::hooks::ToolNudgePolicy;
 
     assert!(matches!(
-        ToolNudgePolicy::for_process(spacebot::ProcessType::Worker),
+        ToolNudgePolicy::for_process(agentspace::ProcessType::Worker),
         ToolNudgePolicy::Enabled
     ));
 
     assert!(matches!(
-        ToolNudgePolicy::for_process(spacebot::ProcessType::Branch),
+        ToolNudgePolicy::for_process(agentspace::ProcessType::Branch),
         ToolNudgePolicy::Disabled
     ));
 
     assert!(matches!(
-        ToolNudgePolicy::for_process(spacebot::ProcessType::Channel),
+        ToolNudgePolicy::for_process(agentspace::ProcessType::Channel),
         ToolNudgePolicy::Disabled
     ));
 }
@@ -74,13 +74,13 @@ fn tool_nudge_policy_for_process_defaults() {
 /// Test that workers are created with the correct default policy.
 #[test]
 fn worker_hook_has_enabled_policy_by_default() {
-    use spacebot::hooks::ToolNudgePolicy;
+    use agentspace::hooks::ToolNudgePolicy;
 
     let (event_tx, _event_rx) = tokio::sync::broadcast::channel(8);
-    let hook = spacebot::hooks::SpacebotHook::new(
+    let hook = agentspace::hooks::AgentspaceHook::new(
         std::sync::Arc::from("test-agent"),
-        spacebot::ProcessId::Worker(uuid::Uuid::new_v4()),
-        spacebot::ProcessType::Worker,
+        agentspace::ProcessId::Worker(uuid::Uuid::new_v4()),
+        agentspace::ProcessType::Worker,
         None,
         event_tx,
     );
@@ -94,13 +94,13 @@ fn worker_hook_has_enabled_policy_by_default() {
 /// Test that branches are created with the correct default policy.
 #[test]
 fn branch_hook_has_disabled_policy_by_default() {
-    use spacebot::hooks::ToolNudgePolicy;
+    use agentspace::hooks::ToolNudgePolicy;
 
     let (event_tx, _event_rx) = tokio::sync::broadcast::channel(8);
-    let hook = spacebot::hooks::SpacebotHook::new(
+    let hook = agentspace::hooks::AgentspaceHook::new(
         std::sync::Arc::from("test-agent"),
-        spacebot::ProcessId::Branch(uuid::Uuid::new_v4()),
-        spacebot::ProcessType::Branch,
+        agentspace::ProcessId::Branch(uuid::Uuid::new_v4()),
+        agentspace::ProcessType::Branch,
         None,
         event_tx,
     );
@@ -113,13 +113,13 @@ fn branch_hook_has_disabled_policy_by_default() {
 /// Test that channels are created with the correct default policy.
 #[test]
 fn channel_hook_has_disabled_policy_by_default() {
-    use spacebot::hooks::ToolNudgePolicy;
+    use agentspace::hooks::ToolNudgePolicy;
 
     let (event_tx, _event_rx) = tokio::sync::broadcast::channel(8);
-    let hook = spacebot::hooks::SpacebotHook::new(
+    let hook = agentspace::hooks::AgentspaceHook::new(
         std::sync::Arc::from("test-agent"),
-        spacebot::ProcessId::Channel(std::sync::Arc::from("test-channel")),
-        spacebot::ProcessType::Channel,
+        agentspace::ProcessId::Channel(std::sync::Arc::from("test-channel")),
+        agentspace::ProcessType::Channel,
         Some(std::sync::Arc::from("test-channel")),
         event_tx,
     );
@@ -133,10 +133,10 @@ fn channel_hook_has_disabled_policy_by_default() {
 #[test]
 fn hook_clone_works() {
     let (event_tx, _event_rx) = tokio::sync::broadcast::channel(8);
-    let hook = spacebot::hooks::SpacebotHook::new(
+    let hook = agentspace::hooks::AgentspaceHook::new(
         std::sync::Arc::from("test-agent"),
-        spacebot::ProcessId::Worker(uuid::Uuid::new_v4()),
-        spacebot::ProcessType::Worker,
+        agentspace::ProcessId::Worker(uuid::Uuid::new_v4()),
+        agentspace::ProcessType::Worker,
         None,
         event_tx,
     );
@@ -149,10 +149,10 @@ fn hook_clone_works() {
 #[tokio::test]
 async fn hook_send_status_generates_event() {
     let (event_tx, mut event_rx) = tokio::sync::broadcast::channel(8);
-    let hook = spacebot::hooks::SpacebotHook::new(
+    let hook = agentspace::hooks::AgentspaceHook::new(
         std::sync::Arc::from("test-agent"),
-        spacebot::ProcessId::Worker(uuid::Uuid::new_v4()),
-        spacebot::ProcessType::Worker,
+        agentspace::ProcessId::Worker(uuid::Uuid::new_v4()),
+        agentspace::ProcessType::Worker,
         None,
         event_tx,
     );
@@ -161,11 +161,11 @@ async fn hook_send_status_generates_event() {
 
     let event = event_rx.try_recv().expect("Should receive status event");
     assert!(
-        matches!(&event, spacebot::ProcessEvent::StatusUpdate { .. }),
+        matches!(&event, agentspace::ProcessEvent::StatusUpdate { .. }),
         "Expected StatusUpdate event, got {:?}",
         event
     );
-    if let spacebot::ProcessEvent::StatusUpdate { status, .. } = event {
+    if let agentspace::ProcessEvent::StatusUpdate { status, .. } = event {
         assert_eq!(status, "test status");
     }
 }
@@ -176,16 +176,16 @@ async fn tool_call_emits_started_event() {
     use rig::agent::PromptHook;
 
     let (event_tx, mut event_rx) = tokio::sync::broadcast::channel(8);
-    let hook = spacebot::hooks::SpacebotHook::new(
+    let hook = agentspace::hooks::AgentspaceHook::new(
         std::sync::Arc::from("test-agent"),
-        spacebot::ProcessId::Worker(uuid::Uuid::new_v4()),
-        spacebot::ProcessType::Worker,
+        agentspace::ProcessId::Worker(uuid::Uuid::new_v4()),
+        agentspace::ProcessType::Worker,
         None,
         event_tx,
     );
 
     let action =
-        <spacebot::hooks::SpacebotHook as PromptHook<spacebot::llm::SpacebotModel>>::on_tool_call(
+        <agentspace::hooks::AgentspaceHook as PromptHook<agentspace::llm::AgentspaceModel>>::on_tool_call(
             &hook,
             "test_tool",
             Some("call_123".to_string()),
@@ -203,11 +203,11 @@ async fn tool_call_emits_started_event() {
         .try_recv()
         .expect("Should receive tool started event");
     assert!(
-        matches!(&event, spacebot::ProcessEvent::ToolStarted { .. }),
+        matches!(&event, agentspace::ProcessEvent::ToolStarted { .. }),
         "Expected ToolStarted event, got {:?}",
         event
     );
-    if let spacebot::ProcessEvent::ToolStarted { tool_name, .. } = event {
+    if let agentspace::ProcessEvent::ToolStarted { tool_name, .. } = event {
         assert_eq!(tool_name, "test_tool");
     }
 }
@@ -218,17 +218,17 @@ async fn tool_result_emits_completed_event() {
     use rig::agent::PromptHook;
 
     let (event_tx, mut event_rx) = tokio::sync::broadcast::channel(8);
-    let hook = spacebot::hooks::SpacebotHook::new(
+    let hook = agentspace::hooks::AgentspaceHook::new(
         std::sync::Arc::from("test-agent"),
-        spacebot::ProcessId::Worker(uuid::Uuid::new_v4()),
-        spacebot::ProcessType::Worker,
+        agentspace::ProcessId::Worker(uuid::Uuid::new_v4()),
+        agentspace::ProcessType::Worker,
         None,
         event_tx,
     );
 
     // First emit a tool started event to get a call_id
     let _ =
-        <spacebot::hooks::SpacebotHook as PromptHook<spacebot::llm::SpacebotModel>>::on_tool_call(
+        <agentspace::hooks::AgentspaceHook as PromptHook<agentspace::llm::AgentspaceModel>>::on_tool_call(
             &hook,
             "test_tool",
             Some("call_123".to_string()),
@@ -241,7 +241,7 @@ async fn tool_result_emits_completed_event() {
     let _ = event_rx.try_recv();
 
     // Now emit the result
-    let action = <spacebot::hooks::SpacebotHook as PromptHook<spacebot::llm::SpacebotModel>>::on_tool_result(
+    let action = <agentspace::hooks::AgentspaceHook as PromptHook<agentspace::llm::AgentspaceModel>>::on_tool_result(
         &hook,
         "test_tool",
         Some("call_123".to_string()),
@@ -261,11 +261,11 @@ async fn tool_result_emits_completed_event() {
         .try_recv()
         .expect("Should receive tool completed event");
     assert!(
-        matches!(&event, spacebot::ProcessEvent::ToolCompleted { .. }),
+        matches!(&event, agentspace::ProcessEvent::ToolCompleted { .. }),
         "Expected ToolCompleted event, got {:?}",
         event
     );
-    if let spacebot::ProcessEvent::ToolCompleted {
+    if let agentspace::ProcessEvent::ToolCompleted {
         tool_name, result, ..
     } = event
     {
@@ -282,10 +282,10 @@ async fn completion_hooks_work() {
     use rig::completion::{CompletionResponse, Message, Usage};
 
     let (event_tx, _event_rx) = tokio::sync::broadcast::channel(8);
-    let hook = spacebot::hooks::SpacebotHook::new(
+    let hook = agentspace::hooks::AgentspaceHook::new(
         std::sync::Arc::from("test-agent"),
-        spacebot::ProcessId::Worker(uuid::Uuid::new_v4()),
-        spacebot::ProcessType::Worker,
+        agentspace::ProcessId::Worker(uuid::Uuid::new_v4()),
+        agentspace::ProcessType::Worker,
         None,
         event_tx,
     );
@@ -293,7 +293,7 @@ async fn completion_hooks_work() {
     let prompt = Message::from("Test prompt");
 
     // Test on_completion_call
-    let action = <spacebot::hooks::SpacebotHook as PromptHook<spacebot::llm::SpacebotModel>>::on_completion_call(
+    let action = <agentspace::hooks::AgentspaceHook as PromptHook<agentspace::llm::AgentspaceModel>>::on_completion_call(
         &hook, &prompt, &[],
     )
     .await;
@@ -304,12 +304,12 @@ async fn completion_hooks_work() {
         choice: OneOrMany::one(rig::message::AssistantContent::text("Response")),
         message_id: None,
         usage: Usage::default(),
-        raw_response: spacebot::llm::model::RawResponse {
+        raw_response: agentspace::llm::model::RawResponse {
             body: serde_json::json!({}),
         },
     };
 
-    let action = <spacebot::hooks::SpacebotHook as PromptHook<spacebot::llm::SpacebotModel>>::on_completion_response(
+    let action = <agentspace::hooks::AgentspaceHook as PromptHook<agentspace::llm::AgentspaceModel>>::on_completion_response(
         &hook, &prompt, &response,
     )
     .await;

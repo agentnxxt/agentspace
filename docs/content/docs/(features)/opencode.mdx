@@ -5,7 +5,7 @@ description: Spawn full coding agents as worker processes via the OpenCode integ
 
 # OpenCode
 
-Spacebot can spawn [OpenCode](https://opencode.ai) as a worker backend. Instead of running a Rig agent with shell/file/exec tools, an OpenCode worker delegates to a persistent OpenCode subprocess that has its own tool suite, codebase exploration, and context management.
+Agentspace can spawn [OpenCode](https://opencode.ai) as a worker backend. Instead of running a Rig agent with shell/file/exec tools, an OpenCode worker delegates to a persistent OpenCode subprocess that has its own tool suite, codebase exploration, and context management.
 
 Use OpenCode workers for multi-file coding tasks. Use builtin workers for one-shot commands, file operations, and non-coding work.
 
@@ -31,7 +31,7 @@ Once enabled, the `spawn_worker` tool gains a `worker_type` parameter. The chann
 
 ```
 Channel: "spawn_worker: refactor the auth module, worker_type: opencode, directory: /code/myapp"
-  → Spacebot gets/creates an OpenCode server for /code/myapp
+  → Agentspace gets/creates an OpenCode server for /code/myapp
   → Creates an HTTP session
   → Sends the task as a prompt
   → Monitors SSE events for progress
@@ -39,15 +39,15 @@ Channel: "spawn_worker: refactor the auth module, worker_type: opencode, directo
   → Result text is returned as WorkerComplete
 ```
 
-The OpenCode worker runs its own agent loop internally. Spacebot monitors it via SSE and translates tool events into status updates visible to the channel.
+The OpenCode worker runs its own agent loop internally. Agentspace monitors it via SSE and translates tool events into status updates visible to the channel.
 
 ## Server Pool
 
-OpenCode runs as `opencode serve --port <port>` — a persistent HTTP server per working directory. Spacebot manages a pool of these servers.
+OpenCode runs as `opencode serve --port <port>` — a persistent HTTP server per working directory. Agentspace manages a pool of these servers.
 
 **Deterministic ports**: Each directory gets a port derived from its path hash (range 10000-60000). The same directory always maps to the same port.
 
-**Server reattach**: After a Spacebot restart, the pool tries to reconnect to existing OpenCode servers via health check on their deterministic port. If the server is still running, it's reused without spawning a new process.
+**Server reattach**: After a Agentspace restart, the pool tries to reconnect to existing OpenCode servers via health check on their deterministic port. If the server is still running, it's reused without spawning a new process.
 
 **Pool limits**: Controlled by `max_servers` (default: 5). When the limit is reached, spawning a worker for a new directory fails.
 
@@ -71,7 +71,7 @@ All requests include `?directory=<path>` as a query parameter.
 
 ### SSE Events
 
-Spacebot subscribes to the SSE stream and processes:
+Agentspace subscribes to the SSE stream and processes:
 
 - **Tool events** — translated to `set_status` updates (e.g. "running: bash", "running: edit")
 - **Session idle** — signals task completion
@@ -87,7 +87,7 @@ Spacebot subscribes to the SSE stream and processes:
 | **Agent loop** | Rig agent in-process | OpenCode subprocess |
 | **Tools** | shell, file, exec, set_status, browser | OpenCode's full tool suite (bash, read, edit, glob, grep, write, webfetch, task) |
 | **Context** | Fresh prompt + task | Full OpenCode session with codebase awareness |
-| **Model** | Configured via Spacebot routing | Configured via OpenCode or Spacebot override |
+| **Model** | Configured via Agentspace routing | Configured via OpenCode or Agentspace override |
 | **Best for** | One-shot commands, file reads, non-coding tasks | Multi-file refactors, feature implementation, code exploration |
 | **Interactive** | Supported | Supported (same session preserved across follow-ups) |
 
@@ -99,7 +99,7 @@ The channel system prompt includes a decision guide when OpenCode is enabled:
 
 ## Permissions
 
-OpenCode has its own permission system for dangerous operations. Spacebot controls the defaults:
+OpenCode has its own permission system for dangerous operations. Agentspace controls the defaults:
 
 ```toml
 [defaults.opencode.permissions]
@@ -108,7 +108,7 @@ bash = "allow"      # shell commands
 webfetch = "allow"  # web fetching
 ```
 
-With all permissions set to `"allow"`, OpenCode suppresses most permission prompts. When a permission prompt does fire, Spacebot auto-approves it and emits a `WorkerPermission` event.
+With all permissions set to `"allow"`, OpenCode suppresses most permission prompts. When a permission prompt does fire, Agentspace auto-approves it and emits a `WorkerPermission` event.
 
 These settings are passed to OpenCode via the `OPENCODE_CONFIG_CONTENT` environment variable. LSP and formatter are disabled for headless operation.
 
@@ -161,7 +161,7 @@ webfetch = "allow"
 
 ```
 ┌─────────────┐     HTTP/SSE      ┌──────────────────┐
-│   Spacebot   │ ←───────────────→ │  OpenCode Server  │
+│   Agentspace   │ ←───────────────→ │  OpenCode Server  │
 │  (worker.rs) │                   │  (port 12345)     │
 └─────────────┘                   └──────────────────┘
       │                                   │
@@ -175,13 +175,13 @@ webfetch = "allow"
 └─────────────┘
 ```
 
-The OpenCode server is a child process managed by Spacebot. It persists across worker invocations for the same directory. Multiple workers targeting the same directory share the same server (different sessions).
+The OpenCode server is a child process managed by Agentspace. It persists across worker invocations for the same directory. Multiple workers targeting the same directory share the same server (different sessions).
 
 ## Embedded Web UI
 
-When you view an OpenCode worker in the Workers tab, Spacebot can show the full interactive OpenCode interface inline — the same editor, terminal, and conversation view you'd get from OpenCode's standalone app.
+When you view an OpenCode worker in the Workers tab, Agentspace can show the full interactive OpenCode interface inline — the same editor, terminal, and conversation view you'd get from OpenCode's standalone app.
 
-The embedded UI uses a Shadow DOM for CSS isolation and a memory router to avoid conflicts with Spacebot's own routing. All API and SSE traffic is proxied through Spacebot's reverse proxy at `/api/opencode/{port}/`, keeping everything same-origin.
+The embedded UI uses a Shadow DOM for CSS isolation and a memory router to avoid conflicts with Agentspace's own routing. All API and SSE traffic is proxied through Agentspace's reverse proxy at `/api/opencode/{port}/`, keeping everything same-origin.
 
 ### Building the embed
 

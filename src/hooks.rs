@@ -2,8 +2,8 @@
 
 pub mod cortex;
 pub mod loop_guard;
-pub mod spacebot;
+pub mod agentspace;
 
 pub use cortex::CortexHook;
 pub use loop_guard::{LoopGuard, LoopGuardConfig, LoopGuardVerdict};
-pub use spacebot::{SpacebotHook, ToolNudgePolicy};
+pub use agentspace::{AgentspaceHook, ToolNudgePolicy};

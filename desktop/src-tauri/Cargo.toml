@@ -1,10 +1,10 @@
 [package]
-name = "spacebot-desktop"
+name = "agentspace-desktop"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "Spacebot"
+name = "Agentspace"
 path = "src/main.rs"
 
 [dependencies]

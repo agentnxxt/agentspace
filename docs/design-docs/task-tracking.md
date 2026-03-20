@@ -1,6 +1,6 @@
 # Task Tracking System
 
-A kanban-style task board built into Spacebot. Tasks are the structured, actionable layer on top of the existing `Todo` memory type. The cortex promotes todos into tasks when they're deemed actionable. Humans approve tasks before the agent executes them. Workers use subtasks as their execution plan.
+A kanban-style task board built into Agentspace. Tasks are the structured, actionable layer on top of the existing `Todo` memory type. The cortex promotes todos into tasks when they're deemed actionable. Humans approve tasks before the agent executes them. Workers use subtasks as their execution plan.
 
 ## Concept
 
@@ -109,11 +109,11 @@ Stored as a JSON object in the `metadata` column. Arbitrary key-value pairs for 
 
 ```json
 {
-	"github_issue": "https://github.com/spacedriveapp/spacebot/issues/123",
-	"github_pr": "https://github.com/spacedriveapp/spacebot/pull/456",
+	"github_issue": "https://github.com/agentnxxt/agentspace/issues/123",
+	"github_pr": "https://github.com/agentnxxt/agentspace/pull/456",
 	"estimated_effort": "small",
 	"worker_type": "opencode",
-	"directory": "/Users/james/Projects/spacebot",
+	"directory": "/Users/james/Projects/agentspace",
 	"skill": "rust-dev",
 	"notes": "Depends on the auth refactor landing first"
 }

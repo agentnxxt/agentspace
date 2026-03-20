@@ -16,7 +16,7 @@ use crate::agent::process_control::{
 use crate::agent::worker::Worker;
 use crate::error::Result;
 use crate::hooks::CortexHook;
-use crate::llm::SpacebotModel;
+use crate::llm::AgentspaceModel;
 use crate::memory::maintenance as memory_maintenance;
 use crate::memory::search::{SearchConfig, SearchMode, SearchSort};
 use crate::memory::types::{Association, MemoryType, RelationType};
@@ -2403,7 +2403,7 @@ pub async fn generate_bulletin(deps: &AgentDeps, logger: &CortexLogger) -> bool 
 
     let routing = deps.runtime_config.routing.load();
     let model_name = routing.resolve(ProcessType::Cortex, None).to_string();
-    let model = SpacebotModel::make(&deps.llm_manager, &model_name)
+    let model = AgentspaceModel::make(&deps.llm_manager, &model_name)
         .with_context(&*deps.agent_id, "cortex")
         .with_routing((**routing).clone());
 
@@ -2569,7 +2569,7 @@ pub async fn generate_knowledge_synthesis(deps: &AgentDeps, logger: &CortexLogge
 
     let routing = deps.runtime_config.routing.load();
     let model_name = routing.resolve(ProcessType::Cortex, None).to_string();
-    let model = SpacebotModel::make(&deps.llm_manager, &model_name)
+    let model = AgentspaceModel::make(&deps.llm_manager, &model_name)
         .with_context(&*deps.agent_id, "cortex")
         .with_routing((**routing).clone());
 
@@ -2819,7 +2819,7 @@ pub async fn maybe_synthesize_intraday_batch(
     // Use a short one-shot LLM call — no tools, no hooks.
     let routing = deps.runtime_config.routing.load();
     let model_name = routing.resolve(ProcessType::Cortex, None).to_string();
-    let model = SpacebotModel::make(&deps.llm_manager, &model_name)
+    let model = AgentspaceModel::make(&deps.llm_manager, &model_name)
         .with_context(&*deps.agent_id, "cortex")
         .with_routing((**routing).clone());
 
@@ -2961,7 +2961,7 @@ pub async fn maybe_synthesize_daily_summary(
     // One-shot LLM call.
     let routing = deps.runtime_config.routing.load();
     let model_name = routing.resolve(ProcessType::Cortex, None).to_string();
-    let model = SpacebotModel::make(&deps.llm_manager, &model_name)
+    let model = AgentspaceModel::make(&deps.llm_manager, &model_name)
         .with_context(&*deps.agent_id, "cortex")
         .with_routing((**routing).clone());
 
@@ -3112,7 +3112,7 @@ async fn generate_profile(deps: &AgentDeps, logger: &CortexLogger) {
 
     let routing = deps.runtime_config.routing.load();
     let model_name = routing.resolve(ProcessType::Cortex, None).to_string();
-    let model = SpacebotModel::make(&deps.llm_manager, &model_name)
+    let model = AgentspaceModel::make(&deps.llm_manager, &model_name)
         .with_context(&*deps.agent_id, "cortex")
         .with_routing((**routing).clone());
 
@@ -3301,12 +3301,12 @@ async fn pickup_one_ready_task(deps: &AgentDeps, logger: &CortexLogger) -> anyho
     let screenshot_dir = deps
         .runtime_config
         .workspace_dir
-        .join(".spacebot")
+        .join(".agentspace")
         .join("screenshots");
     let logs_dir = deps
         .runtime_config
         .workspace_dir
-        .join(".spacebot")
+        .join(".agentspace")
         .join("logs");
     if let Err(error) = std::fs::create_dir_all(&screenshot_dir) {
         tracing::warn!(%error, path = %screenshot_dir.display(), "failed to create screenshot directory");

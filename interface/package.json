@@ -1,5 +1,5 @@
 {
-	"name": "spacebot-interface",
+	"name": "agentspace-interface",
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",

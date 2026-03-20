@@ -13,7 +13,7 @@
 //!
 //! **Branch ToolServer** (one per branch, isolated):
 //! - `memory_save` + `memory_recall` + `memory_delete` + `channel_recall`
-//! - `spacebot_docs` for embedded self-documentation lookup
+//! - `agentspace_docs` for embedded self-documentation lookup
 //! - `task_create` + `task_list` + `task_update`
 //! - `spawn_worker` is included for channel-originated branches only
 //!
@@ -26,7 +26,7 @@
 //! - `memory_save` — registered at startup
 //!
 //! **Cortex Chat ToolServer** (interactive admin chat):
-//! - branch + worker tool superset plus `spacebot_docs`, `config_inspect`, and `spawn_worker`
+//! - branch + worker tool superset plus `agentspace_docs`, `config_inspect`, and `spawn_worker`
 
 pub mod attachment_recall;
 pub mod branch_tool;
@@ -56,7 +56,7 @@ pub mod set_status;
 pub mod shell;
 pub mod skills_search;
 pub mod skip;
-pub mod spacebot_docs;
+pub mod agentspace_docs;
 pub mod spawn_worker;
 pub mod task_create;
 pub mod task_list;
@@ -132,8 +132,8 @@ pub use skills_search::{
     SkillsSearchArgs, SkillsSearchError, SkillsSearchOutput, SkillsSearchTool,
 };
 pub use skip::{SkipArgs, SkipError, SkipFlag, SkipOutput, SkipTool, new_skip_flag};
-pub use spacebot_docs::{
-    SpacebotDocContent, SpacebotDocsArgs, SpacebotDocsError, SpacebotDocsOutput, SpacebotDocsTool,
+pub use agentspace_docs::{
+    AgentspaceDocContent, AgentspaceDocsArgs, AgentspaceDocsError, AgentspaceDocsOutput, AgentspaceDocsTool,
 };
 pub use spawn_worker::{
     DetachedSpawnWorkerTool, SpawnWorkerArgs, SpawnWorkerError, SpawnWorkerOutput, SpawnWorkerTool,
@@ -516,7 +516,7 @@ fn memory_save_with_events(
 ///
 /// Each branch gets its own isolated ToolServer so `memory_recall` is never
 /// visible to the channel. Includes memory tools, task-board tools, and
-/// `spacebot_docs` for on-demand self-documentation lookup.
+/// `agentspace_docs` for on-demand self-documentation lookup.
 #[allow(clippy::too_many_arguments)]
 pub fn create_branch_tool_server(
     state: Option<ChannelState>,
@@ -545,7 +545,7 @@ pub fn create_branch_tool_server(
         .tool(MemoryRecallTool::new(memory_search.clone()))
         .tool(MemoryDeleteTool::new(memory_search))
         .tool(ChannelRecallTool::new(conversation_logger, channel_store))
-        .tool(SpacebotDocsTool::new())
+        .tool(AgentspaceDocsTool::new())
         .tool(EmailSearchTool::new(runtime_config))
         .tool(WorkerInspectTool::new(run_logger, agent_id.to_string()))
         .tool(TaskCreateTool::new(
@@ -662,7 +662,7 @@ pub fn create_cortex_tool_server(
 /// the interactive cortex full capabilities. Does not include channel-specific
 /// tools (reply, react, skip) since the cortex chat doesn't talk to platforms.
 /// Adds `config_inspect` for live runtime config introspection and
-/// `spacebot_docs` for embedded docs/changelog retrieval.
+/// `agentspace_docs` for embedded docs/changelog retrieval.
 #[allow(clippy::too_many_arguments)]
 pub fn create_cortex_chat_tool_server(
     agent_id: AgentId,
@@ -682,7 +682,7 @@ pub fn create_cortex_chat_tool_server(
     api_state: Arc<crate::api::ApiState>,
     cortex_ctx: Option<crate::tools::spawn_worker::CortexChatContext>,
 ) -> ToolServerHandle {
-    let logs_dir = workspace.join(".spacebot").join("logs");
+    let logs_dir = workspace.join(".agentspace").join("logs");
 
     let spawn_tool = {
         let tool = DetachedSpawnWorkerTool::new(deps, screenshot_dir.clone(), logs_dir);
@@ -702,7 +702,7 @@ pub fn create_cortex_chat_tool_server(
         .tool(MemoryRecallTool::new(memory_search.clone()))
         .tool(MemoryDeleteTool::new(memory_search))
         .tool(ChannelRecallTool::new(conversation_logger, channel_store))
-        .tool(SpacebotDocsTool::new())
+        .tool(AgentspaceDocsTool::new())
         .tool(ConfigInspectTool::new(
             agent_id.to_string(),
             runtime_config.clone(),

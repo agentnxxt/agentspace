@@ -23,7 +23,7 @@ impl Db {
     /// Connect to all databases and run migrations.
     pub async fn connect(data_dir: &Path) -> Result<Self> {
         // SQLite
-        let sqlite_url = format!("sqlite:{}?mode=rwc", data_dir.join("spacebot.db").display());
+        let sqlite_url = format!("sqlite:{}?mode=rwc", data_dir.join("agentspace.db").display());
         let sqlite = SqlitePool::connect(&sqlite_url)
             .await
             .with_context(|| "failed to connect to SQLite")?;

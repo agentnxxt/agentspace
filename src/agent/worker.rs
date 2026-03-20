@@ -3,8 +3,8 @@
 use crate::agent::compactor::estimate_history_tokens;
 use crate::config::BrowserConfig;
 use crate::error::Result;
-use crate::hooks::SpacebotHook;
-use crate::llm::SpacebotModel;
+use crate::hooks::AgentspaceHook;
+use crate::llm::AgentspaceModel;
 use crate::llm::routing::{is_context_overflow_error, is_retriable_error};
 use crate::{AgentDeps, ChannelId, ProcessId, ProcessType, WorkerId};
 use rig::agent::AgentBuilder;
@@ -66,7 +66,7 @@ pub struct Worker {
     pub task: String,
     pub state: WorkerState,
     pub deps: AgentDeps,
-    pub hook: SpacebotHook,
+    pub hook: AgentspaceHook,
     /// System prompt loaded from prompts/WORKER.md.
     pub system_prompt: String,
     /// Input channel for interactive workers (follow-up loop).
@@ -107,7 +107,7 @@ impl Worker {
     ) -> (Self, mpsc::Sender<String>) {
         let id = Uuid::new_v4();
         let process_id = ProcessId::Worker(id);
-        let hook = SpacebotHook::new(
+        let hook = AgentspaceHook::new(
             deps.agent_id.clone(),
             process_id,
             ProcessType::Worker,
@@ -236,7 +236,7 @@ impl Worker {
         // Rebuild the hook so it publishes events under the correct worker ID
         // (Self::build creates it with a fresh random ID).
         let process_id = ProcessId::Worker(existing_id);
-        worker.hook = SpacebotHook::new(
+        worker.hook = AgentspaceHook::new(
             worker.deps.agent_id.clone(),
             process_id,
             ProcessType::Worker,
@@ -315,7 +315,7 @@ impl Worker {
 
         let routing = self.deps.runtime_config.routing.load();
         let model_name = routing.resolve(ProcessType::Worker, None).to_string();
-        let model = SpacebotModel::make(&self.deps.llm_manager, &model_name)
+        let model = AgentspaceModel::make(&self.deps.llm_manager, &model_name)
             .with_context(&*self.deps.agent_id, "worker")
             .with_worker_type("builtin")
             .with_routing((**routing).clone());
@@ -556,10 +556,10 @@ impl Worker {
                         Ok(response) => break Ok(response),
                         Err(rig::completion::PromptError::PromptCancelled {
                             ref reason, ..
-                        }) if SpacebotHook::is_tool_nudge_reason(reason) => {
+                        }) if AgentspaceHook::is_tool_nudge_reason(reason) => {
                             let failure_reason = format!(
                                 "follow-up ended without terminal outcome after {} nudge retries",
-                                SpacebotHook::TOOL_NUDGE_MAX_RETRIES
+                                AgentspaceHook::TOOL_NUDGE_MAX_RETRIES
                             );
                             self.write_failure_log(&history, &failure_reason);
                             tracing::warn!(

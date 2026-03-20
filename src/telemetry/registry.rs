@@ -9,7 +9,7 @@ use std::sync::LazyLock;
 /// Global metrics instance. Initialized once, accessed from any call site.
 static METRICS: LazyLock<Metrics> = LazyLock::new(Metrics::new);
 
-/// All Prometheus metric handles for the Spacebot process.
+/// All Prometheus metric handles for the Agentspace process.
 ///
 /// Access via `Metrics::global()`. Metric handles are cheap to clone (Arc
 /// internally) so call sites can grab references without threading state.
@@ -194,7 +194,7 @@ impl Metrics {
 
         let llm_requests_total = IntCounterVec::new(
             Opts::new(
-                "spacebot_llm_requests_total",
+                "agentspace_llm_requests_total",
                 "Total LLM completion requests",
             ),
             &["agent_id", "model", "tier", "worker_type"],
@@ -202,14 +202,14 @@ impl Metrics {
         .expect("hardcoded metric descriptor");
 
         let tool_calls_total = IntCounterVec::new(
-            Opts::new("spacebot_tool_calls_total", "Total tool calls executed"),
+            Opts::new("agentspace_tool_calls_total", "Total tool calls executed"),
             &["agent_id", "tool_name", "process_type"],
         )
         .expect("hardcoded metric descriptor");
 
         let memory_reads_total = IntCounterVec::new(
             Opts::new(
-                "spacebot_memory_reads_total",
+                "agentspace_memory_reads_total",
                 "Total memory recall operations",
             ),
             &["agent_id"],
@@ -218,7 +218,7 @@ impl Metrics {
 
         let memory_writes_total = IntCounterVec::new(
             Opts::new(
-                "spacebot_memory_writes_total",
+                "agentspace_memory_writes_total",
                 "Total memory save operations",
             ),
             &["agent_id"],
@@ -227,7 +227,7 @@ impl Metrics {
 
         let llm_request_duration_seconds = HistogramVec::new(
             HistogramOpts::new(
-                "spacebot_llm_request_duration_seconds",
+                "agentspace_llm_request_duration_seconds",
                 "LLM request duration in seconds",
             )
             .buckets(vec![
@@ -239,7 +239,7 @@ impl Metrics {
 
         let tool_call_duration_seconds = HistogramVec::new(
             HistogramOpts::new(
-                "spacebot_tool_call_duration_seconds",
+                "agentspace_tool_call_duration_seconds",
                 "Tool call duration in seconds",
             )
             .buckets(vec![0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0]),
@@ -248,14 +248,14 @@ impl Metrics {
         .expect("hardcoded metric descriptor");
 
         let active_workers = IntGaugeVec::new(
-            Opts::new("spacebot_active_workers", "Currently active workers"),
+            Opts::new("agentspace_active_workers", "Currently active workers"),
             &["agent_id"],
         )
         .expect("hardcoded metric descriptor");
 
         let memory_entry_count = IntGaugeVec::new(
             Opts::new(
-                "spacebot_memory_entry_count",
+                "agentspace_memory_entry_count",
                 "Total memory entries per agent",
             ),
             &["agent_id"],
@@ -263,14 +263,14 @@ impl Metrics {
         .expect("hardcoded metric descriptor");
 
         let llm_tokens_total = IntCounterVec::new(
-            Opts::new("spacebot_llm_tokens_total", "Total LLM tokens consumed"),
+            Opts::new("agentspace_llm_tokens_total", "Total LLM tokens consumed"),
             &["agent_id", "model", "tier", "direction", "worker_type"],
         )
         .expect("hardcoded metric descriptor");
 
         let llm_estimated_cost_dollars = CounterVec::new(
             Opts::new(
-                "spacebot_llm_estimated_cost_dollars",
+                "agentspace_llm_estimated_cost_dollars",
                 "Estimated LLM cost in USD",
             ),
             &["agent_id", "model", "tier", "worker_type"],
@@ -278,14 +278,14 @@ impl Metrics {
         .expect("hardcoded metric descriptor");
 
         let active_branches = IntGaugeVec::new(
-            Opts::new("spacebot_active_branches", "Currently active branches"),
+            Opts::new("agentspace_active_branches", "Currently active branches"),
             &["agent_id"],
         )
         .expect("hardcoded metric descriptor");
 
         let worker_duration_seconds = HistogramVec::new(
             HistogramOpts::new(
-                "spacebot_worker_duration_seconds",
+                "agentspace_worker_duration_seconds",
                 "Worker lifetime duration in seconds",
             )
             .buckets(vec![
@@ -296,14 +296,14 @@ impl Metrics {
         .expect("hardcoded metric descriptor");
 
         let process_errors_total = IntCounterVec::new(
-            Opts::new("spacebot_process_errors_total", "Process errors by type"),
+            Opts::new("agentspace_process_errors_total", "Process errors by type"),
             &["agent_id", "process_type", "error_type", "worker_type"],
         )
         .expect("hardcoded metric descriptor");
 
         let memory_updates_total = IntCounterVec::new(
             Opts::new(
-                "spacebot_memory_updates_total",
+                "agentspace_memory_updates_total",
                 "Memory mutation operations",
             ),
             &["agent_id", "operation"],
@@ -312,7 +312,7 @@ impl Metrics {
 
         let dispatch_while_cold_count = IntCounterVec::new(
             Opts::new(
-                "spacebot_dispatch_while_cold_count",
+                "agentspace_dispatch_while_cold_count",
                 "Dispatch attempts while readiness contract is unsatisfied",
             ),
             &["agent_id", "dispatch_type", "reason"],
@@ -321,7 +321,7 @@ impl Metrics {
 
         let event_receiver_lagged_events_total = IntCounterVec::new(
             Opts::new(
-                "spacebot_event_receiver_lagged_events_total",
+                "agentspace_event_receiver_lagged_events_total",
                 "Total broadcast events dropped because a receiver lagged",
             ),
             &["agent_id", "receiver"],
@@ -330,7 +330,7 @@ impl Metrics {
 
         let warmup_recovery_latency_ms = HistogramVec::new(
             HistogramOpts::new(
-                "spacebot_warmup_recovery_latency_ms",
+                "agentspace_warmup_recovery_latency_ms",
                 "Forced warmup recovery latency in milliseconds",
             )
             .buckets(vec![
@@ -344,14 +344,14 @@ impl Metrics {
 
         // MCP (7)
         let mcp_connections = IntGaugeVec::new(
-            Opts::new("spacebot_mcp_connections", "Active MCP connections"),
+            Opts::new("agentspace_mcp_connections", "Active MCP connections"),
             &["server_name", "state"],
         )
         .expect("hardcoded metric descriptor");
 
         let mcp_tools_registered = IntGaugeVec::new(
             Opts::new(
-                "spacebot_mcp_tools_registered",
+                "agentspace_mcp_tools_registered",
                 "Number of tools registered per MCP server",
             ),
             &["server_name"],
@@ -360,7 +360,7 @@ impl Metrics {
 
         let mcp_connection_attempts_total = IntCounterVec::new(
             Opts::new(
-                "spacebot_mcp_connection_attempts_total",
+                "agentspace_mcp_connection_attempts_total",
                 "MCP connection attempts",
             ),
             &["server_name", "result"],
@@ -369,7 +369,7 @@ impl Metrics {
 
         let mcp_tool_calls_total = IntCounterVec::new(
             Opts::new(
-                "spacebot_mcp_tool_calls_total",
+                "agentspace_mcp_tool_calls_total",
                 "MCP tool calls by server and tool",
             ),
             &["server_name", "tool_name"],
@@ -377,14 +377,14 @@ impl Metrics {
         .expect("hardcoded metric descriptor");
 
         let mcp_reconnects_total = IntCounterVec::new(
-            Opts::new("spacebot_mcp_reconnects_total", "MCP reconnection attempts"),
+            Opts::new("agentspace_mcp_reconnects_total", "MCP reconnection attempts"),
             &["server_name"],
         )
         .expect("hardcoded metric descriptor");
 
         let mcp_connection_duration_seconds = HistogramVec::new(
             HistogramOpts::new(
-                "spacebot_mcp_connection_duration_seconds",
+                "agentspace_mcp_connection_duration_seconds",
                 "MCP connection establishment duration",
             )
             .buckets(vec![0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0]),
@@ -394,7 +394,7 @@ impl Metrics {
 
         let mcp_tool_call_duration_seconds = HistogramVec::new(
             HistogramOpts::new(
-                "spacebot_mcp_tool_call_duration_seconds",
+                "agentspace_mcp_tool_call_duration_seconds",
                 "MCP tool call duration",
             )
             .buckets(vec![0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0]),
@@ -405,7 +405,7 @@ impl Metrics {
         // Channel/Messaging (4)
         let messages_received_total = IntCounterVec::new(
             Opts::new(
-                "spacebot_messages_received_total",
+                "agentspace_messages_received_total",
                 "Total messages received",
             ),
             &["agent_id", "channel_type"],
@@ -413,14 +413,14 @@ impl Metrics {
         .expect("hardcoded metric descriptor");
 
         let messages_sent_total = IntCounterVec::new(
-            Opts::new("spacebot_messages_sent_total", "Total messages sent"),
+            Opts::new("agentspace_messages_sent_total", "Total messages sent"),
             &["agent_id", "channel_type"],
         )
         .expect("hardcoded metric descriptor");
 
         let message_handling_duration_seconds = HistogramVec::new(
             HistogramOpts::new(
-                "spacebot_message_handling_duration_seconds",
+                "agentspace_message_handling_duration_seconds",
                 "Message handling duration",
             )
             .buckets(vec![0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0]),
@@ -429,7 +429,7 @@ impl Metrics {
         .expect("hardcoded metric descriptor");
 
         let channel_errors_total = IntCounterVec::new(
-            Opts::new("spacebot_channel_errors_total", "Channel-level errors"),
+            Opts::new("agentspace_channel_errors_total", "Channel-level errors"),
             &["agent_id", "channel_type", "error_type"],
         )
         .expect("hardcoded metric descriptor");
@@ -437,7 +437,7 @@ impl Metrics {
         // Memory (3)
         let memory_operation_duration_seconds = HistogramVec::new(
             HistogramOpts::new(
-                "spacebot_memory_operation_duration_seconds",
+                "agentspace_memory_operation_duration_seconds",
                 "Memory operation duration",
             )
             .buckets(vec![
@@ -449,7 +449,7 @@ impl Metrics {
 
         let memory_search_results = HistogramVec::new(
             HistogramOpts::new(
-                "spacebot_memory_search_results",
+                "agentspace_memory_search_results",
                 "Number of search results returned",
             )
             .buckets(vec![0.0, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0]),
@@ -459,7 +459,7 @@ impl Metrics {
 
         let memory_embedding_duration_seconds = Histogram::with_opts(
             HistogramOpts::new(
-                "spacebot_memory_embedding_duration_seconds",
+                "agentspace_memory_embedding_duration_seconds",
                 "Embedding generation duration",
             )
             .buckets(vec![0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5]),
@@ -468,14 +468,14 @@ impl Metrics {
 
         // API (2)
         let http_requests_total = IntCounterVec::new(
-            Opts::new("spacebot_http_requests_total", "Total HTTP requests"),
+            Opts::new("agentspace_http_requests_total", "Total HTTP requests"),
             &["method", "handler", "status"],
         )
         .expect("hardcoded metric descriptor");
 
         let http_request_duration_seconds = HistogramVec::new(
             HistogramOpts::new(
-                "spacebot_http_request_duration_seconds",
+                "agentspace_http_request_duration_seconds",
                 "HTTP request duration",
             )
             .buckets(vec![
@@ -487,13 +487,13 @@ impl Metrics {
 
         // Agent Lifecycle (2)
         let branches_spawned_total = IntCounterVec::new(
-            Opts::new("spacebot_branches_spawned_total", "Branches spawned"),
+            Opts::new("agentspace_branches_spawned_total", "Branches spawned"),
             &["agent_id"],
         )
         .expect("hardcoded metric descriptor");
 
         let context_overflow_total = IntCounterVec::new(
-            Opts::new("spacebot_context_overflow_total", "Context overflow events"),
+            Opts::new("agentspace_context_overflow_total", "Context overflow events"),
             &["agent_id", "process_type"],
         )
         .expect("hardcoded metric descriptor");
@@ -501,7 +501,7 @@ impl Metrics {
         // Cost (1)
         let worker_cost_dollars = CounterVec::new(
             Opts::new(
-                "spacebot_worker_cost_dollars",
+                "agentspace_worker_cost_dollars",
                 "Worker cost tracking in USD",
             ),
             &["agent_id", "worker_type"],
@@ -510,7 +510,7 @@ impl Metrics {
 
         // Cron (1)
         let cron_executions_total = IntCounterVec::new(
-            Opts::new("spacebot_cron_executions_total", "Cron task executions"),
+            Opts::new("agentspace_cron_executions_total", "Cron task executions"),
             &["agent_id", "task_type", "result"],
         )
         .expect("hardcoded metric descriptor");
@@ -518,7 +518,7 @@ impl Metrics {
         // Ingestion (1)
         let ingestion_files_processed_total = IntCounterVec::new(
             Opts::new(
-                "spacebot_ingestion_files_processed_total",
+                "agentspace_ingestion_files_processed_total",
                 "Ingestion files processed",
             ),
             &["agent_id", "result"],

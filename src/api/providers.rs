@@ -903,7 +903,7 @@ pub(super) async fn test_provider_model(
         }
     };
 
-    let model = crate::llm::SpacebotModel::make(&llm_manager, normalized_model);
+    let model = crate::llm::AgentspaceModel::make(&llm_manager, normalized_model);
     let agent = AgentBuilder::new(model)
         .preamble("You are running a provider connectivity check. Reply with exactly: OK")
         .build();

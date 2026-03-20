@@ -18,8 +18,8 @@ Everything that exists today, what it does, and what happens to it.
 
 | Item | Lines | What it does | Disposition |
 |------|-------|-------------|-------------|
-| `SENSITIVE_FILES` constant | 12-18 | Blocklist of 5 filenames: `config.toml`, `config.redb`, `settings.redb`, `.env`, `spacebot.db` | **Remove.** Sandbox makes these read-only via mount namespace. |
-| `SECRET_ENV_VARS` constant | 21-30 | Blocklist of 8 env var names: API keys for Anthropic, OpenAI, OpenRouter, Discord, Slack (bot + app), Telegram, Brave Search | **Remove.** Sandbox inherits the parent's env, but the sandbox blocks reading `/proc/self/environ`. Leak detection in `SpacebotHook` catches any secrets that make it into tool output. |
+| `SENSITIVE_FILES` constant | 12-18 | Blocklist of 5 filenames: `config.toml`, `config.redb`, `settings.redb`, `.env`, `agentspace.db` | **Remove.** Sandbox makes these read-only via mount namespace. |
+| `SECRET_ENV_VARS` constant | 21-30 | Blocklist of 8 env var names: API keys for Anthropic, OpenAI, OpenRouter, Discord, Slack (bot + app), Telegram, Brave Search | **Remove.** Sandbox inherits the parent's env, but the sandbox blocks reading `/proc/self/environ`. Leak detection in `AgentspaceHook` catches any secrets that make it into tool output. |
 | `instance_dir` field | 36 | Stored on `ShellTool` for path blocking comparisons | **Remove.** No longer needed — sandbox handles containment. |
 | `check_command()` method | 50-232 | Pre-execution string inspection with 9 categories of checks (detailed below) | **Remove entirely.** All 182 lines. |
 | — Instance dir blocking | 53-69 | Blocks commands containing the instance dir path (unless they also mention workspace) | Replaced by bwrap `--ro-bind` making the instance dir read-only |
@@ -72,7 +72,7 @@ Everything that exists today, what it does, and what happens to it.
 |------|-------|-------------|-------------|
 | `call()` method | 81-144 | Accepts any absolute path, reads file, sends as attachment. Only checks: is_absolute, is_file, max 25MB | **Fix.** Add workspace path validation (same `resolve_path` pattern from FileTool). Currently any readable file on disk can be exfiltrated via this tool. |
 
-### `hooks/spacebot.rs` — SpacebotHook (Leak Detection)
+### `hooks/agentspace.rs` — AgentspaceHook (Leak Detection)
 
 | Item | Lines | What it does | Disposition |
 |------|-------|-------------|-------------|
@@ -98,7 +98,7 @@ Everything that exists today, what it does, and what happens to it.
 - `exec.rs`: `DANGEROUS_ENV_VARS` blocking (library injection protection)
 - `shell.rs` + `exec.rs`: working dir validation, `tools/bin` PATH prepend, system-internal functions
 - `file.rs`: everything (resolve_path, symlink check, identity file protection)
-- `hooks/spacebot.rs`: everything (leak detection — plaintext, URL-encoded, base64, hex)
+- `hooks/agentspace.rs`: everything (leak detection — plaintext, URL-encoded, base64, hex)
 - `browser.rs`: everything (SSRF protection)
 
 **Fixed:**
@@ -193,7 +193,7 @@ bwrap
   --ro-bind <data_dir> <data_dir>        # re-protect agent data dir
   --unshare-pid                          # isolated PID namespace
   --new-session                          # prevent TIOCSTI TTY injection
-  --die-with-parent                      # kill child if spacebot dies
+  --die-with-parent                      # kill child if agentspace dies
   --chdir <working_dir>                  # set cwd
   -- sh -c "<command>"                   # the actual command
 ```
@@ -203,7 +203,7 @@ Mount order matters — later mounts override earlier ones at the same path:
 2. `--bind <workspace>` re-enables writes for the workspace
 3. `--ro-bind <data_dir>` re-applies read-only on the data directory (which lives under the instance dir, potentially overlapping with workspace's parent)
 
-The agent's `data_dir` (containing `spacebot.db`, `config.redb`, `settings.redb`, LanceDB) is explicitly re-mounted read-only even though `--ro-bind / /` already covers it. This ensures it stays protected if the workspace mount would otherwise make it writable (the default workspace is `{instance_dir}/agents/{id}/workspace`, and the data dir is `{instance_dir}/agents/{id}/data`).
+The agent's `data_dir` (containing `agentspace.db`, `config.redb`, `settings.redb`, LanceDB) is explicitly re-mounted read-only even though `--ro-bind / /` already covers it. This ensures it stays protected if the workspace mount would otherwise make it writable (the default workspace is `{instance_dir}/agents/{id}/workspace`, and the data dir is `{instance_dir}/agents/{id}/data`).
 
 **macOS (sandbox-exec):**
 

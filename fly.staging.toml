@@ -1,12 +1,12 @@
-app = "spacebot-staging"
+app = "agentspace-staging"
 primary_region = "iad"
 
 [build]
   dockerfile = "Dockerfile"
 
 [env]
-  SPACEBOT_DIR = "/data"
-  SPACEBOT_DEPLOYMENT = "docker"
+  AGENTSPACE_DIR = "/data"
+  AGENTSPACE_DEPLOYMENT = "docker"
 
 [http_service]
   internal_port = 19898
@@ -20,7 +20,7 @@ primary_region = "iad"
   memory = "1gb"
 
 [mounts]
-  source = "spacebot_staging_data"
+  source = "agentspace_staging_data"
   destination = "/data"
 
 [checks]

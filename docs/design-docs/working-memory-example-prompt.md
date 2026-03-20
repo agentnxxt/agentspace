@@ -1,6 +1,6 @@
 # Working Memory: Example System Prompt
 
-> This is a realistic example of what a channel LLM would see after the working memory system is implemented. It simulates a Slack-connected Spacebot instance for a 10-person engineering team, mid-afternoon on a busy day. The agent is "Atlas" — a main-agent preset.
+> This is a realistic example of what a channel LLM would see after the working memory system is implemented. It simulates a Slack-connected Agentspace instance for a 10-person engineering team, mid-afternoon on a busy day. The agent is "Atlas" — a main-agent preset.
 >
 > Sections marked `[UNCHANGED]` are identical to the current system. Sections marked `[NEW]` or `[REPLACED]` are part of the working memory design.
 

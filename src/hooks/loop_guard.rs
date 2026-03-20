@@ -95,7 +95,7 @@ pub enum LoopGuardVerdict {
     CircuitBreak(String),
 }
 
-/// Held behind `Arc<Mutex<>>` on `SpacebotHook`. Persists across tool calls
+/// Held behind `Arc<Mutex<>>` on `AgentspaceHook`. Persists across tool calls
 /// within one Rig `agent.prompt()` invocation, reset at prompt boundaries.
 pub struct LoopGuard {
     config: LoopGuardConfig,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const STORAGE_KEY = "spacebot:agent-order";
+const STORAGE_KEY = "agentspace:agent-order";
 
 /**
  * Hook to manage persistent agent ordering via localStorage.

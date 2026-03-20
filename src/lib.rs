@@ -1,4 +1,4 @@
-//! Spacebot: A Rust agentic system where every LLM process has a dedicated role.
+//! Agentspace: A Rust agentic system where every LLM process has a dedicated role.
 
 pub mod agent;
 pub mod api;

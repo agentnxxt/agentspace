@@ -5,14 +5,14 @@ description: Complete reference for config.toml and all available settings.
 
 # Configuration
 
-Complete reference for `config.toml`. Spacebot looks for this file at `~/.spacebot/config.toml` (or `$SPACEBOT_DIR/config.toml`). If no config file exists, it falls back to environment variables.
+Complete reference for `config.toml`. Agentspace looks for this file at `~/.agentspace/config.toml` (or `$AGENTSPACE_DIR/config.toml`). If no config file exists, it falls back to environment variables.
 
 ## File Location
 
 ```
-~/.spacebot/config.toml          # default
-$SPACEBOT_DIR/config.toml        # env override
-spacebot --config /path/to.toml  # CLI override
+~/.agentspace/config.toml          # default
+$AGENTSPACE_DIR/config.toml        # env override
+agentspace --config /path/to.toml  # CLI override
 ```
 
 ## Environment Variables
@@ -21,13 +21,13 @@ These environment variables control instance-level behavior and are not set in `
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SPACEBOT_DIR` | `~/.spacebot` | Instance root directory. All data, config, databases, and sockets live under this path. Set this to run multiple isolated instances (e.g. dev and prod) side by side. |
-| `SPACEBOT_DEPLOYMENT` | auto-detected | Deployment mode: `docker`, `hosted`, or native (auto-detected). Affects API bind address, agent limits, and update behavior. |
-| `SPACEBOT_MAX_AGENTS` | unlimited | Maximum number of agents (enforced in hosted mode only). |
-| `SPACEBOT_CRON_TIMEZONE` | server local | Default timezone for cron active-hours evaluation (IANA name). Overridden by `defaults.cron_timezone` or `agents.cron_timezone` in config. |
-| `SPACEBOT_USER_TIMEZONE` | inherits cron | Default timezone for channel/worker temporal context. Overridden by config equivalents. |
-| `SPACEBOT_CHANNEL_MODEL` | `anthropic/claude-sonnet-4-20250514` | Default channel model (env-only mode). |
-| `SPACEBOT_WORKER_MODEL` | `anthropic/claude-haiku-4.5-20250514` | Default worker model (env-only mode). |
+| `AGENTSPACE_DIR` | `~/.agentspace` | Instance root directory. All data, config, databases, and sockets live under this path. Set this to run multiple isolated instances (e.g. dev and prod) side by side. |
+| `AGENTSPACE_DEPLOYMENT` | auto-detected | Deployment mode: `docker`, `hosted`, or native (auto-detected). Affects API bind address, agent limits, and update behavior. |
+| `AGENTSPACE_MAX_AGENTS` | unlimited | Maximum number of agents (enforced in hosted mode only). |
+| `AGENTSPACE_CRON_TIMEZONE` | server local | Default timezone for cron active-hours evaluation (IANA name). Overridden by `defaults.cron_timezone` or `agents.cron_timezone` in config. |
+| `AGENTSPACE_USER_TIMEZONE` | inherits cron | Default timezone for channel/worker temporal context. Overridden by config equivalents. |
+| `AGENTSPACE_CHANNEL_MODEL` | `anthropic/claude-sonnet-4-20250514` | Default channel model (env-only mode). |
+| `AGENTSPACE_WORKER_MODEL` | `anthropic/claude-haiku-4.5-20250514` | Default worker model (env-only mode). |
 
 ## Full Reference
 
@@ -63,7 +63,7 @@ api_key = "env:MY_OPENAI_KEY"
 
 [llm.provider.local_openai]
 api_type = "openai_completions"
-base_url = "http://localhost:8080" # do not include /v1; Spacebot appends endpoint paths
+base_url = "http://localhost:8080" # do not include /v1; Agentspace appends endpoint paths
 api_key = "env:LOCAL_OPENAI_KEY"
 name = "Local OpenAI Compatible"
 
@@ -131,7 +131,7 @@ screenshot_dir = "/path/to/screenshots"  # optional, defaults to data_dir/screen
 [[agents]]
 id = "main"
 default = true
-workspace = "/custom/workspace/path"   # optional, defaults to ~/.spacebot/agents/{id}/workspace
+workspace = "/custom/workspace/path"   # optional, defaults to ~/.agentspace/agents/{id}/workspace
 cron_timezone = "America/Los_Angeles"  # optional per-agent cron timezone override
 user_timezone = "America/Los_Angeles"  # optional per-agent timezone override for channel/worker time context
 
@@ -206,20 +206,20 @@ groq_key = "gsk_abc123..."
 
 The `secret:` prefix resolves from the agent's secret store at config load time. If the secret doesn't exist, the value is treated as missing and implicit env fallbacks are tried.
 
-LLM keys also have implicit env fallbacks — if no key is set in the TOML, Spacebot checks `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `KILO_API_KEY`, and `OPENCODE_GO_API_KEY` automatically.
+LLM keys also have implicit env fallbacks — if no key is set in the TOML, Agentspace checks `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `KILO_API_KEY`, and `OPENCODE_GO_API_KEY` automatically.
 
 Use `POST /api/secrets/migrate` to automatically move plaintext credentials from `config.toml` into the secret store and replace them with `secret:` references. See [Secret Store -- Migration](/docs/secrets#migration) for details.
 
 ## Env-Only Mode
 
-If no `config.toml` exists, Spacebot runs from environment variables alone:
+If no `config.toml` exists, Agentspace runs from environment variables alone:
 
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."
 # optional model overrides
-export SPACEBOT_CHANNEL_MODEL="anthropic/claude-sonnet-4-20250514"
-export SPACEBOT_WORKER_MODEL="anthropic/claude-haiku-4.5-20250514"
-spacebot
+export AGENTSPACE_CHANNEL_MODEL="anthropic/claude-sonnet-4-20250514"
+export AGENTSPACE_WORKER_MODEL="anthropic/claude-haiku-4.5-20250514"
+agentspace
 ```
 
 This creates a single "main" agent with default settings.
@@ -250,7 +250,7 @@ You can mix providers across process types. See [Routing](/docs/routing) for the
 
 ## Hot Reload
 
-Most config values are hot-reloaded when their files change. Spacebot watches `config.toml`, identity files, and skill directories. Changes are debounced to 2 seconds and applied to all running channels, workers, and branches without restart.
+Most config values are hot-reloaded when their files change. Agentspace watches `config.toml`, identity files, and skill directories. Changes are debounced to 2 seconds and applied to all running channels, workers, and branches without restart.
 
 ### What Hot-Reloads
 
@@ -282,12 +282,12 @@ Most config values are hot-reloaded when their files change. Spacebot watches `c
 
 A file watcher (via the `notify` crate) monitors:
 
-- `~/.spacebot/config.toml`
-- `~/.spacebot/skills/` (instance-level skills)
+- `~/.agentspace/config.toml`
+- `~/.agentspace/skills/` (instance-level skills)
 - Each agent's root directory (identity files: SOUL.md, IDENTITY.md, ROLE.md)
 - Each agent's `workspace/skills/` (workspace-level skills)
 
-On file change, Spacebot re-reads the changed files and atomically swaps the new values into the live `RuntimeConfig` using `arc-swap`. All consumers (channels, branches, workers, compactors, cron jobs) read from `RuntimeConfig` on every use, so they pick up changes immediately.
+On file change, Agentspace re-reads the changed files and atomically swaps the new values into the live `RuntimeConfig` using `arc-swap`. All consumers (channels, branches, workers, compactors, cron jobs) read from `RuntimeConfig` on every use, so they pick up changes immediately.
 
 ```
 File change detected
@@ -307,7 +307,7 @@ System prompts (channel, branch, worker, compactor, cortex, etc.) are Jinja2 tem
 ## On-Disk Layout
 
 ```
-~/.spacebot/
+~/.agentspace/
 ├── config.toml                    # main config (hot-reloaded)
 ├── embedding_cache/               # shared embedding model cache
 ├── skills/                        # instance-level skills (hot-reloaded)
@@ -322,7 +322,7 @@ System prompts (channel, branch, worker, compactor, cortex, etc.) are Jinja2 tem
         │   ├── skills/            # workspace-level skills (hot-reloaded)
         │   └── ingest/            # drop files here for memory ingestion
         ├── data/
-        │   ├── spacebot.db        # SQLite
+        │   ├── agentspace.db        # SQLite
         │   ├── lancedb/           # vector search
         │   ├── config.redb        # key-value settings
         │   ├── settings.redb      # runtime settings (worker_log_mode, etc.)
@@ -398,7 +398,7 @@ name = "My Provider"            # Optional - friendly name for display
 
 > Note:
 > - For `openai_completions`, `openai_chat_completions`, and `openai_responses`, configure `base_url` as the provider root URL (usually without a trailing `/v1`).
-> - Spacebot appends the endpoint path automatically:
+> - Agentspace appends the endpoint path automatically:
 >   - `openai_completions` -> `/v1/chat/completions`
 >   - `openai_chat_completions` -> `/chat/completions`
 >   - `openai_responses` -> `/v1/responses`
@@ -482,7 +482,7 @@ base_url = "https://api.anthropic.com"
 api_key = "env:ANTHROPIC_API_KEY"
 ```
 
-If no prefix is provided (for example `claude-sonnet-4-20250514`), Spacebot defaults to the `anthropic` provider.
+If no prefix is provided (for example `claude-sonnet-4-20250514`), Agentspace defaults to the `anthropic` provider.
 
 ### `[defaults.routing.task_overrides]`
 
@@ -541,7 +541,7 @@ Dispatch readiness is derived from warmup runtime state:
 - embedding must be ready
 - bulletin age must be fresh (`<= max(60s, refresh_secs * 2)`)
 
-When branch/worker/cron dispatch happens before readiness is satisfied, Spacebot still dispatches, increments cold-dispatch metrics, and queues a forced warmup pass in the background.
+When branch/worker/cron dispatch happens before readiness is satisfied, Agentspace still dispatches, increments cold-dispatch metrics, and queues a forced warmup pass in the background.
 
 ### `[defaults.browser]`
 
@@ -561,7 +561,7 @@ When branch/worker/cron dispatch happens before readiness is satisfied, Spacebot
 |-----|------|---------|-------------|
 | `id` | string | **required** | Agent identifier |
 | `default` | bool | false | Whether this is the default agent |
-| `workspace` | string | `~/.spacebot/agents/{id}/workspace` | Custom workspace path |
+| `workspace` | string | `~/.agentspace/agents/{id}/workspace` | Custom workspace path |
 | `cron_timezone` | string | inherits | Per-agent timezone override for cron active-hours evaluation |
 | `user_timezone` | string | inherits | Per-agent timezone override for channel/worker temporal context |
 | `max_concurrent_branches` | integer | inherits | Override instance default |
@@ -619,17 +619,17 @@ Cron timezone precedence is:
 
 1. `agents.cron_timezone`
 2. `defaults.cron_timezone`
-3. `SPACEBOT_CRON_TIMEZONE`
+3. `AGENTSPACE_CRON_TIMEZONE`
 4. server local timezone
 
-If a configured timezone is invalid, Spacebot logs a warning and falls back to server local time.
+If a configured timezone is invalid, Agentspace logs a warning and falls back to server local time.
 
 Channel/worker temporal context timezone precedence is:
 
 1. `agents.user_timezone`
 2. `defaults.user_timezone`
-3. `SPACEBOT_USER_TIMEZONE`
-4. resolved cron timezone (from `agents.cron_timezone` / `defaults.cron_timezone` / `SPACEBOT_CRON_TIMEZONE`)
+3. `AGENTSPACE_USER_TIMEZONE`
+4. resolved cron timezone (from `agents.cron_timezone` / `defaults.cron_timezone` / `AGENTSPACE_CRON_TIMEZONE`)
 5. server local timezone
 
 ### `[messaging.discord]`

@@ -546,7 +546,7 @@ impl Sandbox {
         cmd.arg("--die-with-parent");
 
         // 9. Clear all inherited environment variables. Workers must not see
-        // system secrets (LLM API keys, messaging tokens) or SPACEBOT_* internals.
+        // system secrets (LLM API keys, messaging tokens) or AGENTSPACE_* internals.
         cmd.arg("--clearenv");
 
         // 10. Working directory

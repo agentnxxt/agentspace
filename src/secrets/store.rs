@@ -43,7 +43,7 @@ const CONFIG_KEY_SENTINEL: &str = "sentinel";
 
 /// The plaintext sentinel value. Encrypted during `enable_encryption()` and
 /// verified during `unlock()`.
-const SENTINEL_PLAINTEXT: &[u8] = b"spacebot-secrets-sentinel-v1";
+const SENTINEL_PLAINTEXT: &[u8] = b"agentspace-secrets-sentinel-v1";
 
 /// Secret value wrapper that redacts in Debug and Display to prevent accidental
 /// logging of credential values.

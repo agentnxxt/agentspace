@@ -34,7 +34,7 @@ Sandbox mode is **enabled** in config, but no supported backend is available on 
 Sandbox mode is **disabled**.
 
 - `shell` subprocesses run without OS-level filesystem containment.
-- Host filesystem access follows the OS permissions of the Spacebot process.
+- Host filesystem access follows the OS permissions of the Agentspace process.
 - Environment sanitization still applies (clean env + explicit passthrough/tool vars).
 - The file tools (`file_read`, `file_write`, `file_edit`, `file_list`) can access any path readable by the process (no workspace restriction).
 {%- endif %}

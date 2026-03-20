@@ -3219,7 +3219,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "spacebot-desktop"
+name = "agentspace-desktop"
 version = "0.1.0"
 dependencies = [
  "sb-desktop-macos",

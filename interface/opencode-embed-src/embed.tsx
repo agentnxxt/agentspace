@@ -3,7 +3,7 @@
  *
  * Exports a `mountOpenCode` function that renders the full OpenCode SPA
  * into an arbitrary DOM element using a MemoryRouter (no window.history
- * interference). Designed to be consumed by host apps (e.g. Spacebot)
+ * interference). Designed to be consumed by host apps (e.g. Agentspace)
  * that already have their own router.
  *
  * Unlike entry.tsx, this module has NO top-level side effects — it only
@@ -22,7 +22,7 @@ import { MetaProvider } from "@solidjs/meta"
 import { MemoryRouter, Route, createMemoryHistory } from "@solidjs/router"
 import { ErrorBoundary, lazy, onMount, type ParentProps, Show, Suspense } from "solid-js"
 import { render } from "solid-js/web"
-import spacebotTheme from "./spacebot-theme.json"
+import agentspaceTheme from "./agentspace-theme.json"
 import { CommandProvider } from "@/context/command"
 import { CommentsProvider } from "@/context/comments"
 import { FileProvider } from "@/context/file"
@@ -153,13 +153,13 @@ export type MountOpenCodeConfig = {
 
   /**
    * Custom theme to register and activate. If omitted, the built-in
-   * Spacebot theme is used. Pass `null` to skip theme injection
+   * Agentspace theme is used. Pass `null` to skip theme injection
    * entirely and use OpenCode's default theme.
    */
   theme?: DesktopTheme | null
 
   /**
-   * Force a color scheme. Defaults to "dark" to match Spacebot's UI.
+   * Force a color scheme. Defaults to "dark" to match Agentspace's UI.
    * Pass "system" to respect the user's OS preference.
    */
   colorScheme?: ColorScheme
@@ -190,9 +190,9 @@ export function mountOpenCode(
   config: MountOpenCodeConfig,
 ): MountOpenCodeHandle {
   const { serverUrl, initialRoute = "/", colorScheme = "dark" } = config
-  // Resolve theme: undefined → default Spacebot theme, null → no injection
+  // Resolve theme: undefined → default Agentspace theme, null → no injection
   const theme = config.theme === undefined
-    ? (spacebotTheme as DesktopTheme)
+    ? (agentspaceTheme as DesktopTheme)
     : config.theme ?? undefined
 
   // Create an in-memory history that never touches the real URL bar.

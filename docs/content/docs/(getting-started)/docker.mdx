@@ -1,28 +1,28 @@
 ---
 title: Docker
-description: Run Spacebot in a container with the unified Spacebot image.
+description: Run Agentspace in a container with the unified Agentspace image.
 ---
 
 # Docker
 
-Run Spacebot in a container with the unified Spacebot image.
+Run Agentspace in a container with the unified Agentspace image.
 
 ## Quick Start
 
 ```bash
 docker run -d \
-  --name spacebot \
+  --name agentspace \
   -e ANTHROPIC_API_KEY="sk-ant-..." \
-  -v spacebot-data:/data \
+  -v agentspace-data:/data \
   -p 19898:19898 \
-  ghcr.io/spacedriveapp/spacebot:latest
+  ghcr.io/agentnxxt/agentspace:latest
 ```
 
 The web UI is available at `http://localhost:19898`.
 
 ## Image Behavior
 
-There is one published image: `ghcr.io/spacedriveapp/spacebot`.
+There is one published image: `ghcr.io/agentnxxt/agentspace`.
 
 - `latest` tracks the rolling release
 - `vX.Y.Z` pins a specific release
@@ -48,7 +48,7 @@ All persistent data lives at `/data` inside the container. Mount a volume here.
 └── logs/                    # log files (daily rotation)
 ```
 
-On first launch with no config, Spacebot creates a default `main` agent with template identity files. The FastEmbed model (~100MB) downloads on first memory operation -- subsequent starts use the cache.
+On first launch with no config, Agentspace creates a default `main` agent with template identity files. The FastEmbed model (~100MB) downloads on first memory operation -- subsequent starts use the cache.
 
 ## Configuration
 
@@ -58,12 +58,12 @@ The simplest approach. No config file needed.
 
 ```bash
 docker run -d \
-  --name spacebot \
+  --name agentspace \
   -e ANTHROPIC_API_KEY="sk-ant-..." \
   -e DISCORD_BOT_TOKEN="..." \
-  -v spacebot-data:/data \
+  -v agentspace-data:/data \
   -p 19898:19898 \
-  ghcr.io/spacedriveapp/spacebot:latest
+  ghcr.io/agentnxxt/agentspace:latest
 ```
 
 Available environment variables:
@@ -77,8 +77,8 @@ Available environment variables:
 | `SLACK_BOT_TOKEN`        | Slack bot token        |
 | `SLACK_APP_TOKEN`        | Slack app token        |
 | `BRAVE_SEARCH_API_KEY`   | Brave Search API key   |
-| `SPACEBOT_CHANNEL_MODEL` | Override channel model |
-| `SPACEBOT_WORKER_MODEL`  | Override worker model  |
+| `AGENTSPACE_CHANNEL_MODEL` | Override channel model |
+| `AGENTSPACE_WORKER_MODEL`  | Override worker model  |
 
 ### Config File
 
@@ -86,11 +86,11 @@ Mount a config file into the volume for full control:
 
 ```bash
 docker run -d \
-  --name spacebot \
-  -v spacebot-data:/data \
+  --name agentspace \
+  -v agentspace-data:/data \
   -v ./config.toml:/data/config.toml:ro \
   -p 19898:19898 \
-  ghcr.io/spacedriveapp/spacebot:latest
+  ghcr.io/agentnxxt/agentspace:latest
 ```
 
 Config values can reference environment variables with `env:VAR_NAME`:
@@ -106,21 +106,21 @@ See [Configuration](/docs/config) for the full config reference.
 
 ```yaml
 services:
-  spacebot:
-    image: ghcr.io/spacedriveapp/spacebot:latest
-    container_name: spacebot
+  agentspace:
+    image: ghcr.io/agentnxxt/agentspace:latest
+    container_name: agentspace
     restart: unless-stopped
     ports:
       - "19898:19898"
     volumes:
-      - spacebot-data:/data
+      - agentspace-data:/data
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       # Optional:
       # - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
 
 volumes:
-  spacebot-data:
+  agentspace-data:
 ```
 
 ### Browser Workers
@@ -130,10 +130,10 @@ caches it on the mounted `/data` volume.
 
 ## Building the Image
 
-From the spacebot repo root:
+From the agentspace repo root:
 
 ```bash
-docker build -t spacebot:local .
+docker build -t agentspace:local .
 ```
 
 The multi-stage Dockerfile has two stages:
@@ -166,14 +166,14 @@ healthcheck:
 
 ## Container Behavior
 
-- Spacebot runs in **foreground mode** (`--foreground`) inside the container. No daemonization.
+- Agentspace runs in **foreground mode** (`--foreground`) inside the container. No daemonization.
 - Logs go to stdout/stderr. Use `docker logs` to view them.
 - Graceful shutdown on `SIGTERM` (what `docker stop` sends). Drains active channels, closes database connections.
 - The PID file and Unix socket (used in daemon mode) are not created.
 
 ## Updates
 
-Spacebot checks for new releases on startup and every hour. When a new version is available, a banner appears in the web UI.
+Agentspace checks for new releases on startup and every hour. When a new version is available, a banner appears in the web UI.
 
 You can also open **Settings → Updates** for update status, one-click apply controls (Docker), and manual command snippets.
 
@@ -182,15 +182,15 @@ You can also open **Settings → Updates** for update status, one-click apply co
 ### Manual Update
 
 ```bash
-docker compose pull spacebot
-docker compose up -d --force-recreate spacebot
+docker compose pull agentspace
+docker compose up -d --force-recreate agentspace
 ```
 
 If you're not using Compose:
 
 ```bash
-docker pull ghcr.io/spacedriveapp/spacebot:latest
-docker stop spacebot && docker rm spacebot
+docker pull ghcr.io/agentnxxt/agentspace:latest
+docker stop agentspace && docker rm agentspace
 # re-run your original docker run command with the new image tag
 ```
 
@@ -200,14 +200,14 @@ Mount the Docker socket to enable updating directly from the web UI:
 
 ```yaml
 services:
-  spacebot:
-    image: ghcr.io/spacedriveapp/spacebot:latest
-    container_name: spacebot
+  agentspace:
+    image: ghcr.io/agentnxxt/agentspace:latest
+    container_name: agentspace
     restart: unless-stopped
     ports:
       - "19898:19898"
     volumes:
-      - spacebot-data:/data
+      - agentspace-data:/data
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
@@ -217,15 +217,15 @@ When the socket is mounted, the update banner shows an **Update now** button tha
 
 Without the socket mount, the banner still notifies you of new versions but you'll need to update manually.
 
-One-click updates are intended for containers running Spacebot release tags. If you're running a custom/self-built image, update by rebuilding your image and recreating the container.
+One-click updates are intended for containers running Agentspace release tags. If you're running a custom/self-built image, update by rebuilding your image and recreating the container.
 
 ### Native / Source Builds
 
-If Spacebot is installed from source (`cargo install --path .` or a local release build), updates are manual:
+If Agentspace is installed from source (`cargo install --path .` or a local release build), updates are manual:
 
 1. Pull latest source
 2. Rebuild/reinstall the binary
-3. Restart Spacebot
+3. Restart Agentspace
 
 The web UI still shows update availability, but it cannot rebuild binaries for native installs.
 
@@ -246,7 +246,7 @@ curl -X POST http://localhost:19898/api/update/apply
 
 ## CI / Releases
 
-Images are built and pushed to `ghcr.io/spacedriveapp/spacebot` via GitHub Actions (`.github/workflows/release.yml`).
+Images are built and pushed to `ghcr.io/agentnxxt/agentspace` via GitHub Actions (`.github/workflows/release.yml`).
 
 **Triggers:**
 
@@ -262,8 +262,8 @@ Images are built and pushed to `ghcr.io/spacedriveapp/spacebot` via GitHub Actio
 
 ```bash
 # Manual single-instance deploy
-fly launch --image ghcr.io/spacedriveapp/spacebot:latest
-fly volumes create spacebot_data --size 5
+fly launch --image ghcr.io/agentnxxt/agentspace:latest
+fly volumes create agentspace_data --size 5
 fly secrets set ANTHROPIC_API_KEY="sk-ant-..."
 fly deploy
 ```

@@ -1,6 +1,6 @@
 # stereOS Integration
 
-Research into [stereOS](https://github.com/papercomputeco/stereos) — a NixOS-based Linux distro purpose-built for running AI agents in hardened VMs — and how it maps to Spacebot's architecture.
+Research into [stereOS](https://github.com/papercomputeco/stereos) — a NixOS-based Linux distro purpose-built for running AI agents in hardened VMs — and how it maps to Agentspace's architecture.
 
 ## What stereOS Is
 
@@ -30,13 +30,13 @@ stereOS implements defense-in-depth across six layers:
 
 **Secret handling:** `stereosd` receives secrets from the host over vsock, writes them to `/run/stereos/secrets/` on tmpfs with root-only permissions (0700). Never touches disk.
 
-## How It Maps to Spacebot
+## How It Maps to Agentspace
 
 ### 1. Hosted Platform Instance Runtime (High Value)
 
-`spacebot-platform` currently provisions Fly Machines for customer instances. stereOS could serve as the instance runtime:
+`agentspace-platform` currently provisions Fly Machines for customer instances. stereOS could serve as the instance runtime:
 
-- Build a `spacebot-mixtape` containing the Spacebot binary
+- Build a `agentspace-mixtape` containing the Agentspace binary
 - `stereosd` handles lifecycle (start/stop/health) and secret injection (API keys, config) — replaces direct Fly Machine API calls for some operations
 - Sub-3-second boot means near-instant instance provisioning
 - `agentd` provides tmux session introspection — admins can attach to debug customer instances
@@ -47,7 +47,7 @@ stereOS implements defense-in-depth across six layers:
 
 ### 2. Worker Sandbox Environment (High Value, Longer Term)
 
-Spacebot workers execute arbitrary shell commands via `ShellTool` and `ExecTool`. Since 0.2.0, sandboxing uses bubblewrap (Linux) and `sandbox-exec` (macOS) — see `docs/design-docs/sandbox.md`. stereOS offers a stronger primitive: **run worker processes inside a purpose-built VM**.
+Agentspace workers execute arbitrary shell commands via `ShellTool` and `ExecTool`. Since 0.2.0, sandboxing uses bubblewrap (Linux) and `sandbox-exec` (macOS) — see `docs/design-docs/sandbox.md`. stereOS offers a stronger primitive: **run worker processes inside a purpose-built VM**.
 
 What this would look like:
 
@@ -79,31 +79,31 @@ What this would look like:
 
 ### 3. OpenCode Worker Backend (Medium Value)
 
-Spacebot already supports OpenCode as a worker backend. stereOS ships an `opencode-mixtape`. There's a natural alignment — Spacebot could spawn OpenCode workers inside stereOS VMs for maximum isolation during coding sessions, especially for untrusted workloads. The plumbing already exists on both sides; it's mainly an integration question.
+Agentspace already supports OpenCode as a worker backend. stereOS ships an `opencode-mixtape`. There's a natural alignment — Agentspace could spawn OpenCode workers inside stereOS VMs for maximum isolation during coding sessions, especially for untrusted workloads. The plumbing already exists on both sides; it's mainly an integration question.
 
 ### 4. Self-Hosted Deployment (Medium Value)
 
-For users who want to self-host Spacebot with maximum isolation, a `spacebot-mixtape` is the simplest path:
+For users who want to self-host Agentspace with maximum isolation, a `agentspace-mixtape` is the simplest path:
 
-- `nix build .#spacebot-mixtape` produces a bootable image
+- `nix build .#agentspace-mixtape` produces a bootable image
 - User launches it in QEMU/KVM or on Apple Silicon via `run-vm.sh`
 - Secrets injected at boot, workspace mounted via virtio-fs
 - No Docker, no container runtime, no host dependencies beyond QEMU
 
 This is a clean alternative to the current Docker deployment path for security-conscious users.
 
-## What a `spacebot-mixtape` Would Look Like
+## What a `agentspace-mixtape` Would Look Like
 
 Adding a new mixtape to stereOS is minimal. Based on the existing patterns:
 
 ```nix
-# mixtapes/spacebot/base.nix
+# mixtapes/agentspace/base.nix
 { config, lib, pkgs, ... }:
 {
-  stereos.agent.extraPackages = [ pkgs.spacebot ];
+  stereos.agent.extraPackages = [ pkgs.agentspace ];
 
   # Seed a minimal config.toml — secrets come via stereosd at boot
-  environment.etc."skel/.config/spacebot/config.toml".text = ''
+  environment.etc."skel/.config/agentspace/config.toml".text = ''
     [llm]
     anthropic_key = "file:/run/stereos/secrets/ANTHROPIC_API_KEY"
 
@@ -116,13 +116,13 @@ Adding a new mixtape to stereOS is minimal. Based on the existing patterns:
 Then register in `flake.nix`:
 
 ```nix
-spacebot-mixtape = stereos-lib.mkMixtape {
-  name = "spacebot-mixtape";
-  features = [ ./mixtapes/spacebot/base.nix ];
+agentspace-mixtape = stereos-lib.mkMixtape {
+  name = "agentspace-mixtape";
+  features = [ ./mixtapes/agentspace/base.nix ];
 };
 ```
 
-The main prerequisite is packaging the Spacebot binary as a Nix derivation. Since it's a single Rust binary with no runtime dependencies, this is straightforward — `crane` or `naersk` for the Nix build, with SQLite and OpenSSL as build inputs.
+The main prerequisite is packaging the Agentspace binary as a Nix derivation. Since it's a single Rust binary with no runtime dependencies, this is straightforward — `crane` or `naersk` for the Nix build, with SQLite and OpenSSL as build inputs.
 
 ## Blockers and Open Questions
 
@@ -139,17 +139,17 @@ stereOS is aarch64-linux only. Fly Machines are predominantly x86_64. Cross-comp
 
 ### Control Plane Protocol
 
-`stereosd` speaks a custom protocol over vsock. For `spacebot-platform` to manage stereOS instances, it would need a Rust client for this protocol (or stereOS would need an HTTP API). The protocol is not yet documented publicly — would need to inspect the `stereosd` source.
+`stereosd` speaks a custom protocol over vsock. For `agentspace-platform` to manage stereOS instances, it would need a Rust client for this protocol (or stereOS would need an HTTP API). The protocol is not yet documented publicly — would need to inspect the `stereosd` source.
 
 ### Workspace Persistence
 
-stereOS VMs are ephemeral by design. Spacebot instances need persistent storage (SQLite databases, LanceDB, workspace files). This would require virtio-fs mounts to a persistent volume, which stereOS supports but the Fly integration path would need to map to Fly volumes.
+stereOS VMs are ephemeral by design. Agentspace instances need persistent storage (SQLite databases, LanceDB, workspace files). This would require virtio-fs mounts to a persistent volume, which stereOS supports but the Fly integration path would need to map to Fly volumes.
 
 ## Recommendation
 
 **Near term (low effort, high signal):**
 
-- Create a `spacebot-mixtape` in stereOS for self-hosted deployment. This is 2-3 files of Nix config + a Nix derivation for the Spacebot binary. Gives us a hardened, bootable deployment option with zero Docker dependency.
+- Create a `agentspace-mixtape` in stereOS for self-hosted deployment. This is 2-3 files of Nix config + a Nix derivation for the Agentspace binary. Gives us a hardened, bootable deployment option with zero Docker dependency.
 
 **Medium term (moderate effort):**
 

@@ -1907,7 +1907,7 @@ mod tests {
             ignore_stories: true,
             permissions: Arc::new(ArcSwap::from_pointee(perms)),
             client: reqwest::Client::new(),
-            tmp_dir: PathBuf::from("/tmp/spacebot-test"),
+            tmp_dir: PathBuf::from("/tmp/agentspace-test"),
             typing_tasks: Arc::new(RwLock::new(HashMap::new())),
             shutdown_tx: Arc::new(RwLock::new(None)),
         }
@@ -2049,7 +2049,7 @@ mod rpc_error_tests {
             ignore_stories: true,
             permissions: Arc::new(ArcSwap::from_pointee(perms)),
             client: reqwest::Client::new(),
-            tmp_dir: PathBuf::from("/tmp/spacebot-test"),
+            tmp_dir: PathBuf::from("/tmp/agentspace-test"),
             typing_tasks: Arc::new(RwLock::new(HashMap::new())),
             shutdown_tx: Arc::new(RwLock::new(None)),
         }

@@ -554,7 +554,7 @@ export function Settings() {
 		if (!deviceCodeInfo || !deviceCodeCopied) return;
 		window.open(
 			deviceCodeInfo.verificationUrl,
-			"spacebot-openai-device",
+			"agentspace-openai-device",
 			"popup=true,width=780,height=960,noopener,noreferrer",
 		);
 	};
@@ -1467,7 +1467,7 @@ function SecretsSection() {
 						<p className="text-tiny text-ink-faint">
 							{categoryInput === "tool"
 								? "Workers will have access to this credential via environment variable."
-								: "Only the Spacebot process can read this credential. Workers never see it."}
+								: "Only the Agentspace process can read this credential. Workers never see it."}
 						</p>
 					</div>
 
@@ -2244,7 +2244,7 @@ function formatCheckedAt(checkedAt: string | null): string {
 }
 
 function pullableDockerImage(image: string | null): string {
-	if (!image) return "ghcr.io/spacedriveapp/spacebot:latest";
+	if (!image) return "ghcr.io/agentnxxt/agentspace:latest";
 	return image.split("@")[0] ?? image;
 }
 
@@ -2329,20 +2329,20 @@ function UpdatesSection() {
 			: "Native";
 
 	const dockerComposeCommands = [
-		"docker compose pull spacebot",
-		"docker compose up -d --force-recreate spacebot",
+		"docker compose pull agentspace",
+		"docker compose up -d --force-recreate agentspace",
 	];
 
 	const dockerRunCommands = [
 		`docker pull ${pullableDockerImage(data?.docker_image ?? null)}`,
-		"docker stop spacebot && docker rm spacebot",
+		"docker stop agentspace && docker rm agentspace",
 		"# re-run your docker run command",
 	];
 
 	const nativeCommands = [
 		"git pull",
 		"cargo install --path . --force",
-		"spacebot restart",
+		"agentspace restart",
 	];
 
 	return (
@@ -2584,7 +2584,7 @@ function ChangelogSection() {
 			<div className="mb-6">
 				<h2 className="font-plex text-sm font-semibold text-ink">Changelog</h2>
 				<p className="mt-1 text-sm text-ink-dull">
-					Release history for this Spacebot build.
+					Release history for this Agentspace build.
 				</p>
 			</div>
 

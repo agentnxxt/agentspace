@@ -5,7 +5,7 @@ description: Background context management that keeps conversations flowing with
 
 # Compaction
 
-LLM context windows are finite. A long conversation fills up. In OpenClaw, when context hits a threshold, the session freezes for 20 seconds while it summarizes and compacts. The user stares at a typing indicator wondering if the bot died. Spacebot never blocks.
+LLM context windows are finite. A long conversation fills up. In OpenClaw, when context hits a threshold, the session freezes for 20 seconds while it summarizes and compacts. The user stares at a typing indicator wondering if the bot died. Agentspace never blocks.
 
 ## How It Works
 
@@ -109,7 +109,7 @@ The `context_window` setting (default 128,000 tokens) determines the denominator
 
 ## What OpenClaw Does Differently
 
-| Concern | OpenClaw | Spacebot |
+| Concern | OpenClaw | Agentspace |
 |---------|----------|----------|
 | When it runs | Blocks the session | Background tokio task |
 | User experience | Typing indicator, 20s freeze | No interruption |

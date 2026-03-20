@@ -39,7 +39,7 @@ gate-pr-ci-fast: preflight-ci
 build-opencode-embed:
     ./scripts/build-opencode-embed.sh
 
-# Build the spacebot binary and copy it into the Tauri sidecar
+# Build the agentspace binary and copy it into the Tauri sidecar
 # binaries directory with the correct target-triple suffix.
 bundle-sidecar:
     ./scripts/bundle-sidecar.sh --release

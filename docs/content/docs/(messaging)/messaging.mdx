@@ -1,11 +1,11 @@
 ---
 title: Messaging
-description: How Spacebot connects to Discord, Slack, Telegram, Twitch, Email, and webhooks.
+description: How Agentspace connects to Discord, Slack, Telegram, Twitch, Email, and webhooks.
 ---
 
 # Messaging
 
-Spacebot connects to chat platforms so your agent can talk to people where they already are. You can connect multiple platforms at once — messages from all of them flow into the same agent system.
+Agentspace connects to chat platforms so your agent can talk to people where they already are. You can connect multiple platforms at once — messages from all of them flow into the same agent system.
 
 ## Supported Platforms
 
@@ -24,20 +24,20 @@ Spacebot connects to chat platforms so your agent can talk to people where they 
 ## How It Works
 
 1. You connect a platform by adding your tokens in the dashboard or config
-2. Spacebot opens a persistent connection to that platform
-3. When someone sends a message, Spacebot receives it and decides whether to reply, skip, or delegate work
+2. Agentspace opens a persistent connection to that platform
+3. When someone sends a message, Agentspace receives it and decides whether to reply, skip, or delegate work
 4. Each conversation (channel, thread, DM) gets its own isolated history
 
 You can connect multiple platforms at the same time. An agent on Discord and Slack simultaneously is just two bindings pointing at the same agent.
 
-For Email specifically, Spacebot treats inbound mail as intake-first by default: triage, memory capture for meaningful non-spam messages, and escalation to other channels for urgent items. Inbound email channels do not auto-reply. When the Email adapter is configured, intentional outbound email can still be initiated from other channels using an explicit target such as `email:alice@example.com`.
+For Email specifically, Agentspace treats inbound mail as intake-first by default: triage, memory capture for meaningful non-spam messages, and escalation to other channels for urgent items. Inbound email channels do not auto-reply. When the Email adapter is configured, intentional outbound email can still be initiated from other channels using an explicit target such as `email:alice@example.com`.
 
 ## Bindings
 
 Bindings route messages from a platform to a specific agent. A binding says "messages from this place go to this agent."
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Go to **Settings** → **Bindings** tab to create and manage bindings.
 
@@ -89,10 +89,10 @@ If no binding matches an incoming message, it's routed to the default agent auto
 
 ## Multiple Agents
 
-You can run multiple agents on the same Spacebot instance, each connected to different places. Each agent has its own memory, personality, and conversation history.
+You can run multiple agents on the same Agentspace instance, each connected to different places. Each agent has its own memory, personality, and conversation history.
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Create multiple agents in **Settings** → **Agents**, then assign them to different bindings.
 
@@ -125,7 +125,7 @@ workspace_id = "T01234ABCDE"
 
 ## Conversations
 
-Each chat context maps to its own Spacebot conversation with isolated history:
+Each chat context maps to its own Agentspace conversation with isolated history:
 
 | Platform | What gets its own conversation |
 |----------|-------------------------------|

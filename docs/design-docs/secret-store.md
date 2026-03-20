@@ -19,11 +19,11 @@ This file is accessible via `GET /api/config/raw` in the dashboard and via `cat 
 FLY_APP_NAME=sb-0759a0a6
 FLY_REGION=iad
 FLY_VM_MEMORY_MB=8192
-FLY_IMAGE_REF=registry.fly.io/spacebot-image:v0.2.1
+FLY_IMAGE_REF=registry.fly.io/agentspace-image:v0.2.1
 
-# Spacebot config (non-sensitive)
-SPACEBOT_DEPLOYMENT=hosted
-SPACEBOT_DIR=/data
+# Agentspace config (non-sensitive)
+AGENTSPACE_DEPLOYMENT=hosted
+AGENTSPACE_DIR=/data
 
 # Standard process vars
 HOME=/root
@@ -128,21 +128,21 @@ With sandbox on, both can be protected (bubblewrap's `--unshare-pid` hides `/pro
 
 - Store via `SecItemAdd` / retrieve via `SecItemCopyMatching` using the Security framework.
 - Access is controlled by the calling binary's code signature and ACL. A `bash` subprocess spawned by ShellTool is a different binary — Keychain will not grant access without explicit user authorization.
-- Even `security find-generic-password` from a worker fails because the Keychain item's access list only includes the Spacebot binary.
+- Even `security find-generic-password` from a worker fails because the Keychain item's access list only includes the Agentspace binary.
 - The `security-framework` crate provides safe Rust bindings.
 
 **Keychain item:**
 ```
-Service:  "sh.spacebot.master-key"
+Service:  "sh.agentspace.master-key"
 Account:  "<instance_id>" (or "default" for self-hosted single-instance)
 Data:     <32 random bytes>
-Access:   Spacebot binary only (kSecAttrAccessibleAfterFirstUnlock)
+Access:   Agentspace binary only (kSecAttrAccessibleAfterFirstUnlock)
 ```
 
 #### Linux: Kernel Keyring (`keyctl`)
 
-- Store via `add_key("user", "spacebot_master", key_bytes, session_keyring)` — the key lives in kernel memory, not on any filesystem.
-- Scoped to a **session keyring**. Spacebot creates a new session keyring on startup via `keyctl_join_session_keyring()`. Workers are spawned with a fresh empty session keyring via `pre_exec` — they cannot access the parent's keyring.
+- Store via `add_key("user", "agentspace_master", key_bytes, session_keyring)` — the key lives in kernel memory, not on any filesystem.
+- Scoped to a **session keyring**. Agentspace creates a new session keyring on startup via `keyctl_join_session_keyring()`. Workers are spawned with a fresh empty session keyring via `pre_exec` — they cannot access the parent's keyring.
 - No file to `cat`, no env var to read, no `/proc` exposure. The key is only accessible via the `keyctl` syscall with the correct keyring ID, which workers don't have.
 - Works without sandbox, without root. The kernel enforces access control at the syscall level.
 
@@ -174,12 +174,12 @@ This is additive to `--clearenv` — env sanitization strips env vars, the sessi
 
 #### Hosted Deployment
 
-The platform generates a per-instance master key on provisioning and stores it in the platform database (tied to the user's account). On instance startup, the platform writes the key to a **tmpfs file** that Spacebot reads once, then the platform deletes it. Spacebot stores the key in the Linux kernel keyring immediately and never persists it to the volume.
+The platform generates a per-instance master key on provisioning and stores it in the platform database (tied to the user's account). On instance startup, the platform writes the key to a **tmpfs file** that Agentspace reads once, then the platform deletes it. Agentspace stores the key in the Linux kernel keyring immediately and never persists it to the volume.
 
 Flow:
 1. Platform provisions instance → generates 32-byte random key → stores in platform DB (`instances.master_key`, encrypted at rest).
-2. Platform starts Fly machine → writes key to `/run/spacebot/master_key` (tmpfs, 0600, root-only).
-3. Spacebot startup → reads `/run/spacebot/master_key` → stores in kernel keyring → deletes the tmpfs file.
+2. Platform starts Fly machine → writes key to `/run/agentspace/master_key` (tmpfs, 0600, root-only).
+3. Agentspace startup → reads `/run/agentspace/master_key` → stores in kernel keyring → deletes the tmpfs file.
 4. Key is now only in kernel memory. Volume compromise doesn't expose it. `/run` is tmpfs, wiped on restart.
 5. On next restart, the platform re-injects the key via the same tmpfs mechanism.
 
@@ -195,7 +195,7 @@ The secret store is **always enabled** on self-hosted instances — it works in 
 
 1. User navigates to Settings → Secrets. The secrets panel is fully functional (add, edit, delete secrets). A banner shows: *"Secrets are stored without encryption. Enable encryption for protection against volume compromise."*
 2. User clicks "Enable Encryption."
-3. Spacebot generates a 32-byte random master key, encrypts all existing secrets in place.
+3. Agentspace generates a 32-byte random master key, encrypts all existing secrets in place.
 4. The key is stored in the OS credential store (Keychain on macOS, kernel keyring on Linux).
 5. The dashboard displays the key once: *"Save this master key somewhere safe. You'll need it to unlock the secret manager after a reboot (Linux) or if the Keychain is reset (macOS)."*
 6. The key is **not written to disk**. No `.master_key` file, no env var, no config entry. The only durable copies are the OS credential store and whatever the user saved externally.
@@ -232,7 +232,7 @@ Argon2id rather than the current SHA-256 in `build_cipher()`. For hosted instanc
 2. **Hosted users:** The platform also generates master keys for all instances and injects them via tmpfs. Migration encrypts secrets automatically. Fully encrypted from day one, no user action required.
 3. **Self-hosted users:** Migration to the unencrypted store is automatic. The dashboard shows a banner encouraging encryption: *"Secrets are stored without encryption. Enable encryption for protection against volume compromise."* Encryption is opt-in — user clicks "Enable Encryption" when ready.
 
-On startup, Spacebot scans the environment for variables matching known secret patterns (anything with `TOKEN`, `KEY`, `SECRET`, `PASSWORD` in the name). If found and `passthrough_env` doesn't list them, a prominent warning is logged: "Detected secrets in environment variables. Consider moving them to the secret store." The warning is informational — nothing breaks, nothing is stripped.
+On startup, Agentspace scans the environment for variables matching known secret patterns (anything with `TOKEN`, `KEY`, `SECRET`, `PASSWORD` in the name). If found and `passthrough_env` doesn't list them, a prominent warning is logged: "Detected secrets in environment variables. Consider moving them to the secret store." The warning is informational — nothing breaks, nothing is stripped.
 
 ### Config Resolution Prefixes
 
@@ -366,7 +366,7 @@ Redacted:    "Authenticated as user X. Token: [REDACTED:GH_TOKEN]"
 | OpenCode SSE events      | Before forwarding to the worker event handler                      |
 | Branch conclusions       | Before injection into channel history (branches can spawn workers) |
 
-**Why exact match, not regex:** Leak detection (SpacebotHook) already does regex pattern matching for known key formats (`sk-ant-*`, `ghp_*`, etc.). The scrubber is complementary — it catches secrets that don't have recognizable patterns. A random 64-char string the user stored as a tool secret has no regex pattern, but the scrubber knows its exact value and catches it. The two layers work together:
+**Why exact match, not regex:** Leak detection (AgentspaceHook) already does regex pattern matching for known key formats (`sk-ant-*`, `ghp_*`, etc.). The scrubber is complementary — it catches secrets that don't have recognizable patterns. A random 64-char string the user stored as a tool secret has no regex pattern, but the scrubber knows its exact value and catches it. The two layers work together:
 
 - **Leak detection (regex):** catches known formats even if the secret isn't in the store (e.g., a key the user typed inline). Reactive — kills the agent after detection.
 - **Output scrubbing (exact match):** catches any stored tool secret regardless of format. Proactive — redacts before the value reaches the channel. The channel sees `[REDACTED:GH_TOKEN]` and knows the secret was used, but never sees the value.
@@ -415,7 +415,7 @@ For non-streaming paths (worker result text, branch conclusions), the full strin
 | Env sanitization (`--clearenv` + selective `--setenv`) | No                  | Workers only get tool secrets, never system secrets or internal vars |
 | Worker secret name injection (prompt)                  | No                  | Workers know what credentials are available without running `printenv` — no secret values in LLM context |
 | Output scrubbing (exact match)                         | No                  | Tool secret values propagating from worker output back to channels/branches |
-| Leak detection (SpacebotHook, regex)                   | No                  | Last-resort safety net — known key format patterns in any tool output          |
+| Leak detection (AgentspaceHook, regex)                   | No                  | Last-resort safety net — known key format patterns in any tool output          |
 | Secret store encryption (AES-256-GCM)                  | **Yes**             | Disk access to secrets.redb (stolen volume, backup leak)                       |
 | Master key in OS credential store (Keychain / kernel keyring) | **Yes**       | Worker access to the encryption key — OS enforces access control at the binary/keyring level, independent of sandbox state |
 | Worker session keyring isolation (`pre_exec`)          | **Yes**             | Workers accessing parent's kernel keyring on Linux (additive to `--clearenv`)  |
@@ -444,9 +444,9 @@ The key properties: **system secrets never leave Rust memory.** Tool secrets rea
 | `src/secrets/keystore.rs`             | New: OS credential store abstraction — `KeyStore` trait with `MacOSKeyStore` (Security framework / Keychain) and `LinuxKeyStore` (kernel keyring / keyctl) backends  |
 | `src/main.rs`                         | Initialize `SecretsStore` (unencrypted or encrypted), auto-migrate literal keys from config.toml on first boot, load master key from OS credential store if encrypted (or enter locked state), pass system secrets to provider init |
 | `src/agent/worker.rs`                 | Add `pre_exec` hook to spawn workers with a fresh empty session keyring (Linux) |
-| `spacebot-platform/api/src/fly.rs`    | Generate per-instance master key on provisioning, store in platform DB, inject via tmpfs at `/run/spacebot/master_key` in `machine_config()`                        |
-| `spacebot-platform/api/src/db.rs`     | Add `master_key` column to instances table (encrypted at rest)                                                                                                      |
-| `spacebot-platform/api/src/routes.rs` | Add master key rotation endpoint for dashboard                                                                                                                      |
+| `agentspace-platform/api/src/fly.rs`    | Generate per-instance master key on provisioning, store in platform DB, inject via tmpfs at `/run/agentspace/master_key` in `machine_config()`                        |
+| `agentspace-platform/api/src/db.rs`     | Add `master_key` column to instances table (encrypted at rest)                                                                                                      |
+| `agentspace-platform/api/src/routes.rs` | Add master key rotation endpoint for dashboard                                                                                                                      |
 
 ## Phase Plan
 
@@ -474,7 +474,7 @@ Layered on top of the working unencrypted store.
 3. Add `pre_exec` hook to worker spawning: children get a fresh empty session keyring (Linux).
 4. Startup: detect encrypted store → load master key from OS credential store → derive cipher key via Argon2id → decrypt. If key not found → locked state.
 5. Unlock/lock API: `POST /api/secrets/unlock`, `POST /api/secrets/lock`.
-6. Platform: generate per-instance master key on provisioning, store in platform DB, inject via tmpfs at `/run/spacebot/master_key`. Hosted instances are always encrypted.
+6. Platform: generate per-instance master key on provisioning, store in platform DB, inject via tmpfs at `/run/agentspace/master_key`. Hosted instances are always encrypted.
 7. Key rotation: `POST /api/secrets/rotate`.
 8. Export/import for backup and migration.
 
@@ -500,7 +500,7 @@ Layered on top of the working unencrypted store.
 3. Secret store status indicator (`unencrypted` / `locked` / `unlocked`).
 4. Encryption onboarding banner for unencrypted self-hosted stores.
 5. Unlock prompt for locked stores (after Linux reboot).
-6. CLI `spacebot secrets` subcommand tree. See "Dashboard & CLI Secret Management" for full specification.
+6. CLI `agentspace secrets` subcommand tree. See "Dashboard & CLI Secret Management" for full specification.
 7. Hosted: master key rotation via platform API.
 
 ## Open Questions
@@ -511,7 +511,7 @@ Layered on top of the working unencrypted store.
 4. **Category override UX.** How prominent should the system/tool toggle be in the dashboard? Auto-categorization handles the common cases, but users need to understand the distinction to make informed overrides.
 5. ~~**Self-hosted tool secrets without master key.**~~ **Resolved — see `passthrough_env` below.**
 6. ~~**Linux key file exposure without sandbox.**~~ **Resolved — no key file on disk.** Linux uses the kernel keyring only. After reboot, the secret store enters a locked state and the user unlocks via dashboard or CLI. See "Dashboard & CLI Secret Management" below.
-7. **Keychain ACL on unsigned dev builds.** During development, the Spacebot binary may not be code-signed. macOS Keychain ACLs based on code signature won't work for unsigned binaries — need to handle this gracefully (fall back to file-based storage in dev mode, or use a less restrictive Keychain access policy).
+7. **Keychain ACL on unsigned dev builds.** During development, the Agentspace binary may not be code-signed. macOS Keychain ACLs based on code signature won't work for unsigned binaries — need to handle this gracefully (fall back to file-based storage in dev mode, or use a less restrictive Keychain access policy).
 
 ### Env Passthrough for Self-Hosted
 
@@ -535,7 +535,7 @@ When secrets have been migrated to the store, `passthrough_env` is redundant for
 
 On hosted instances, `passthrough_env` is empty by default and has no effect — the platform manages all secrets via the store.
 
-**Why not just skip `--clearenv` when there's no master key?** Because `--clearenv` protects more than just the master key — it prevents system secrets, internal vars (`SPACEBOT_*`), and any other env vars from leaking to workers. The master key is protected by the OS credential store regardless of `--clearenv`, but env sanitization is still necessary for everything else. The passthrough list is explicit — the user declares exactly which vars they want forwarded. Everything else is stripped.
+**Why not just skip `--clearenv` when there's no master key?** Because `--clearenv` protects more than just the master key — it prevents system secrets, internal vars (`AGENTSPACE_*`), and any other env vars from leaking to workers. The master key is protected by the OS credential store regardless of `--clearenv`, but env sanitization is still necessary for everything else. The passthrough list is explicit — the user declares exactly which vars they want forwarded. Everything else is stripped.
 
 ---
 
@@ -575,7 +575,7 @@ The secret store works immediately without encryption. Enabling encryption is a 
 
 1. User navigates to Settings → Secrets. The secrets panel is fully functional. A banner shows: *"Secrets are stored without encryption. Enable encryption for protection against volume compromise."*
 2. Clicks "Enable Encryption."
-3. `POST /api/secrets/encrypt` — Spacebot generates a 32-byte random key, stores it in the OS credential store, encrypts all existing secrets in place, returns the key as a hex string.
+3. `POST /api/secrets/encrypt` — Agentspace generates a 32-byte random key, stores it in the OS credential store, encrypts all existing secrets in place, returns the key as a hex string.
 4. Dashboard displays the key in a modal with a copy button and a warning: *"Save this key somewhere safe. On Linux, you'll need it to unlock the secret manager after a reboot. This is the only time the key will be shown."*
 5. User confirms they've saved the key. Banner disappears. Store is now encrypted.
 
@@ -583,7 +583,7 @@ The secret store works immediately without encryption. Enabling encryption is a 
 
 ```bash
 # Enable encryption
-spacebot secrets encrypt
+agentspace secrets encrypt
 # Output:
 # Encrypting 12 secrets...
 # Master key: a1b2c3d4e5f6...  (64 hex chars)
@@ -594,7 +594,7 @@ spacebot secrets encrypt
 
 # Migration (separate from encryption — runs automatically on first boot,
 # or manually if needed)
-spacebot secrets migrate
+agentspace secrets migrate
 # Output:
 # Detected 4 plaintext keys in config.toml:
 #   anthropic_key     → ANTHROPIC_API_KEY (system)
@@ -622,7 +622,7 @@ Only applies when encryption is enabled. Unencrypted stores are always available
 
 ```bash
 # Unlock
-spacebot secrets unlock
+agentspace secrets unlock
 # Enter master key: ********
 # Secret manager unlocked. 12 secrets decrypted.
 # Re-initialized: LlmManager (3 providers), MessagingManager (2 adapters).
@@ -632,15 +632,15 @@ spacebot secrets unlock
 # automation, pipe from a secrets manager or file, not a shell env var
 # (env vars are visible in /proc and process listings — the same exposure
 # the OS credential store is designed to avoid).
-cat /run/secrets/spacebot_key | spacebot secrets unlock --stdin
+cat /run/secrets/agentspace_key | agentspace secrets unlock --stdin
 
 # Lock (clears key from OS credential store — useful for maintenance)
-spacebot secrets lock
+agentspace secrets lock
 # Secret manager locked. Secrets remain encrypted on disk.
 # The bot will continue running with cached credentials until restart.
 
 # Check status
-spacebot secrets status
+agentspace secrets status
 # State: unlocked
 # Secrets: 12 (5 system, 7 tool)
 ```
@@ -722,27 +722,27 @@ Removes from the store. If the secret is referenced by config.toml (`secret:NAME
 
 ```bash
 # List
-spacebot secrets list
+agentspace secrets list
 # NAME                  CATEGORY   UPDATED
 # ANTHROPIC_API_KEY     system     2026-02-25 10:30
 # GH_TOKEN              tool       2026-02-27 14:00
 
 # Add/update
-spacebot secrets set GH_TOKEN --category tool
+agentspace secrets set GH_TOKEN --category tool
 # Enter value: ********
 # Secret GH_TOKEN saved (tool).
 
 # Or non-interactively
-echo "ghp_abc123" | spacebot secrets set GH_TOKEN --category tool --stdin
+echo "ghp_abc123" | agentspace secrets set GH_TOKEN --category tool --stdin
 
 # Delete
-spacebot secrets delete GH_TOKEN
+agentspace secrets delete GH_TOKEN
 # Warning: GH_TOKEN is referenced in config.toml at agents.tools.github_token
 # Delete anyway? [y/N]: y
 # Deleted GH_TOKEN.
 
 # Show category info
-spacebot secrets info GH_TOKEN
+agentspace secrets info GH_TOKEN
 # Name:     GH_TOKEN
 # Category: tool
 # Created:  2026-02-25 10:31
@@ -755,7 +755,7 @@ spacebot secrets info GH_TOKEN
 Master key rotation replaces the encryption key without changing the stored secrets:
 
 1. User initiates rotation via dashboard or CLI.
-2. `POST /api/secrets/rotate` — Spacebot generates a new master key, re-encrypts all secrets with the new key, stores the new key in the OS credential store, returns the new key for the user to save.
+2. `POST /api/secrets/rotate` — Agentspace generates a new master key, re-encrypts all secrets with the new key, stores the new key in the OS credential store, returns the new key for the user to save.
 3. The old key is invalidated. The user's previously saved key no longer works for unlock.
 
 **Dashboard:** Settings → Secrets → "Rotate Master Key" button. Confirms with a warning that the old key becomes invalid. Shows the new key in a modal.
@@ -763,7 +763,7 @@ Master key rotation replaces the encryption key without changing the stored secr
 **CLI:**
 
 ```bash
-spacebot secrets rotate
+agentspace secrets rotate
 # WARNING: This will invalidate your current master key.
 # You will need to save the new key for future unlocks.
 # Continue? [y/N]: y
@@ -782,12 +782,12 @@ For disaster recovery and instance migration:
 
 ```bash
 # Export all secrets (encrypted with the current master key)
-spacebot secrets export --output secrets-backup.enc
+agentspace secrets export --output secrets-backup.enc
 # Exported 12 secrets to secrets-backup.enc
 # This file is encrypted with your current master key.
 
 # Import secrets from a backup
-spacebot secrets import --input secrets-backup.enc
+agentspace secrets import --input secrets-backup.enc
 # Enter the master key used to create this backup: ********
 # Imported 12 secrets. 3 conflicts (existing secrets with same name):
 #   ANTHROPIC_API_KEY — kept existing (use --overwrite to replace)
@@ -795,7 +795,7 @@ spacebot secrets import --input secrets-backup.enc
 #   NPM_TOKEN — kept existing
 
 # Import with overwrite
-spacebot secrets import --input secrets-backup.enc --overwrite
+agentspace secrets import --input secrets-backup.enc --overwrite
 ```
 
 **Unencrypted store warning:** If encryption is not enabled, the export file contains plaintext secrets. The CLI warns:
@@ -803,7 +803,7 @@ spacebot secrets import --input secrets-backup.enc --overwrite
 ```
 # WARNING: Encryption is not enabled. This export contains
 # plaintext secrets. Store it securely or enable encryption
-# first with: spacebot secrets encrypt
+# first with: agentspace secrets encrypt
 ```
 
 When encryption is enabled, the export file is the raw encrypted redb data plus a header with the Argon2id salt. It's useless without the master key. This covers:
@@ -835,7 +835,7 @@ Authentication uses the same bearer token as the rest of the control API. On hos
 ### CLI Subcommand Structure
 
 ```
-spacebot secrets
+agentspace secrets
   status              Show store state and secret counts
   list                List all secrets (name + category)
   set <name>          Add or update a secret (interactive or --stdin)
@@ -850,4 +850,4 @@ spacebot secrets
   import              Import from backup
 ```
 
-All subcommands communicate with the running Spacebot instance via the control API (`localhost:19898`). They don't access the secret store directly — this ensures the same locking/unlocking semantics apply regardless of whether the user uses the dashboard or CLI.
+All subcommands communicate with the running Agentspace instance via the control API (`localhost:19898`). They don't access the secret store directly — this ensures the same locking/unlocking semantics apply regardless of whether the user uses the dashboard or CLI.

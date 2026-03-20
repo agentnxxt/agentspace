@@ -4,20 +4,20 @@
 
 ## Problem
 
-Today, telling Spacebot where to work is manual and repetitive. Every session starts with "we're working in `~/Projects/spacebot`", "we're on the `feat/foo` worktree", "spawn an OpenCode worker there". The agent has no persistent model of *what* you're building, *which repos* are involved, or *where* work trees live. Multi-repo projects (like Spacebot itself, with `spacebot/`, `spacebot-platform/`, `spacebot-dash/`, `spacebot-web/`) require the human to be the directory oracle every time.
+Today, telling Agentspace where to work is manual and repetitive. Every session starts with "we're working in `~/Projects/agentspace`", "we're on the `feat/foo` worktree", "spawn an OpenCode worker there". The agent has no persistent model of *what* you're building, *which repos* are involved, or *where* work trees live. Multi-repo projects (like Agentspace itself, with `agentspace/`, `agentspace-platform/`, `agentspace-dash/`, `agentspace-web/`) require the human to be the directory oracle every time.
 
 ## Vision
 
-Projects give Spacebot a first-class understanding of the developer's workspace layout. When you say "let's start a new feature on Spacebot", the agent already knows the repos, can create a worktree, spawn an OpenCode worker in the right directory, and track everything — without you specifying a single path.
+Projects give Agentspace a first-class understanding of the developer's workspace layout. When you say "let's start a new feature on Agentspace", the agent already knows the repos, can create a worktree, spawn an OpenCode worker in the right directory, and track everything — without you specifying a single path.
 
 ```
-~/Projects/spacebot/            ← project root
-├── spacebot/                   ← repo (core agent)
-├── spacebot-platform/          ← repo (control plane)
-├── spacebot-dash/              ← repo (dashboard)
-├── spacebot-web/               ← repo (marketing site)
-├── feat-projects/              ← worktree of spacebot/ for this feature
-└── fix-auth-bug/               ← worktree of spacebot-platform/
+~/Projects/agentspace/            ← project root
+├── agentspace/                   ← repo (core agent)
+├── agentspace-platform/          ← repo (control plane)
+├── agentspace-dash/              ← repo (dashboard)
+├── agentspace-web/               ← repo (marketing site)
+├── feat-projects/              ← worktree of agentspace/ for this feature
+└── fix-auth-bug/               ← worktree of agentspace-platform/
 ```
 
 A project is a **folder** containing **repos** and **worktrees**. The agent tracks all of them, understands their relationships, and uses that knowledge to autonomously route work to the right place.
@@ -34,7 +34,7 @@ A named, tracked workspace folder. Every project maps to exactly one directory o
 |-------|-------------|
 | `id` | UUID |
 | `agent_id` | Owning agent |
-| `name` | Human-readable name (e.g., "Spacebot") |
+| `name` | Human-readable name (e.g., "Agentspace") |
 | `description` | Optional rich description (markdown) |
 | `icon` | Optional icon identifier or emoji |
 | `tags` | JSON array of string tags for categorization |
@@ -52,7 +52,7 @@ A git repository within a project folder. Discovered automatically via `git rev-
 |-------|-------------|
 | `id` | UUID |
 | `project_id` | Parent project |
-| `name` | Directory name (e.g., "spacebot-dash") |
+| `name` | Directory name (e.g., "agentspace-dash") |
 | `path` | Path relative to project root |
 | `remote_url` | Primary remote URL (origin) |
 | `default_branch` | e.g., "main" |
@@ -89,7 +89,7 @@ Workers gain optional project awareness. When a worker is spawned within a proje
 
 ## Settings
 
-Projects support per-project settings that control how Spacebot manages the workspace. These are stored as JSON in the project's `settings` column and merged with agent-level defaults.
+Projects support per-project settings that control how Agentspace manages the workspace. These are stored as JSON in the project's `settings` column and merged with agent-level defaults.
 
 ### Agent-Level Defaults
 
@@ -478,19 +478,19 @@ The agent config page (`/agents/$agentId/config`) gains a "Projects" section wit
 With projects configured, a typical conversation:
 
 ```
-User: Let's start working on a new feature for the auth system in spacebot-platform
+User: Let's start working on a new feature for the auth system in agentspace-platform
 
 Channel LLM (internally):
-  1. Checks active projects → finds "Spacebot" project
-  2. Identifies "spacebot-platform" repo in the project
+  1. Checks active projects → finds "Agentspace" project
+  2. Identifies "agentspace-platform" repo in the project
   3. use_worktrees = true → calls project_manage(create_worktree,
        repo_id=<platform_repo_id>, branch="feat/auth-improvements")
-  4. Worktree created at ~/Projects/spacebot/feat-auth-improvements/
+  4. Worktree created at ~/Projects/agentspace/feat-auth-improvements/
   5. Spawns OpenCode worker with project_id + worktree_id
   6. Worker receives project context and starts in the right directory
 
 Channel: I've created a worktree `feat-auth-improvements` branching from
-spacebot-platform's main branch and spawned a worker there. The worker
+agentspace-platform's main branch and spawned a worker there. The worker
 is now exploring the auth system. I'll relay its findings when it's done.
 ```
 
@@ -507,15 +507,15 @@ Channel LLM (internally):
   1. Checks active projects with their worktrees and workers
   2. Compiles a summary
 
-Channel: Here's where things stand with the Spacebot project:
+Channel: Here's where things stand with the Agentspace project:
   
   **Active worktrees:**
-  - `feat-auth-improvements` (spacebot-platform, branch: feat/auth-improvements)
+  - `feat-auth-improvements` (agentspace-platform, branch: feat/auth-improvements)
     → Worker running: "Implement OAuth2 PKCE flow" (12 min, 34 tool calls)
-  - `feat-projects` (spacebot, branch: feat/projects)
+  - `feat-projects` (agentspace, branch: feat/projects)
     → Idle (last worked on 2 hours ago)
   
-  **Repos:** 4 (spacebot, spacebot-platform, spacebot-dash, spacebot-web)
+  **Repos:** 4 (agentspace, agentspace-platform, agentspace-dash, agentspace-web)
   **Disk usage:** 12.4 GB
 ```
 
@@ -527,7 +527,7 @@ Topics and projects are complementary systems that can reference each other:
 
 - A **topic** can have a `project_id` in its criteria metadata, scoping its memory synthesis to memories generated while working on that project.
 - When spawning workers with both `project_id` and `topic_ids`, the worker gets spatial context (where) from the project and knowledge context (what) from the topics.
-- The channel prompt lists both available projects and available topics. The LLM can match them naturally: "For the auth feature on spacebot-platform, I'll use the 'Auth System' topic and work in the Spacebot project."
+- The channel prompt lists both available projects and available topics. The LLM can match them naturally: "For the auth feature on agentspace-platform, I'll use the 'Auth System' topic and work in the Agentspace project."
 
 Future: topics could be auto-associated with projects via tagging or memory source tracking (memories created by workers in project X are relevant to topics about project X).
 

@@ -1,6 +1,6 @@
 # Metrics Reference
 
-Comprehensive reference for Spacebot's Prometheus metrics. For quick-start setup, see `docs/metrics.md`. For the published docs, see the metrics page on [docs.spacebot.sh](https://docs.spacebot.sh).
+Comprehensive reference for Agentspace's Prometheus metrics. For quick-start setup, see `docs/metrics.md`. For the published docs, see the metrics page on [docs.space.agnxxt.com](https://docs.space.agnxxt.com).
 
 ## Feature Gate
 
@@ -18,75 +18,75 @@ The Docker image always includes metrics — `--features metrics` is hardcoded i
 
 ## Metric Inventory
 
-All metrics are prefixed with `spacebot_`. The registry uses a private `prometheus::Registry` (not the default global one) to avoid conflicts with other libraries.
+All metrics are prefixed with `agentspace_`. The registry uses a private `prometheus::Registry` (not the default global one) to avoid conflicts with other libraries.
 
 ### LLM
 
-#### `spacebot_llm_requests_total`
+#### `agentspace_llm_requests_total`
 
 | Field | Value |
 |-------|-------|
 | Type | `IntCounterVec` |
 | Labels | `agent_id`, `model`, `tier`, `worker_type` |
-| Instrumented in | `src/llm/model.rs` — `SpacebotModel::completion()` |
+| Instrumented in | `src/llm/model.rs` — `AgentspaceModel::completion()` |
 | Description | Total LLM completion requests (one per `completion()` call, including retries and fallbacks). |
 
-#### `spacebot_llm_request_duration_seconds`
+#### `agentspace_llm_request_duration_seconds`
 
 | Field | Value |
 |-------|-------|
 | Type | `HistogramVec` |
 | Labels | `agent_id`, `model`, `tier`, `worker_type` |
 | Buckets | 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 15, 30, 60, 120 |
-| Instrumented in | `src/llm/model.rs` — `SpacebotModel::completion()` |
+| Instrumented in | `src/llm/model.rs` — `AgentspaceModel::completion()` |
 | Description | End-to-end LLM request duration in seconds. Includes retry loops and fallback chain traversal. |
 
-#### `spacebot_llm_tokens_total`
+#### `agentspace_llm_tokens_total`
 
 | Field | Value |
 |-------|-------|
 | Type | `IntCounterVec` |
 | Labels | `agent_id`, `model`, `tier`, `direction`, `worker_type` |
-| Instrumented in | `src/llm/model.rs` — `SpacebotModel::completion()` |
+| Instrumented in | `src/llm/model.rs` — `AgentspaceModel::completion()` |
 | Description | Total LLM tokens consumed. `direction` is one of `input`, `output`, or `cached_input`. |
 
-#### `spacebot_llm_estimated_cost_dollars`
+#### `agentspace_llm_estimated_cost_dollars`
 
 | Field | Value |
 |-------|-------|
 | Type | `CounterVec` (f64) |
 | Labels | `agent_id`, `model`, `tier`, `worker_type` |
-| Instrumented in | `src/llm/model.rs` — `SpacebotModel::completion()` |
+| Instrumented in | `src/llm/model.rs` — `AgentspaceModel::completion()` |
 | Description | Estimated LLM cost in USD. Uses a built-in pricing table (`src/llm/pricing.rs`). |
 
 **Note:** Costs are best-effort estimates. The pricing table covers major models (Claude 4/3.5/3, GPT-4o, o-series, Gemini, DeepSeek) with a conservative fallback for unknown models ($3/M input, $15/M output).
 
 ### Tools
 
-#### `spacebot_tool_calls_total`
+#### `agentspace_tool_calls_total`
 
 | Field | Value |
 |-------|-------|
 | Type | `IntCounterVec` |
 | Labels | `agent_id`, `tool_name`, `process_type` |
-| Instrumented in | `src/hooks/spacebot.rs` — `SpacebotHook::on_tool_result()` |
+| Instrumented in | `src/hooks/agentspace.rs` — `AgentspaceHook::on_tool_result()` |
 | Description | Total tool calls executed across all processes. Incremented after each tool call completes (success or failure). |
 
-#### `spacebot_tool_call_duration_seconds`
+#### `agentspace_tool_call_duration_seconds`
 
 | Field | Value |
 |-------|-------|
 | Type | `HistogramVec` |
 | Labels | `agent_id`, `tool_name`, `process_type` |
 | Buckets | 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30 |
-| Instrumented in | `src/hooks/spacebot.rs` — `on_tool_call()` starts timer, `on_tool_result()` observes |
+| Instrumented in | `src/hooks/agentspace.rs` — `on_tool_call()` starts timer, `on_tool_result()` observes |
 | Description | Tool call execution duration in seconds. |
 
 **Implementation note:** Duration is tracked via a `LazyLock<Mutex<HashMap<String, Instant>>>` static keyed by Rig's internal call ID. If a tool call starts but the agent terminates before `on_tool_result` fires (e.g. leak detection), the timer entry remains — bounded by concurrent tool calls, not a practical concern.
 
 ### MCP
 
-#### `spacebot_mcp_connections`
+#### `agentspace_mcp_connections`
 
 | Field | Value |
 |-------|-------|
@@ -95,7 +95,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/mcp.rs` |
 | Description | Active MCP connections by server and connection state (connecting, connected, disconnected, failed). |
 
-#### `spacebot_mcp_tools_registered`
+#### `agentspace_mcp_tools_registered`
 
 | Field | Value |
 |-------|-------|
@@ -104,7 +104,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/mcp.rs` |
 | Description | Number of tools registered per MCP server. |
 
-#### `spacebot_mcp_connection_attempts_total`
+#### `agentspace_mcp_connection_attempts_total`
 
 | Field | Value |
 |-------|-------|
@@ -113,7 +113,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/mcp.rs` |
 | Description | MCP connection attempts. `result` is `success` or `failure`. |
 
-#### `spacebot_mcp_tool_calls_total`
+#### `agentspace_mcp_tool_calls_total`
 
 | Field | Value |
 |-------|-------|
@@ -122,7 +122,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/mcp.rs` |
 | Description | MCP tool calls by server and tool name. |
 
-#### `spacebot_mcp_reconnects_total`
+#### `agentspace_mcp_reconnects_total`
 
 | Field | Value |
 |-------|-------|
@@ -131,7 +131,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/mcp.rs` |
 | Description | MCP reconnection attempts. |
 
-#### `spacebot_mcp_connection_duration_seconds`
+#### `agentspace_mcp_connection_duration_seconds`
 
 | Field | Value |
 |-------|-------|
@@ -141,7 +141,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/mcp.rs` |
 | Description | MCP connection establishment duration in seconds. |
 
-#### `spacebot_mcp_tool_call_duration_seconds`
+#### `agentspace_mcp_tool_call_duration_seconds`
 
 | Field | Value |
 |-------|-------|
@@ -153,7 +153,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 
 ### Channel / Messaging
 
-#### `spacebot_messages_received_total`
+#### `agentspace_messages_received_total`
 
 | Field | Value |
 |-------|-------|
@@ -162,7 +162,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/agent/channel.rs` |
 | Description | Total messages received from external channels. |
 
-#### `spacebot_messages_sent_total`
+#### `agentspace_messages_sent_total`
 
 | Field | Value |
 |-------|-------|
@@ -171,7 +171,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/agent/channel.rs` |
 | Description | Total messages sent (replies) via channels. |
 
-#### `spacebot_message_handling_duration_seconds`
+#### `agentspace_message_handling_duration_seconds`
 
 | Field | Value |
 |-------|-------|
@@ -181,7 +181,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/agent/channel.rs` |
 | Description | End-to-end message handling duration from receipt to reply. |
 
-#### `spacebot_channel_errors_total`
+#### `agentspace_channel_errors_total`
 
 | Field | Value |
 |-------|-------|
@@ -192,7 +192,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 
 ### Memory
 
-#### `spacebot_memory_reads_total`
+#### `agentspace_memory_reads_total`
 
 | Field | Value |
 |-------|-------|
@@ -201,7 +201,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/tools/memory_recall.rs` — `MemoryRecallTool::call()` |
 | Description | Total successful memory recall (search) operations. |
 
-#### `spacebot_memory_writes_total`
+#### `agentspace_memory_writes_total`
 
 | Field | Value |
 |-------|-------|
@@ -210,7 +210,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/tools/memory_save.rs` — `MemorySaveTool::call()` |
 | Description | Total successful memory save operations. |
 
-#### `spacebot_memory_updates_total`
+#### `agentspace_memory_updates_total`
 
 | Field | Value |
 |-------|-------|
@@ -219,7 +219,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/memory/store.rs` (save/delete), `src/tools/memory_save.rs`, `src/tools/memory_delete.rs` (forget) |
 | Description | Memory mutation operations. `operation` is one of `save`, `delete`, or `forget`. |
 
-#### `spacebot_memory_entry_count`
+#### `agentspace_memory_entry_count`
 
 | Field | Value |
 |-------|-------|
@@ -230,7 +230,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 
 **Note:** This gauge tracks deltas from process start, not the absolute database count. On restart it resets to 0. For the true count, query the database directly.
 
-#### `spacebot_memory_operation_duration_seconds`
+#### `agentspace_memory_operation_duration_seconds`
 
 | Field | Value |
 |-------|-------|
@@ -240,7 +240,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/memory/store.rs` |
 | Description | Memory operation duration in seconds (save, load, search, delete). |
 
-#### `spacebot_memory_search_results`
+#### `agentspace_memory_search_results`
 
 | Field | Value |
 |-------|-------|
@@ -250,7 +250,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/tools/memory_recall.rs` |
 | Description | Number of search results returned per recall query. |
 
-#### `spacebot_memory_embedding_duration_seconds`
+#### `agentspace_memory_embedding_duration_seconds`
 
 | Field | Value |
 |-------|-------|
@@ -261,7 +261,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 
 ### Agent & Worker Lifecycle
 
-#### `spacebot_active_workers`
+#### `agentspace_active_workers`
 
 | Field | Value |
 |-------|-------|
@@ -270,7 +270,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/agent/channel_dispatch.rs` — `spawn_worker_task()` |
 | Description | Currently active workers. Incremented when a worker task is spawned, decremented when it completes. |
 
-#### `spacebot_active_branches`
+#### `agentspace_active_branches`
 
 | Field | Value |
 |-------|-------|
@@ -279,7 +279,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/agent/channel_dispatch.rs` — branch spawn (inc) and completion (dec) |
 | Description | Currently active branches per agent. |
 
-#### `spacebot_branches_spawned_total`
+#### `agentspace_branches_spawned_total`
 
 | Field | Value |
 |-------|-------|
@@ -288,7 +288,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/agent/channel_dispatch.rs` — `spawn_branch()` |
 | Description | Total branches spawned (monotonic counter, unlike the gauge). |
 
-#### `spacebot_worker_duration_seconds`
+#### `agentspace_worker_duration_seconds`
 
 | Field | Value |
 |-------|-------|
@@ -298,38 +298,38 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/agent/channel_dispatch.rs` — `spawn_worker_task()` |
 | Description | Worker lifetime duration in seconds from spawn to completion. `worker_type` is `builtin` or `opencode`. |
 
-#### `spacebot_context_overflow_total`
+#### `agentspace_context_overflow_total`
 
 | Field | Value |
 |-------|-------|
 | Type | `IntCounterVec` |
 | Labels | `agent_id`, `process_type` |
-| Instrumented in | `src/llm/model.rs` — `SpacebotModel::completion()` error paths |
+| Instrumented in | `src/llm/model.rs` — `AgentspaceModel::completion()` error paths |
 | Description | Context overflow events (when a request exceeds the model's context window). |
 
-#### `spacebot_process_errors_total`
+#### `agentspace_process_errors_total`
 
 | Field | Value |
 |-------|-------|
 | Type | `IntCounterVec` |
 | Labels | `agent_id`, `process_type`, `error_type`, `worker_type` |
-| Instrumented in | `src/llm/model.rs` — `SpacebotModel::completion()` error paths |
+| Instrumented in | `src/llm/model.rs` — `AgentspaceModel::completion()` error paths |
 | Description | Process errors by type. `error_type` classifies the failure (timeout, rate_limit, context_overflow, provider_error, other). |
 
 ### Cost
 
-#### `spacebot_worker_cost_dollars`
+#### `agentspace_worker_cost_dollars`
 
 | Field | Value |
 |-------|-------|
 | Type | `CounterVec` (f64) |
 | Labels | `agent_id`, `worker_type` |
-| Instrumented in | `src/llm/model.rs` — `SpacebotModel::completion()` |
+| Instrumented in | `src/llm/model.rs` — `AgentspaceModel::completion()` |
 | Description | Worker-specific cost tracking in USD. Only incremented for requests where `tier == "worker"`. |
 
 ### API
 
-#### `spacebot_http_requests_total`
+#### `agentspace_http_requests_total`
 
 | Field | Value |
 |-------|-------|
@@ -338,7 +338,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/api/server.rs` — middleware layer |
 | Description | Total HTTP requests to the API server. |
 
-#### `spacebot_http_request_duration_seconds`
+#### `agentspace_http_request_duration_seconds`
 
 | Field | Value |
 |-------|-------|
@@ -350,7 +350,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 
 ### Cron
 
-#### `spacebot_cron_executions_total`
+#### `agentspace_cron_executions_total`
 
 | Field | Value |
 |-------|-------|
@@ -361,7 +361,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 
 ### Ingestion
 
-#### `spacebot_ingestion_files_processed_total`
+#### `agentspace_ingestion_files_processed_total`
 
 | Field | Value |
 |-------|-------|
@@ -372,7 +372,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 
 ### Warmup / Readiness
 
-#### `spacebot_dispatch_while_cold_count`
+#### `agentspace_dispatch_while_cold_count`
 
 | Field | Value |
 |-------|-------|
@@ -381,7 +381,7 @@ All metrics are prefixed with `spacebot_`. The registry uses a private `promethe
 | Instrumented in | `src/agent/channel_dispatch.rs` — readiness guard |
 | Description | Dispatch attempts while the readiness contract is unsatisfied. |
 
-#### `spacebot_warmup_recovery_latency_ms`
+#### `agentspace_warmup_recovery_latency_ms`
 
 | Field | Value |
 |-------|-------|
@@ -447,7 +447,7 @@ Every instrumentation call site uses `#[cfg(feature = "metrics")]` at the statem
 | `src/lib.rs` | `#[cfg(feature = "metrics")] pub mod telemetry` |
 | `src/main.rs` | `#[cfg(feature = "metrics")] let _metrics_handle = ...` |
 | `src/llm/model.rs` | `#[cfg(feature = "metrics")] let start` + `#[cfg(feature = "metrics")] { ... }` |
-| `src/hooks/spacebot.rs` | `#[cfg(feature = "metrics")] static TOOL_CALL_TIMERS` + 2 blocks |
+| `src/hooks/agentspace.rs` | `#[cfg(feature = "metrics")] static TOOL_CALL_TIMERS` + 2 blocks |
 | `src/tools/memory_save.rs` | `#[cfg(feature = "metrics")] { ... }` |
 | `src/tools/memory_recall.rs` | `#[cfg(feature = "metrics")] { ... }` |
 | `src/tools/memory_delete.rs` | `#[cfg(feature = "metrics")] crate::telemetry::Metrics::global()...` |

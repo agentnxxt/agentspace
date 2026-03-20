@@ -236,7 +236,7 @@ export function ChannelEditModal({platform, name, status, open, onOpenChange}: C
 						{name}
 					</DialogTitle>
 					<DialogDescription>
-						{configured ? `Manage ${name} connection and bindings.` : `Connect ${name} to Spacebot.`}
+						{configured ? `Manage ${name} connection and bindings.` : `Connect ${name} to Agentspace.`}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -347,11 +347,11 @@ export function ChannelEditModal({platform, name, status, open, onOpenChange}: C
 								</div>
 							</div>
 							<p className="mt-1.5 text-xs text-ink-faint">
-								Use tokens from your Twitch application with chat:read and chat:write scopes enabled. Tokens are stored in your Spacebot instance and refreshed automatically while running.
+								Use tokens from your Twitch application with chat:read and chat:write scopes enabled. Tokens are stored in your Agentspace instance and refreshed automatically while running.
 							</p>
 							<p className="mt-1.5 text-xs text-ink-faint">
 								Need help?{" "}
-								<a href="https://docs.spacebot.sh/twitch-setup" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+								<a href="https://docs.space.agnxxt.com/twitch-setup" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
 									Read the Twitch setup docs &rarr;
 								</a>
 							</p>

@@ -5,7 +5,7 @@ description: Headless Chrome automation for workers via CDP and the ref system.
 
 # Browser
 
-Browser automation for Spacebot workers via headless Chrome. Workers can navigate websites, interact with page elements, take screenshots, and extract content. Built on [chromiumoxide](https://github.com/mattsse/chromiumoxide), which drives Chrome over the DevTools Protocol (CDP).
+Browser automation for Agentspace workers via headless Chrome. Workers can navigate websites, interact with page elements, take screenshots, and extract content. Built on [chromiumoxide](https://github.com/mattsse/chromiumoxide), which drives Chrome over the DevTools Protocol (CDP).
 
 ## Why Worker-Only
 
@@ -129,7 +129,7 @@ browser_close {}
 Screenshots are saved as timestamped PNGs to the agent's screenshot directory:
 
 ```
-~/.spacebot/agents/main/data/screenshots/screenshot_20260212_143052_123.png
+~/.agentspace/agents/main/data/screenshots/screenshot_20260212_143052_123.png
 ```
 
 The file path is returned in the tool output so the worker can reference it in its summary. The directory is configurable via `screenshot_dir` in the browser config, defaulting to `{data_dir}/screenshots`.

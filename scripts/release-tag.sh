@@ -21,8 +21,8 @@ if ! git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 fi
 
 resolve_github_repo() {
-  if [ -n "${SPACEBOT_RELEASE_REPO:-}" ]; then
-    printf "%s\n" "$SPACEBOT_RELEASE_REPO"
+  if [ -n "${AGENTSPACE_RELEASE_REPO:-}" ]; then
+    printf "%s\n" "$AGENTSPACE_RELEASE_REPO"
     return
   fi
 
@@ -46,13 +46,13 @@ PY
 }
 
 resolve_marketing_copy_path() {
-  if [ "${SPACEBOT_SKIP_MARKETING_COPY:-0}" = "1" ]; then
+  if [ "${AGENTSPACE_SKIP_MARKETING_COPY:-0}" = "1" ]; then
     printf "%s\n" ""
     return
   fi
 
   local path
-  path="${SPACEBOT_RELEASE_MARKETING_COPY_FILE:-}"
+  path="${AGENTSPACE_RELEASE_MARKETING_COPY_FILE:-}"
 
   if [ -z "$path" ]; then
     cat >&2 <<'EOF'
@@ -61,9 +61,9 @@ Release marketing copy is required.
 Create a markdown file and rerun, for example:
   marketing_file="$(mktemp)"
   printf "<release story markdown>\n" > "$marketing_file"
-  SPACEBOT_RELEASE_MARKETING_COPY_FILE="$marketing_file" cargo bump patch
+  AGENTSPACE_RELEASE_MARKETING_COPY_FILE="$marketing_file" cargo bump patch
 
-Set SPACEBOT_SKIP_MARKETING_COPY=1 to bypass this requirement.
+Set AGENTSPACE_SKIP_MARKETING_COPY=1 to bypass this requirement.
 EOF
     return 1
   fi
@@ -89,7 +89,7 @@ generate_release_notes_body() {
   repo_slug="$(resolve_github_repo)"
 
   if [ -z "$repo_slug" ]; then
-    echo "Unable to determine GitHub repo slug from origin. Set SPACEBOT_RELEASE_REPO=<owner/repo>." >&2
+    echo "Unable to determine GitHub repo slug from origin. Set AGENTSPACE_RELEASE_REPO=<owner/repo>." >&2
     return 1
   fi
 
@@ -203,16 +203,16 @@ PY
 
 disallowed_changes=()
 marketing_copy_allowed_relative=""
-if [ -n "${SPACEBOT_RELEASE_MARKETING_COPY_FILE:-}" ]; then
-  case "${SPACEBOT_RELEASE_MARKETING_COPY_FILE}" in
+if [ -n "${AGENTSPACE_RELEASE_MARKETING_COPY_FILE:-}" ]; then
+  case "${AGENTSPACE_RELEASE_MARKETING_COPY_FILE}" in
     "$REPO_ROOT"/*)
-      marketing_copy_allowed_relative="${SPACEBOT_RELEASE_MARKETING_COPY_FILE#$REPO_ROOT/}"
+      marketing_copy_allowed_relative="${AGENTSPACE_RELEASE_MARKETING_COPY_FILE#$REPO_ROOT/}"
       ;;
     /*)
       ;;
     *)
-      if [ "${SPACEBOT_RELEASE_MARKETING_COPY_FILE#../}" = "${SPACEBOT_RELEASE_MARKETING_COPY_FILE}" ]; then
-        marketing_copy_allowed_relative="${SPACEBOT_RELEASE_MARKETING_COPY_FILE#./}"
+      if [ "${AGENTSPACE_RELEASE_MARKETING_COPY_FILE#../}" = "${AGENTSPACE_RELEASE_MARKETING_COPY_FILE}" ]; then
+        marketing_copy_allowed_relative="${AGENTSPACE_RELEASE_MARKETING_COPY_FILE#./}"
       fi
       ;;
   esac

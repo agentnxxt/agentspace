@@ -1,4 +1,4 @@
-//! Top-level error types for Spacebot.
+//! Top-level error types for Agentspace.
 
 use std::sync::Arc;
 

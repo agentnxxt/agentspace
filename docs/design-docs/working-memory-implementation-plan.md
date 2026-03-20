@@ -452,7 +452,7 @@ Add `store.emit(...).record()` calls at each of these locations:
 | `BranchCompleted` | `src/agent/channel.rs` | Branch result handler | `PendingResult` processing |
 | `CronExecuted` | `src/cron/scheduler.rs` | After job completion | Scheduler run loop |
 | `MemorySaved` | `src/tools/memory_save.rs` | After successful save | `memory_save` tool handler |
-| `Error` | `src/hooks/spacebot.rs` | On tool failure | `SpacebotHook::on_tool_result` |
+| `Error` | `src/hooks/agentspace.rs` | On tool failure | `AgentspaceHook::on_tool_result` |
 | `System` | `src/main.rs` | At startup | After initialization |
 | `TaskUpdate` | `src/tools/task_create.rs`, `task_update.rs` | After task CRUD | Tool handlers |
 | `AgentMessage` | `src/tools/send_agent_message.rs` | After send | Tool handler |

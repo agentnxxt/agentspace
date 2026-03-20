@@ -17,8 +17,8 @@ use crate::agent::status::{StatusBlock, SystemInfo};
 use crate::agent::worker::Worker;
 use crate::conversation::{ChannelStore, ConversationLogger, ProcessRunLogger};
 use crate::error::{AgentError, Result};
-use crate::hooks::SpacebotHook;
-use crate::llm::SpacebotModel;
+use crate::hooks::AgentspaceHook;
+use crate::llm::AgentspaceModel;
 use crate::{
     AgentDeps, BranchId, ChannelId, InboundMessage, OutboundResponse, ProcessEvent, ProcessId,
     ProcessType, RoutedResponse, RoutedSender, WorkerId,
@@ -396,7 +396,7 @@ pub struct Channel {
     pub id: ChannelId,
     pub title: Option<String>,
     pub deps: AgentDeps,
-    pub hook: SpacebotHook,
+    pub hook: AgentspaceHook,
     pub state: ChannelState,
     /// Per-channel tool server (isolated from other channels).
     pub tool_server: rig::tool::server::ToolServerHandle,
@@ -495,7 +495,7 @@ impl Channel {
         live_worker_transcripts: Option<LiveWorkerTranscripts>,
     ) -> (Self, mpsc::Sender<InboundMessage>) {
         let process_id = ProcessId::Channel(id.clone());
-        let hook = SpacebotHook::new(
+        let hook = AgentspaceHook::new(
             deps.agent_id.clone(),
             process_id,
             ProcessType::Channel,
@@ -2360,7 +2360,7 @@ impl Channel {
             **rc.max_turns.load()
         };
         let model_name = routing.resolve(ProcessType::Channel, None);
-        let model = SpacebotModel::make(&self.deps.llm_manager, model_name)
+        let model = AgentspaceModel::make(&self.deps.llm_manager, model_name)
             .with_context(&*self.deps.agent_id, "channel")
             .with_routing((**routing).clone());
 

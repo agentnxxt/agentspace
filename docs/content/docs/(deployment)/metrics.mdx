@@ -1,11 +1,11 @@
 ---
 title: Metrics
-description: Prometheus-compatible metrics for monitoring Spacebot's LLM usage, costs, and agent activity.
+description: Prometheus-compatible metrics for monitoring Agentspace's LLM usage, costs, and agent activity.
 ---
 
 # Metrics
 
-Spacebot exposes Prometheus-compatible metrics for monitoring LLM costs, token usage, agent activity, and memory operations. All telemetry code is behind the `metrics` cargo feature flag — without it, every instrumentation block compiles out to nothing.
+Agentspace exposes Prometheus-compatible metrics for monitoring LLM costs, token usage, agent activity, and memory operations. All telemetry code is behind the `metrics` cargo feature flag — without it, every instrumentation block compiles out to nothing.
 
 ## Building with Metrics
 
@@ -15,7 +15,7 @@ cargo build --release --features metrics
 
 ## Configuration
 
-Add a `[metrics]` block to your `spacebot.toml`:
+Add a `[metrics]` block to your `agentspace.toml`:
 
 ```toml
 [metrics]
@@ -41,7 +41,7 @@ The metrics server runs as a separate tokio task alongside the main API server a
 
 ## Exposed Metrics
 
-All metrics are prefixed with `spacebot_`.
+All metrics are prefixed with `agentspace_`.
 
 ### LLM Metrics
 
@@ -49,10 +49,10 @@ These metrics track every LLM completion request, including token counts and est
 
 | Metric | Type | Labels | Description |
 | ------ | ---- | ------ | ----------- |
-| `spacebot_llm_requests_total` | Counter | `agent_id`, `model`, `tier` | Total LLM completion requests |
-| `spacebot_llm_request_duration_seconds` | Histogram | `agent_id`, `model`, `tier` | End-to-end LLM request duration |
-| `spacebot_llm_tokens_total` | Counter | `agent_id`, `model`, `tier`, `direction` | Token counts (`direction`: input, output, cached_input) |
-| `spacebot_llm_estimated_cost_dollars` | Counter | `agent_id`, `model`, `tier` | Estimated cost in USD |
+| `agentspace_llm_requests_total` | Counter | `agent_id`, `model`, `tier` | Total LLM completion requests |
+| `agentspace_llm_request_duration_seconds` | Histogram | `agent_id`, `model`, `tier` | End-to-end LLM request duration |
+| `agentspace_llm_tokens_total` | Counter | `agent_id`, `model`, `tier`, `direction` | Token counts (`direction`: input, output, cached_input) |
+| `agentspace_llm_estimated_cost_dollars` | Counter | `agent_id`, `model`, `tier` | Estimated cost in USD |
 
 The `tier` label corresponds to the process type: `channel`, `branch`, `worker`, `compactor`, or `cortex`.
 
@@ -64,52 +64,52 @@ The `direction` label on token counts distinguishes input tokens, output (comple
 
 | Metric | Type | Labels | Description |
 | ------ | ---- | ------ | ----------- |
-| `spacebot_tool_calls_total` | Counter | `agent_id`, `tool_name` | Total tool calls executed |
-| `spacebot_tool_call_duration_seconds` | Histogram | — | Tool call execution duration |
+| `agentspace_tool_calls_total` | Counter | `agent_id`, `tool_name` | Total tool calls executed |
+| `agentspace_tool_call_duration_seconds` | Histogram | — | Tool call execution duration |
 
 ### Agent & Worker Metrics
 
 | Metric | Type | Labels | Description |
 | ------ | ---- | ------ | ----------- |
-| `spacebot_active_workers` | Gauge | `agent_id` | Currently active workers |
-| `spacebot_active_branches` | Gauge | `agent_id` | Currently active branches |
-| `spacebot_worker_duration_seconds` | Histogram | `agent_id`, `worker_type` | Worker lifetime duration |
-| `spacebot_process_errors_total` | Counter | `agent_id`, `process_type`, `error_type` | Process errors by type |
+| `agentspace_active_workers` | Gauge | `agent_id` | Currently active workers |
+| `agentspace_active_branches` | Gauge | `agent_id` | Currently active branches |
+| `agentspace_worker_duration_seconds` | Histogram | `agent_id`, `worker_type` | Worker lifetime duration |
+| `agentspace_process_errors_total` | Counter | `agent_id`, `process_type`, `error_type` | Process errors by type |
 
 ### Memory Metrics
 
 | Metric | Type | Labels | Description |
 | ------ | ---- | ------ | ----------- |
-| `spacebot_memory_reads_total` | Counter | — | Total memory recall operations |
-| `spacebot_memory_writes_total` | Counter | — | Total memory save operations |
-| `spacebot_memory_entry_count` | Gauge | `agent_id` | Total memory entries per agent |
-| `spacebot_memory_updates_total` | Counter | `agent_id`, `operation` | Memory mutations (`operation`: save, update, delete, forget) |
+| `agentspace_memory_reads_total` | Counter | — | Total memory recall operations |
+| `agentspace_memory_writes_total` | Counter | — | Total memory save operations |
+| `agentspace_memory_entry_count` | Gauge | `agent_id` | Total memory entries per agent |
+| `agentspace_memory_updates_total` | Counter | `agent_id`, `operation` | Memory mutations (`operation`: save, update, delete, forget) |
 
 ## Cost Tracking
 
 Token usage and estimated costs are tracked per-request. To see total estimated spend:
 
 ```text
-sum(spacebot_llm_estimated_cost_dollars) by (agent_id)
+sum(agentspace_llm_estimated_cost_dollars) by (agent_id)
 ```
 
 To see spend rate over the last hour:
 
 ```text
-sum(rate(spacebot_llm_estimated_cost_dollars[1h])) by (agent_id, model) * 3600
+sum(rate(agentspace_llm_estimated_cost_dollars[1h])) by (agent_id, model) * 3600
 ```
 
 To see token throughput:
 
 ```text
-sum(rate(spacebot_llm_tokens_total[5m])) by (direction)
+sum(rate(agentspace_llm_tokens_total[5m])) by (direction)
 ```
 
 ## Prometheus Scrape Config
 
 ```yaml
 scrape_configs:
-  - job_name: spacebot
+  - job_name: agentspace
     scrape_interval: 15s
     static_configs:
       - targets: ["localhost:9090"]
@@ -121,12 +121,12 @@ Expose the metrics port alongside the API port:
 
 ```bash
 docker run -d \
-  --name spacebot \
+  --name agentspace \
   -e ANTHROPIC_API_KEY="sk-ant-..." \
-  -v spacebot-data:/data \
+  -v agentspace-data:/data \
   -p 19898:19898 \
   -p 9090:9090 \
-  ghcr.io/spacedriveapp/spacebot:latest
+  ghcr.io/agentnxxt/agentspace:latest
 ```
 
 The published Docker image already includes metrics support.

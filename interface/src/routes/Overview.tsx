@@ -63,7 +63,7 @@ export function Overview({liveStates, activeLinks}: OverviewProps) {
 		<div className="flex h-full flex-1 items-center justify-between px-6">
 			<div className="flex items-center gap-4">
 				<div className="flex items-center gap-2">
-					<h1 className="font-plex text-sm font-medium text-ink">Spacebot</h1>
+					<h1 className="font-plex text-sm font-medium text-ink">Agentspace</h1>
 					{statusData ? (
 						<div className="h-2 w-2 rounded-full bg-green-500" />
 					) : (
@@ -149,7 +149,7 @@ export function Overview({liveStates, activeLinks}: OverviewProps) {
 						{providersData && !providersData.has_any ? (
 							<div className="flex flex-col items-center gap-6 max-w-md text-center">
 								<div className="flex flex-col items-center gap-4">
-									<h2 className="text-lg font-medium text-ink">Welcome to Spacebot</h2>
+									<h2 className="text-lg font-medium text-ink">Welcome to Agentspace</h2>
 									<p className="text-sm text-ink-faint leading-relaxed">
 										An agentic AI system where every process has a dedicated role. To get started, connect an LLM provider.
 									</p>
@@ -163,7 +163,7 @@ export function Overview({liveStates, activeLinks}: OverviewProps) {
 											Add LLM Provider
 										</Link>
 										<a
-											href="https://docs.spacebot.sh"
+											href="https://docs.space.agnxxt.com"
 											target="_blank"
 											rel="noopener noreferrer"
 											className="inline-flex items-center rounded-lg border border-app-line px-4 py-2 text-sm font-medium text-ink-dull hover:bg-app-hover/40 hover:text-ink transition-colors"
@@ -176,7 +176,7 @@ export function Overview({liveStates, activeLinks}: OverviewProps) {
 									<HugeiconsIcon icon={IdeaIcon} className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
 									<p className="text-tiny text-ink-faint leading-relaxed">
 										<span className="font-medium text-ink-dull">Pro tip:</span>{" "}
-										Once set up, you can talk to the Cortex from any agent page to get help with configuration, debugging, or learning how Spacebot works.
+										Once set up, you can talk to the Cortex from any agent page to get help with configuration, debugging, or learning how Agentspace works.
 									</p>
 								</div>
 							</div>

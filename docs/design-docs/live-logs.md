@@ -96,7 +96,7 @@ Response:
     {
       "timestamp": "2026-02-19T10:30:45.123Z",
       "level": "INFO",
-      "target": "spacebot::agent::channel",
+      "target": "agentspace::agent::channel",
       "message": "processing inbound message"
     }
   ]
@@ -109,7 +109,7 @@ SSE endpoint. Each event:
 
 ```
 event: log
-data: {"timestamp":"2026-02-19T10:30:45.123Z","level":"WARN","target":"spacebot::llm::model","message":"retrying after rate limit"}
+data: {"timestamp":"2026-02-19T10:30:45.123Z","level":"WARN","target":"agentspace::llm::model","message":"retrying after rate limit"}
 ```
 
 Uses `broadcast::subscribe()` + `async_stream` with 15s keepalive, identical pattern to `events_sse`.

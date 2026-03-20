@@ -16,7 +16,7 @@ Target: 60-90 seconds, Twitter. Demo footage from Discord.
 
 Show: message goes in, bot responds immediately, worker runs in background, results come back.
 
-"This is Spacebot. The channel is the ambassador to the human — and it never blocks. Ever. When it needs to think, it branches — forks its own context, does memory recall, comes back with an answer. When it needs to do real work, it spawns a worker. The channel keeps talking to you the entire time."
+"This is Agentspace. The channel is the ambassador to the human — and it never blocks. Ever. When it needs to think, it branches — forks its own context, does memory recall, comes back with an answer. When it needs to do real work, it spawns a worker. The channel keeps talking to you the entire time."
 
 "Memories aren't markdown files that get overwritten. They're structured objects in a database — typed, weighted, with associations between them. And a background process called the cortex periodically queries the memory graph and builds a curated briefing of what's relevant right now — active projects, recent decisions, open questions — and feeds it into every conversation. Your agent stays current without being asked."
 
@@ -28,4 +28,4 @@ Show: message goes in, bot responds immediately, worker runs in background, resu
 
 ## CLOSE (60-75s) — vision + soft CTA
 
-"I built this because I think agentic AI should feel like infrastructure, not a prototype. If you want to try it — it's open source. If you don't want to set it up yourself — spacebot.sh."
+"I built this because I think agentic AI should feel like infrastructure, not a prototype. If you want to try it — it's open source. If you don't want to set it up yourself — space.agnxxt.com."

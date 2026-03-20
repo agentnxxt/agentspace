@@ -62,12 +62,12 @@ TOML representation:
 id = "jamie"
 display_name = "Jamie Pine"
 role = "Founder"
-bio = "Creator of Spacebot and Spacedrive."
+bio = "Creator of Agentspace and Spacedrive."
 description = """
 Jamie Pine (@jamiepine). Timezone: America/Vancouver.
 
 Full-stack developer, open source maintainer. Created Spacedrive (cross-platform 
-file manager) and Spacebot (agentic AI system). Works in Rust and TypeScript.
+file manager) and Agentspace (agentic AI system). Works in Rust and TypeScript.
 
 Streams development on Twitch. Prefers direct, concise communication. Comfortable 
 with technical depth. Uses AI tools extensively in his workflow.

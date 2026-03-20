@@ -47,7 +47,7 @@ COPY interface/ interface/
 RUN cd interface && bun run build
 
 # 5. Copy source and compile the real binary.
-#    build.rs is skipped (SPACEBOT_SKIP_FRONTEND_BUILD=1) since the
+#    build.rs is skipped (AGENTSPACE_SKIP_FRONTEND_BUILD=1) since the
 #    frontend is already built above with the OpenCode embed included.
 #    prompts/ is needed for include_str! in src/prompts/text.rs.
 #    presets/ is needed for rust-embed in src/factory/presets.rs and
@@ -62,9 +62,9 @@ COPY migrations/ migrations/
 COPY docs/ docs/
 COPY AGENTS.md README.md CHANGELOG.md ./
 COPY src/ src/
-RUN SPACEBOT_SKIP_FRONTEND_BUILD=1 cargo build --release --features metrics \
-    && mv /build/target/release/spacebot /usr/local/bin/spacebot \
-    && cargo clean -p spacebot --release --target-dir /build/target
+RUN AGENTSPACE_SKIP_FRONTEND_BUILD=1 cargo build --release --features metrics \
+    && mv /build/target/release/agentspace /usr/local/bin/agentspace \
+    && cargo clean -p agentspace --release --target-dir /build/target
 
 # ---- Runtime stage ----
 # Minimal runtime with Chrome runtime libraries for fetcher-downloaded Chromium.
@@ -98,16 +98,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/bin/spacebot /usr/local/bin/spacebot
+COPY --from=builder /usr/local/bin/agentspace /usr/local/bin/agentspace
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-ENV SPACEBOT_DIR=/data
-ENV SPACEBOT_DEPLOYMENT=docker
+ENV AGENTSPACE_DIR=/data
+ENV AGENTSPACE_DEPLOYMENT=docker
 EXPOSE 19898 18789 9090
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:19898/api/health || exit 1
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["spacebot", "start", "--foreground"]
+CMD ["agentspace", "start", "--foreground"]

@@ -5,7 +5,7 @@ description: Multi-agent setup with isolated workspaces, databases, identities, 
 
 # Agents
 
-Spacebot supports multiple agents running on a single instance. Each agent is an independent entity with its own soul, memory, conversations, and messaging bindings. One binary, multiple personalities.
+Agentspace supports multiple agents running on a single instance. Each agent is an independent entity with its own soul, memory, conversations, and messaging bindings. One binary, multiple personalities.
 
 Agents communicate through an explicit communication graph — directed links that define who can message whom. The graph also includes org-level humans, giving agents awareness of the people who manage them.
 
@@ -13,15 +13,15 @@ Agents communicate through an explicit communication graph — directed links th
 
 An agent is a self-contained unit. It has:
 
-- **Identity files** — `SOUL.md`, `IDENTITY.md`, and `ROLE.md` in the agent root directory (`~/.spacebot/agents/{id}/`)
-- **A workspace** — sandboxed directory (`~/.spacebot/agents/{id}/workspace/`) for working files, ingest, and prompt overrides; this is the boundary for worker file tools
+- **Identity files** — `SOUL.md`, `IDENTITY.md`, and `ROLE.md` in the agent root directory (`~/.agentspace/agents/{id}/`)
+- **A workspace** — sandboxed directory (`~/.agentspace/agents/{id}/workspace/`) for working files, ingest, and prompt overrides; this is the boundary for worker file tools
 - **Its own databases** — SQLite, LanceDB, and redb, completely isolated from other agents
 - **Its own cortex** — monitoring its own processes and memory graph
 - **Its own conversations** — channels, branches, workers scoped to this agent
 - **Messaging bindings** — which Discord guilds, Telegram chats, or webhook endpoints route to this agent
 - **Links** — connections to other agents and humans in the communication graph
 
-An agent does NOT have its own LLM provider credentials, its own binary, or its own process. All agents share the same Spacebot process, the same tokio runtime, and the same API keys. Isolation is at the data level, not the process level.
+An agent does NOT have its own LLM provider credentials, its own binary, or its own process. All agents share the same Agentspace process, the same tokio runtime, and the same API keys. Isolation is at the data level, not the process level.
 
 ## Configuration
 
@@ -220,7 +220,7 @@ Returns agents, humans, links, and groups for rendering.
 ## On-Disk Structure
 
 ```
-~/.spacebot/
+~/.agentspace/
 ├── config.toml                           # instance config (agents, links, humans, groups)
 │
 ├── agents/
@@ -230,7 +230,7 @@ Returns agents, humans, links, and groups for rendering.
 │   │   ├── ROLE.md                       # responsibilities, scope, escalation rules
 │   │   ├── workspace/                    # sandbox boundary for worker file tools
 │   │   ├── data/
-│   │   │   ├── spacebot.db              # SQLite (memories, conversations, cron jobs)
+│   │   │   ├── agentspace.db              # SQLite (memories, conversations, cron jobs)
 │   │   │   ├── lancedb/                 # LanceDB (embeddings, FTS)
 │   │   │   ├── config.redb             # redb (agent-level settings)
 │   │   │   ├── settings.redb            # redb (runtime settings)

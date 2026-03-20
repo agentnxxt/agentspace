@@ -78,7 +78,7 @@ static MODELS_CACHE: std::sync::LazyLock<
 
 const MODELS_CACHE_TTL: std::time::Duration = std::time::Duration::from_secs(3600);
 
-/// Models known to work with Spacebot's current voice transcription path
+/// Models known to work with Agentspace's current voice transcription path
 /// (OpenAI-compatible `/v1/chat/completions` with `input_audio`).
 const KNOWN_VOICE_TRANSCRIPTION_MODELS: &[&str] = &[
     // Native Gemini API
@@ -99,7 +99,7 @@ const KNOWN_VOICE_TRANSCRIPTION_MODELS: &[&str] = &[
     "openrouter/google/gemini-3.1-pro-preview",
 ];
 
-/// Maps models.dev provider IDs to spacebot's internal provider IDs for
+/// Maps models.dev provider IDs to agentspace's internal provider IDs for
 /// providers with direct integrations.
 fn direct_provider_mapping(models_dev_id: &str) -> Option<&'static str> {
     match models_dev_id {
@@ -199,10 +199,10 @@ async fn fetch_models_dev() -> anyhow::Result<Vec<ModelInfo>> {
             }
 
             let (routing_id, routing_provider) =
-                if let Some(spacebot_provider) = direct_provider_mapping(provider_id) {
+                if let Some(agentspace_provider) = direct_provider_mapping(provider_id) {
                     (
-                        format!("{spacebot_provider}/{model_id}"),
-                        spacebot_provider.to_string(),
+                        format!("{agentspace_provider}/{model_id}"),
+                        agentspace_provider.to_string(),
                     )
                 } else if provider_id == "openrouter" {
                     (format!("openrouter/{model_id}"), "openrouter".into())

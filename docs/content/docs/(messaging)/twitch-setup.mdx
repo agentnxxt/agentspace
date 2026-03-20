@@ -1,11 +1,11 @@
 ---
 title: Twitch Setup
-description: Connect Spacebot to Twitch chat.
+description: Connect Agentspace to Twitch chat.
 ---
 
 # Twitch Setup
 
-Connect Spacebot to Twitch chat. Takes about 10 minutes.
+Connect Agentspace to Twitch chat. Takes about 10 minutes.
 
 You need a **Twitch account** for the bot and a **Twitch application** registered at dev.twitch.tv.
 
@@ -18,7 +18,7 @@ Create a Twitch account for your bot (or use an existing one). The bot will send
 1. Go to [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps) and log in with **any** Twitch account (doesn't need to be the bot account)
 2. Click **Register Your Application**
 3. Fill in the form:
-   - **Name:** anything (e.g. "My Spacebot")
+   - **Name:** anything (e.g. "My Agentspace")
    - **OAuth Redirect URL:** `http://localhost:3000`
    - **Category:** Chat Bot
 4. Click **Create**
@@ -79,20 +79,20 @@ The response contains `access_token` and `refresh_token`. Copy both.
 </Tab>
 </Tabs>
 
-## Step 4: Add Credentials to Spacebot
+## Step 4: Add Credentials to Agentspace
 
-Spacebot needs your **username**, **OAuth token**, **client ID**, **client secret**, and **refresh token**. With all five, Spacebot automatically refreshes expired tokens.
+Agentspace needs your **username**, **OAuth token**, **client ID**, **client secret**, and **refresh token**. With all five, Agentspace automatically refreshes expired tokens.
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
-1. Open your Spacebot dashboard
+1. Open your Agentspace dashboard
 2. Go to **Settings** → **Messaging Platforms**
 3. Click **Setup** on the Twitch card
 4. Enter the bot's **username**, **OAuth token**, **client ID**, **client secret**, and **refresh token**
 5. Click **Save**
 
-Spacebot connects immediately — no restart needed.
+Agentspace connects immediately — no restart needed.
 
 </Tab>
 <Tab value="TOML Config">
@@ -132,8 +132,8 @@ Token changes in config require a restart.
 
 Specify which Twitch channels the bot should join. Channel names are case-insensitive and should not include the `#` prefix.
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Add channel names in the **Channels** tag input on the Twitch binding form.
 
@@ -158,8 +158,8 @@ Twitch channels can be extremely high-volume. By default the bot responds to eve
 
 Set a trigger prefix so the bot only responds to messages that start with it:
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 The trigger prefix is configured in the TOML config file.
 
@@ -184,8 +184,8 @@ Set to an empty string or omit to respond to all messages.
 
 By default the bot responds in every channel it joins. To route specific channels to specific agents, add channel names to your bindings.
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Go to **Settings** → **Bindings** tab and add channel names to your Twitch binding.
 
@@ -208,8 +208,8 @@ If `channel_ids` is empty or omitted, the bot responds in all joined channels.
 
 Restrict which Twitch users can interact with the bot by adding login names to the binding's allowed users list.
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Add Twitch usernames to the **DM Allowed Users** list on the binding form.
 
@@ -232,8 +232,8 @@ When the list is empty (default), all users can interact. Permission changes hot
 
 Route different Twitch channels to different agents.
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Create multiple bindings in the **Bindings** tab, each with different channel names and agents.
 
@@ -273,7 +273,7 @@ Each Twitch channel maps to a single conversation (`twitch:<channel_name>`). Unl
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| `Login authentication failed` | Invalid or expired OAuth token | Re-run the token flow from Step 3. If you have `client_id`, `client_secret`, and `refresh_token` configured, Spacebot refreshes automatically — check that all three are set. |
+| `Login authentication failed` | Invalid or expired OAuth token | Re-run the token flow from Step 3. If you have `client_id`, `client_secret`, and `refresh_token` configured, Agentspace refreshes automatically — check that all three are set. |
 | Bot connects but doesn't respond | Trigger prefix set | Messages must start with the configured prefix (e.g. `!ask`) |
 | Bot responds to everything | No trigger prefix | Set `trigger_prefix` in the config to limit when the bot responds |
 | Messages getting dropped | Rate limit | Reduce response frequency or get the bot account verified |

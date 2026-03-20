@@ -62,7 +62,7 @@
   ] ++ lib.optionals stdenv.isLinux [pkgs.mold];
 
   frontendNodeModules = stdenv.mkDerivation {
-    pname = "spacebot-frontend-node-modules";
+    pname = "agentspace-frontend-node-modules";
     inherit version;
     src = "${frontendSrc}/interface";
 
@@ -116,7 +116,7 @@
   };
 
   frontend = stdenv.mkDerivation {
-    pname = "spacebot-frontend";
+    pname = "agentspace-frontend";
     inherit version;
     src = "${frontendSrc}/interface";
 
@@ -173,7 +173,7 @@
     '';
 
   commonBuildEnv = ''
-    export SPACEBOT_SKIP_FRONTEND_BUILD=1
+    export AGENTSPACE_SKIP_FRONTEND_BUILD=1
     mkdir -p interface/dist
     cp -r ${frontend}/* interface/dist/
   '';
@@ -184,9 +184,9 @@
     fn main() {}
   '';
 
-  spacebotCargoArtifacts = craneLib.buildDepsOnly (commonArgs
+  agentspaceCargoArtifacts = craneLib.buildDepsOnly (commonArgs
     // {
-      cargoExtraArgs = "--bin spacebot";
+      cargoExtraArgs = "--bin agentspace";
       doCheck = false;
       cargoCheckCommand = "true";
       src = craneLib.mkDummySrc {
@@ -200,7 +200,7 @@
       preBuild = commonRustBuildEnvWithLinker;
     });
 
-  spacebotTestsCargoArtifacts = craneLib.buildDepsOnly (commonArgs
+  agentspaceTestsCargoArtifacts = craneLib.buildDepsOnly (commonArgs
     // {
       doCheck = false;
       cargoCheckCommand = "true";
@@ -215,24 +215,24 @@
       preBuild = commonRustBuildEnvWithLinker;
     });
 
-  spacebot = craneLib.buildPackage (commonArgs
+  agentspace = craneLib.buildPackage (commonArgs
     // {
-      cargoArtifacts = spacebotCargoArtifacts;
+      cargoArtifacts = agentspaceCargoArtifacts;
       doCheck = false;
-      cargoExtraArgs = "--bin spacebot";
+      cargoExtraArgs = "--bin agentspace";
 
       preBuild = commonBuildEnvWithLinker;
 
       postInstall = ''
-        mkdir -p $out/share/spacebot
-        cp -r ${runtimeAssetsSrc}/prompts $out/share/spacebot/
-        cp -r ${runtimeAssetsSrc}/migrations $out/share/spacebot/
-        chmod -R u+w $out/share/spacebot
+        mkdir -p $out/share/agentspace
+        cp -r ${runtimeAssetsSrc}/prompts $out/share/agentspace/
+        cp -r ${runtimeAssetsSrc}/migrations $out/share/agentspace/
+        chmod -R u+w $out/share/agentspace
       '';
 
       meta = with lib; {
         description = "An AI agent for teams, communities, and multi-user environments";
-        homepage = "https://spacebot.sh";
+        homepage = "https://space.agnxxt.com";
         license = {
           shortName = "FSL-1.1-ALv2";
           fullName = "Functional Source License, Version 1.1, ALv2 Future License";
@@ -241,13 +241,13 @@
           redistributable = true;
         };
         platforms = platforms.linux ++ platforms.darwin;
-        mainProgram = "spacebot";
+        mainProgram = "agentspace";
       };
     });
 
-  spacebot-tests = craneLib.cargoTest (commonArgs
+  agentspace-tests = craneLib.cargoTest (commonArgs
     // {
-      cargoArtifacts = spacebotTestsCargoArtifacts;
+      cargoArtifacts = agentspaceTestsCargoArtifacts;
 
       # Skip tests that require ONNX model file and known flaky suites in Nix builds
       cargoTestExtraArgs = "-- --skip memory::search::tests --skip memory::store::tests --skip config::tests::test_llm_provider_tables_parse_with_env_and_lowercase_keys";
@@ -255,25 +255,25 @@
       preBuild = commonBuildEnvWithLinker;
     });
 
-  spacebot-full = pkgs.symlinkJoin {
-    name = "spacebot-full";
-    paths = [spacebot];
+  agentspace-full = pkgs.symlinkJoin {
+    name = "agentspace-full";
+    paths = [agentspace];
 
     buildInputs = [pkgs.makeWrapper];
 
     postBuild = ''
-      wrapProgram $out/bin/spacebot \
+      wrapProgram $out/bin/agentspace \
         --set CHROME_PATH "${pkgs.chromium}/bin/chromium" \
         --set CHROME_FLAGS "--no-sandbox --disable-dev-shm-usage --disable-gpu" \
         --set ORT_LIB_LOCATION "${onnxruntime}/lib"
     '';
 
     meta =
-      spacebot.meta
+      agentspace.meta
       // {
-        description = spacebot.meta.description + " (with browser support)";
+        description = agentspace.meta.description + " (with browser support)";
       };
   };
 in {
-  inherit frontend spacebot spacebot-full spacebot-tests;
+  inherit frontend agentspace agentspace-full agentspace-tests;
 }

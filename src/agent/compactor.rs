@@ -5,8 +5,8 @@
 //! + memory extraction) happens in the spawned worker, not here.
 
 use crate::error::Result;
-use crate::hooks::SpacebotHook;
-use crate::llm::SpacebotModel;
+use crate::hooks::AgentspaceHook;
+use crate::llm::AgentspaceModel;
 use crate::{AgentDeps, ChannelId, ProcessId, ProcessType};
 use rig::agent::AgentBuilder;
 use rig::completion::CompletionModel;
@@ -222,7 +222,7 @@ async fn run_compaction(
     // 3. Run the compaction LLM to produce summary + extracted memories
     let routing = deps.runtime_config.routing.load();
     let model_name = routing.resolve(ProcessType::Compactor, None).to_string();
-    let model = SpacebotModel::make(&deps.llm_manager, &model_name)
+    let model = AgentspaceModel::make(&deps.llm_manager, &model_name)
         .with_context(&*deps.agent_id, "compactor")
         .with_routing((**routing).clone());
 
@@ -234,7 +234,7 @@ async fn run_compaction(
         .default_max_turns(1)
         .build();
 
-    let hook = SpacebotHook::new(
+    let hook = AgentspaceHook::new(
         deps.agent_id.clone(),
         ProcessId::Worker(Uuid::new_v4()),
         ProcessType::Compactor,

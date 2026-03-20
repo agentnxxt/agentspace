@@ -228,7 +228,7 @@ impl Tool for SkillsSearchTool {
                     .skills
                     .into_iter()
                     .map(|skill| RegistrySkillResult {
-                        install_command: format!("spacebot skill add {}", skill.source),
+                        install_command: format!("agentspace skill add {}", skill.source),
                         source: skill.source,
                         skill_id: skill.skill_id,
                         name: skill.name,

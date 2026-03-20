@@ -50,7 +50,7 @@ Current behavior has multiple state surfaces that can drift from each other (in-
 
 ### New Environment Variable
 
-- `SPACEBOT_CRON_TIMEZONE` (optional string)
+- `AGENTSPACE_CRON_TIMEZONE` (optional string)
 
 ### Accepted Values
 
@@ -62,7 +62,7 @@ Per agent:
 
 1. `agents[].cron_timezone`
 2. `defaults.cron_timezone`
-3. `SPACEBOT_CRON_TIMEZONE`
+3. `AGENTSPACE_CRON_TIMEZONE`
 4. server local timezone
 
 If the configured timezone is invalid:
@@ -107,7 +107,7 @@ Update existing docs in the same change:
 
 1. `docs/content/docs/(configuration)/config.mdx`
    - Add `cron_timezone` in defaults and per-agent sections.
-   - Document `SPACEBOT_CRON_TIMEZONE`.
+   - Document `AGENTSPACE_CRON_TIMEZONE`.
    - Document precedence and fallback behavior.
 2. `docs/content/docs/(features)/cron.mdx`
    - Clarify active-hour timezone resolution.

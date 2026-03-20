@@ -8,7 +8,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUTPUT="${1:-$REPO_ROOT/CONTEXT.md}"
 
 {
-  echo "# Spacebot — Full Documentation Bundle"
+  echo "# Agentspace — Full Documentation Bundle"
   echo ""
   echo "Generated: $(date -u '+%Y-%m-%d %H:%M UTC')"
   echo ""

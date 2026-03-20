@@ -44,7 +44,7 @@ pub async fn secrets_status(State(state): State<Arc<ApiState>>) -> impl IntoResp
         Err(e) => return e.into_response(),
     };
 
-    let platform_managed = std::env::var("SPACEBOT_DEPLOYMENT")
+    let platform_managed = std::env::var("AGENTSPACE_DEPLOYMENT")
         .is_ok_and(|deployment| deployment.eq_ignore_ascii_case("hosted"));
 
     match store.status(platform_managed) {
@@ -506,7 +506,7 @@ pub async fn export_secrets(State(state): State<Arc<ApiState>>) -> impl IntoResp
             if !export.encrypted {
                 response["warning"] = serde_json::json!(
                     "Encryption is not enabled. This export contains plaintext secrets. \
-                     Store it securely or enable encryption first with: spacebot secrets encrypt"
+                     Store it securely or enable encryption first with: agentspace secrets encrypt"
                 );
             }
             Json(response).into_response()

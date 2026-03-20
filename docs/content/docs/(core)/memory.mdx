@@ -5,11 +5,11 @@ description: Structured memory system with graph associations and hybrid search.
 
 # Memory
 
-Memories in SpaceBot are structured objects in a database. Not markdown files, not daily logs, not a manually curated MEMORY.md. Every memory is a row in SQLite with typed metadata and graph connections, paired with a vector embedding in LanceDB for search.
+Memories in Agentspace are structured objects in a database. Not markdown files, not daily logs, not a manually curated MEMORY.md. Every memory is a row in SQLite with typed metadata and graph connections, paired with a vector embedding in LanceDB for search.
 
 ## Why Not Files
 
-OpenClaw stores memories as markdown files on disk and indexes them into SQLite for search. This creates a whole category of problems: file watchers, hash-based change detection, stale indexes, async sync race conditions, and 43 source files just for the memory subsystem. SpaceBot uses embedded databases as the source of truth -- no file syncing, no server processes.
+OpenClaw stores memories as markdown files on disk and indexes them into SQLite for search. This creates a whole category of problems: file watchers, hash-based change detection, stale indexes, async sync race conditions, and 43 source files just for the memory subsystem. Agentspace uses embedded databases as the source of truth -- no file syncing, no server processes.
 
 ## Storage Split
 
@@ -40,9 +40,9 @@ Memories are typed. The type determines how the memory is stored, searched, and 
 
 **Preference** -- Something the user likes or dislikes. "James prefers Rust over TypeScript." Preferences influence behavior but don't change often.
 
-**Decision** -- A choice that was made. "We decided to use PostgreSQL instead of SQLite for Spacebot." Decisions carry context about why they were made.
+**Decision** -- A choice that was made. "We decided to use PostgreSQL instead of SQLite for Agentspace." Decisions carry context about why they were made.
 
-**Identity** -- Core information about who the user is or who the agent is. Always surfaced, never decayed. "James is a software engineer. My name is Spacebot."
+**Identity** -- Core information about who the user is or who the agent is. Always surfaced, never decayed. "James is a software engineer. My name is Agentspace."
 
 **Event** -- Something that happened. "James deployed SpaceDrive v0.4 on Feb 10." Events are temporal and naturally decay in importance.
 
@@ -135,7 +135,7 @@ The branch curates. 50 raw results become 5 relevant, contextualized memories. T
 
 ### Why Not Search Directly?
 
-In OpenClaw, the LLM calls `memory_search`, gets raw results in its context, and has to make sense of them. This pollutes the context with irrelevant matches, partial chunks, and search metadata. In Spacebot, the branch absorbs all that noise and returns only what matters. The branch is disposable -- its context gets thrown away after it returns. The channel stays clean.
+In OpenClaw, the LLM calls `memory_search`, gets raw results in its context, and has to make sense of them. This pollutes the context with irrelevant matches, partial chunks, and search metadata. In Agentspace, the branch absorbs all that noise and returns only what matters. The branch is disposable -- its context gets thrown away after it returns. The channel stays clean.
 
 This costs an extra LLM call. But it keeps the channel's context clean, which means fewer compactions, which means fewer memory extractions, which means the system runs more efficiently overall.
 
@@ -185,7 +185,7 @@ The injected memories are grouped by type and formatted cleanly. The channel see
 
 ```
 ## Identity
-- My name is Spacebot
+- My name is Agentspace
 - James is a software engineer who works on SpaceDrive
 
 ## Recent Context

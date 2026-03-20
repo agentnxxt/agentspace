@@ -57,24 +57,24 @@ Tool nudging is scoped by process type:
 The policy can be overridden per-hook:
 
 ```rust
-let hook = SpacebotHook::new(...)
+let hook = AgentspaceHook::new(...)
     .with_tool_nudge_policy(ToolNudgePolicy::Disabled);
 ```
 
 ### Implementation Details
 
-**Outcome detection** (`src/hooks/spacebot.rs:on_tool_result`):
+**Outcome detection** (`src/hooks/agentspace.rs:on_tool_result`):
 - After a successful `set_status` tool execution with `kind: "outcome"`, `outcome_signaled` is set to `true`
 - The flag persists for the rest of the prompt request
 
-**Nudge decision** (`src/hooks/spacebot.rs:should_nudge_tool_usage`):
+**Nudge decision** (`src/hooks/agentspace.rs:should_nudge_tool_usage`):
 - Returns `true` when: policy enabled, nudge active, no outcome signaled, AND response has no tool calls (either non-empty text or reasoning-only with no text)
 - Returns `false` when: outcome signaled, response has tool calls, policy disabled
 
 **Empty result guard** (`src/agent/worker.rs`):
 - After the initial task loop, if the result text is empty/whitespace-only, the worker fails instead of reaching `Done`. This is a safety net for cases where a reasoning-only response slips past the nudge gate (e.g. after nudge retries are exhausted).
 
-**Consecutive nudge counter** (`on_tool_result` in `src/hooks/spacebot.rs`):
+**Consecutive nudge counter** (`on_tool_result` in `src/hooks/agentspace.rs`):
 - When nudge policy is enabled and a tool call completes, `nudge_attempts` is reset to zero
 - This means the retry budget is per-consecutive-text-only-streak, not per-prompt-lifetime
 - A worker that alternates between tool calls and narration will never exhaust its budget
@@ -112,7 +112,7 @@ let follow_up_hook = hook
 
 The nudging behavior has comprehensive test coverage:
 
-- **Unit tests** (`src/hooks/spacebot.rs`):
+- **Unit tests** (`src/hooks/agentspace.rs`):
   - `nudges_on_every_text_only_response_without_outcome` — nudge fires on every text-only response
   - `nudges_after_tool_calls_without_outcome` — the exact bug case (read_skill + progress status + text exit)
   - `nudges_on_reasoning_only_response_without_outcome` — nudge fires when response is only Reasoning blocks (no text, no tools)

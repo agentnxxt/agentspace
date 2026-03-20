@@ -1,4 +1,4 @@
-//! Spacebot CLI entry point.
+//! Agentspace CLI entry point.
 
 use anyhow::Context as _;
 use arc_swap::ArcSwap;
@@ -10,7 +10,7 @@ use std::sync::Arc;
 use tokio::sync::mpsc;
 
 #[derive(Parser)]
-#[command(name = "spacebot", version)]
+#[command(name = "agentspace", version)]
 #[command(about = "A Rust agentic system with dedicated processes for every task")]
 struct Cli {
     #[command(subcommand)]
@@ -178,7 +178,7 @@ enum SecretsCommand {
 
 /// Tracks an active conversation channel and its message sender.
 struct ActiveChannel {
-    message_tx: mpsc::Sender<spacebot::InboundMessage>,
+    message_tx: mpsc::Sender<agentspace::InboundMessage>,
     /// Retained so the outbound routing task stays alive.
     _outbound_handle: tokio::task::JoinHandle<()>,
 }
@@ -207,7 +207,7 @@ fn serialize_backfill_transcript(entries: Vec<BackfillTranscriptEntry>) -> Optio
 }
 
 fn render_platform_history_backfill(
-    history_messages: &[spacebot::messaging::traits::HistoryMessage],
+    history_messages: &[agentspace::messaging::traits::HistoryMessage],
 ) -> Option<String> {
     let entries = history_messages
         .iter()
@@ -234,7 +234,7 @@ fn render_platform_history_backfill(
 }
 
 fn render_conversation_history_backfill(
-    history_messages: &[spacebot::conversation::history::ConversationMessage],
+    history_messages: &[agentspace::conversation::history::ConversationMessage],
 ) -> Option<String> {
     let entries = history_messages
         .iter()
@@ -268,35 +268,35 @@ fn render_conversation_history_backfill(
 
 /// Forward outbound response events to SSE clients for the dashboard.
 fn forward_sse_event(
-    api_event_tx: &tokio::sync::broadcast::Sender<spacebot::api::ApiEvent>,
+    api_event_tx: &tokio::sync::broadcast::Sender<agentspace::api::ApiEvent>,
     agent_id: &str,
     channel_id: &str,
-    response: &spacebot::OutboundResponse,
+    response: &agentspace::OutboundResponse,
 ) {
     match response {
-        spacebot::OutboundResponse::Text(text)
-        | spacebot::OutboundResponse::RichMessage { text, .. }
-        | spacebot::OutboundResponse::ThreadReply { text, .. } => {
+        agentspace::OutboundResponse::Text(text)
+        | agentspace::OutboundResponse::RichMessage { text, .. }
+        | agentspace::OutboundResponse::ThreadReply { text, .. } => {
             api_event_tx
-                .send(spacebot::api::ApiEvent::OutboundMessage {
+                .send(agentspace::api::ApiEvent::OutboundMessage {
                     agent_id: agent_id.to_string(),
                     channel_id: channel_id.to_string(),
                     text: text.clone(),
                 })
                 .ok();
         }
-        spacebot::OutboundResponse::Status(spacebot::StatusUpdate::Thinking) => {
+        agentspace::OutboundResponse::Status(agentspace::StatusUpdate::Thinking) => {
             api_event_tx
-                .send(spacebot::api::ApiEvent::TypingState {
+                .send(agentspace::api::ApiEvent::TypingState {
                     agent_id: agent_id.to_string(),
                     channel_id: channel_id.to_string(),
                     is_typing: true,
                 })
                 .ok();
         }
-        spacebot::OutboundResponse::Status(spacebot::StatusUpdate::StopTyping) => {
+        agentspace::OutboundResponse::Status(agentspace::StatusUpdate::StopTyping) => {
             api_event_tx
-                .send(spacebot::api::ApiEvent::TypingState {
+                .send(agentspace::api::ApiEvent::TypingState {
                     agent_id: agent_id.to_string(),
                     channel_id: channel_id.to_string(),
                     is_typing: false,
@@ -310,12 +310,12 @@ fn forward_sse_event(
 /// Route an outbound response to the messaging adapter using the pinned target
 /// message for platform routing metadata (thread_ts, channel_id, etc.).
 async fn route_outbound(
-    messaging: &std::sync::Arc<spacebot::messaging::MessagingManager>,
-    target: &spacebot::InboundMessage,
-    response: spacebot::OutboundResponse,
+    messaging: &std::sync::Arc<agentspace::messaging::MessagingManager>,
+    target: &agentspace::InboundMessage,
+    response: agentspace::OutboundResponse,
 ) {
     match response {
-        spacebot::OutboundResponse::Status(status) => {
+        agentspace::OutboundResponse::Status(status) => {
             if let Err(error) = messaging.send_status(target, status).await {
                 tracing::warn!(%error, "failed to send status update");
             }
@@ -358,20 +358,20 @@ fn cmd_start(
     // Use the config path (if provided) to derive the correct instance dir
     // for the PID check, so it matches the PID file written during daemonize.
     let instance_dir = resolve_instance_dir(&config_path);
-    let paths = spacebot::daemon::DaemonPaths::new(&instance_dir);
+    let paths = agentspace::daemon::DaemonPaths::new(&instance_dir);
 
     // Bail if already running
-    if let Some(pid) = spacebot::daemon::is_running(&paths) {
-        eprintln!("spacebot is already running (pid {pid})");
+    if let Some(pid) = agentspace::daemon::is_running(&paths) {
+        eprintln!("agentspace is already running (pid {pid})");
         std::process::exit(1);
     }
 
     // Run onboarding interactively before daemonizing
     let resolved_config_path = if config_path.is_some() {
         config_path.clone()
-    } else if spacebot::config::Config::needs_onboarding() {
+    } else if agentspace::config::Config::needs_onboarding() {
         // Returns Some(path) if CLI wizard ran, None if user chose the UI.
-        spacebot::config::run_onboarding().with_context(|| "onboarding failed")?
+        agentspace::config::run_onboarding().with_context(|| "onboarding failed")?
     } else {
         None
     };
@@ -389,7 +389,7 @@ fn cmd_start(
         //
         // Tokio's I/O driver and thread pool also don't survive fork, so the
         // runtime and tracing init must happen after this call as well.
-        spacebot::daemon::daemonize(&paths)?;
+        agentspace::daemon::daemonize(&paths)?;
     }
 
     // Open the instance-level secrets store so `secret:` references in config.toml
@@ -411,10 +411,10 @@ fn cmd_start(
 
     runtime.block_on(async {
         let otel_provider = if foreground {
-            spacebot::daemon::init_foreground_tracing(debug, &config.telemetry)
+            agentspace::daemon::init_foreground_tracing(debug, &config.telemetry)
         } else {
-            let paths = spacebot::daemon::DaemonPaths::new(&config.instance_dir);
-            spacebot::daemon::init_background_tracing(&paths, debug, &config.telemetry)
+            let paths = agentspace::daemon::DaemonPaths::new(&config.instance_dir);
+            agentspace::daemon::init_background_tracing(&paths, debug, &config.telemetry)
         };
 
         run(config, foreground, otel_provider, bootstrapped_store).await
@@ -430,24 +430,24 @@ fn resolve_instance_dir(config_path: &Option<std::path::PathBuf>) -> std::path::
             .map(|p| p.to_path_buf())
             .unwrap_or_else(|| std::path::PathBuf::from("."))
     } else {
-        spacebot::config::Config::default_instance_dir()
+        agentspace::config::Config::default_instance_dir()
     }
 }
 
 #[tokio::main]
 async fn cmd_stop() -> anyhow::Result<()> {
-    let paths = spacebot::daemon::DaemonPaths::from_default();
+    let paths = agentspace::daemon::DaemonPaths::from_default();
 
-    let Some(pid) = spacebot::daemon::is_running(&paths) else {
-        eprintln!("spacebot is not running");
+    let Some(pid) = agentspace::daemon::is_running(&paths) else {
+        eprintln!("agentspace is not running");
         std::process::exit(1);
     };
 
-    match spacebot::daemon::send_command(&paths, spacebot::daemon::IpcCommand::Shutdown).await {
-        Ok(spacebot::daemon::IpcResponse::Ok) => {
-            eprintln!("stopping spacebot (pid {pid})...");
+    match agentspace::daemon::send_command(&paths, agentspace::daemon::IpcCommand::Shutdown).await {
+        Ok(agentspace::daemon::IpcResponse::Ok) => {
+            eprintln!("stopping agentspace (pid {pid})...");
         }
-        Ok(spacebot::daemon::IpcResponse::Error { message }) => {
+        Ok(agentspace::daemon::IpcResponse::Error { message }) => {
             eprintln!("shutdown failed: {message}");
             std::process::exit(1);
         }
@@ -461,10 +461,10 @@ async fn cmd_stop() -> anyhow::Result<()> {
         }
     }
 
-    if spacebot::daemon::wait_for_exit(pid) {
-        eprintln!("spacebot stopped");
+    if agentspace::daemon::wait_for_exit(pid) {
+        eprintln!("agentspace stopped");
     } else {
-        eprintln!("spacebot did not stop within 10 seconds (pid {pid})");
+        eprintln!("agentspace did not stop within 10 seconds (pid {pid})");
         std::process::exit(1);
     }
 
@@ -473,9 +473,9 @@ async fn cmd_stop() -> anyhow::Result<()> {
 
 /// Stop if running, don't error if not.
 fn cmd_stop_if_running() {
-    let paths = spacebot::daemon::DaemonPaths::from_default();
+    let paths = agentspace::daemon::DaemonPaths::from_default();
 
-    let Some(pid) = spacebot::daemon::is_running(&paths) else {
+    let Some(pid) = agentspace::daemon::is_running(&paths) else {
         return;
     };
 
@@ -487,20 +487,20 @@ fn cmd_stop_if_running() {
     };
 
     runtime.block_on(async {
-        if let Ok(spacebot::daemon::IpcResponse::Ok) =
-            spacebot::daemon::send_command(&paths, spacebot::daemon::IpcCommand::Shutdown).await
+        if let Ok(agentspace::daemon::IpcResponse::Ok) =
+            agentspace::daemon::send_command(&paths, agentspace::daemon::IpcCommand::Shutdown).await
         {
-            eprintln!("stopping spacebot (pid {pid})...");
-            spacebot::daemon::wait_for_exit(pid);
+            eprintln!("stopping agentspace (pid {pid})...");
+            agentspace::daemon::wait_for_exit(pid);
         }
     });
 }
 
 fn cmd_status() -> anyhow::Result<()> {
-    let paths = spacebot::daemon::DaemonPaths::from_default();
+    let paths = agentspace::daemon::DaemonPaths::from_default();
 
-    let Some(_pid) = spacebot::daemon::is_running(&paths) else {
-        eprintln!("spacebot is not running");
+    let Some(_pid) = agentspace::daemon::is_running(&paths) else {
+        eprintln!("agentspace is not running");
         std::process::exit(1);
     };
 
@@ -510,19 +510,19 @@ fn cmd_status() -> anyhow::Result<()> {
         .context("failed to build tokio runtime")?;
 
     runtime.block_on(async {
-        match spacebot::daemon::send_command(&paths, spacebot::daemon::IpcCommand::Status).await {
-            Ok(spacebot::daemon::IpcResponse::Status {
+        match agentspace::daemon::send_command(&paths, agentspace::daemon::IpcCommand::Status).await {
+            Ok(agentspace::daemon::IpcResponse::Status {
                 pid,
                 uptime_seconds,
             }) => {
                 let hours = uptime_seconds / 3600;
                 let minutes = (uptime_seconds % 3600) / 60;
                 let seconds = uptime_seconds % 60;
-                eprintln!("spacebot is running");
+                eprintln!("agentspace is running");
                 eprintln!("  pid:    {pid}");
                 eprintln!("  uptime: {hours}h {minutes}m {seconds}s");
             }
-            Ok(spacebot::daemon::IpcResponse::Error { message }) => {
+            Ok(agentspace::daemon::IpcResponse::Error { message }) => {
                 eprintln!("status query failed: {message}");
                 std::process::exit(1);
             }
@@ -547,7 +547,7 @@ fn cmd_auth(config_path: Option<std::path::PathBuf>, auth_cmd: AuthCommand) -> a
     let instance_dir = if let Ok(config) = load_config(&config_path) {
         config.instance_dir
     } else {
-        spacebot::config::Config::default_instance_dir()
+        agentspace::config::Config::default_instance_dir()
     };
 
     // Ensure instance dir exists
@@ -562,15 +562,15 @@ fn cmd_auth(config_path: Option<std::path::PathBuf>, auth_cmd: AuthCommand) -> a
         match auth_cmd {
             AuthCommand::Login { console } => {
                 let mode = if console {
-                    spacebot::auth::AuthMode::Console
+                    agentspace::auth::AuthMode::Console
                 } else {
-                    spacebot::auth::AuthMode::Max
+                    agentspace::auth::AuthMode::Max
                 };
-                spacebot::auth::login_interactive(&instance_dir, mode).await?;
+                agentspace::auth::login_interactive(&instance_dir, mode).await?;
                 Ok(())
             }
             AuthCommand::Status => {
-                match spacebot::auth::load_credentials(&instance_dir)? {
+                match agentspace::auth::load_credentials(&instance_dir)? {
                     Some(creds) => {
                         let expires_in = creds.expires_at - chrono::Utc::now().timestamp_millis();
                         let expires_min = expires_in / 60_000;
@@ -589,18 +589,18 @@ fn cmd_auth(config_path: Option<std::path::PathBuf>, auth_cmd: AuthCommand) -> a
                         );
                         eprintln!(
                             "  credentials file: {}",
-                            spacebot::auth::credentials_path(&instance_dir).display()
+                            agentspace::auth::credentials_path(&instance_dir).display()
                         );
                     }
                     None => {
                         eprintln!("No OAuth credentials found.");
-                        eprintln!("Run `spacebot auth login` to authenticate.");
+                        eprintln!("Run `agentspace auth login` to authenticate.");
                     }
                 }
                 Ok(())
             }
             AuthCommand::Logout => {
-                let path = spacebot::auth::credentials_path(&instance_dir);
+                let path = agentspace::auth::credentials_path(&instance_dir);
                 if path.exists() {
                     std::fs::remove_file(&path)?;
                     eprintln!("Credentials removed.");
@@ -610,11 +610,11 @@ fn cmd_auth(config_path: Option<std::path::PathBuf>, auth_cmd: AuthCommand) -> a
                 Ok(())
             }
             AuthCommand::Refresh => {
-                let creds = spacebot::auth::load_credentials(&instance_dir)?
-                    .context("no credentials found — run `spacebot auth login` first")?;
+                let creds = agentspace::auth::load_credentials(&instance_dir)?
+                    .context("no credentials found — run `agentspace auth login` first")?;
                 eprintln!("Refreshing access token...");
                 let new_creds = creds.refresh().await.context("refresh failed")?;
-                spacebot::auth::save_credentials(&instance_dir, &new_creds)?;
+                agentspace::auth::save_credentials(&instance_dir, &new_creds)?;
                 let expires_min =
                     (new_creds.expires_at - chrono::Utc::now().timestamp_millis()) / 60_000;
                 eprintln!("Token refreshed (expires in {}m)", expires_min);
@@ -1046,7 +1046,7 @@ async fn secrets_api_get(
     let response = secrets_api_request(client, reqwest::Method::GET, api_base, auth_token, path)
         .send()
         .await
-        .context("failed to connect to spacebot API — is the daemon running?")?;
+        .context("failed to connect to agentspace API — is the daemon running?")?;
     Ok(response)
 }
 
@@ -1061,7 +1061,7 @@ async fn secrets_api_post(
         .json(body)
         .send()
         .await
-        .context("failed to connect to spacebot API — is the daemon running?")?;
+        .context("failed to connect to agentspace API — is the daemon running?")?;
     Ok(response)
 }
 
@@ -1076,7 +1076,7 @@ async fn secrets_api_put(
         .json(body)
         .send()
         .await
-        .context("failed to connect to spacebot API — is the daemon running?")?;
+        .context("failed to connect to agentspace API — is the daemon running?")?;
     Ok(response)
 }
 
@@ -1089,7 +1089,7 @@ async fn secrets_api_delete(
     let response = secrets_api_request(client, reqwest::Method::DELETE, api_base, auth_token, path)
         .send()
         .await
-        .context("failed to connect to spacebot API — is the daemon running?")?;
+        .context("failed to connect to agentspace API — is the daemon running?")?;
     Ok(response)
 }
 
@@ -1116,7 +1116,7 @@ fn cmd_skill(
                 println!("Installing skill from: {spec}");
                 println!("Target directory: {}", target_dir.display());
 
-                let installed = spacebot::skills::install_from_github(&spec, &target_dir)
+                let installed = agentspace::skills::install_from_github(&spec, &target_dir)
                     .await
                     .context("failed to install skill")?;
 
@@ -1137,7 +1137,7 @@ fn cmd_skill(
                 println!("Installing skill from: {}", path.display());
                 println!("Target directory: {}", target_dir.display());
 
-                let installed = spacebot::skills::install_from_file(&path, &target_dir)
+                let installed = agentspace::skills::install_from_file(&path, &target_dir)
                     .await
                     .context("failed to install skill")?;
 
@@ -1151,7 +1151,7 @@ fn cmd_skill(
             SkillCommand::List { agent } => {
                 let (instance_dir, workspace_dir) = resolve_skill_dirs(&config, agent.as_deref())?;
 
-                let skills = spacebot::skills::SkillSet::load(&instance_dir, &workspace_dir).await;
+                let skills = agentspace::skills::SkillSet::load(&instance_dir, &workspace_dir).await;
 
                 if skills.is_empty() {
                     println!("No skills installed");
@@ -1162,8 +1162,8 @@ fn cmd_skill(
 
                 for info in skills.list() {
                     let source_label = match info.source {
-                        spacebot::skills::SkillSource::Instance => "instance",
-                        spacebot::skills::SkillSource::Workspace => "workspace",
+                        agentspace::skills::SkillSource::Instance => "instance",
+                        agentspace::skills::SkillSource::Workspace => "workspace",
                     };
 
                     println!("  {} ({})", info.name, source_label);
@@ -1179,7 +1179,7 @@ fn cmd_skill(
                 let (instance_dir, workspace_dir) = resolve_skill_dirs(&config, agent.as_deref())?;
 
                 let mut skills =
-                    spacebot::skills::SkillSet::load(&instance_dir, &workspace_dir).await;
+                    agentspace::skills::SkillSet::load(&instance_dir, &workspace_dir).await;
 
                 match skills.remove(&name).await? {
                     Some(path) => {
@@ -1197,7 +1197,7 @@ fn cmd_skill(
             SkillCommand::Info { name, agent } => {
                 let (instance_dir, workspace_dir) = resolve_skill_dirs(&config, agent.as_deref())?;
 
-                let skills = spacebot::skills::SkillSet::load(&instance_dir, &workspace_dir).await;
+                let skills = agentspace::skills::SkillSet::load(&instance_dir, &workspace_dir).await;
 
                 let Some(skill) = skills.get(&name) else {
                     eprintln!("Skill not found: {name}");
@@ -1205,8 +1205,8 @@ fn cmd_skill(
                 };
 
                 let source_label = match skill.source {
-                    spacebot::skills::SkillSource::Instance => "instance",
-                    spacebot::skills::SkillSource::Workspace => "workspace",
+                    agentspace::skills::SkillSource::Instance => "instance",
+                    agentspace::skills::SkillSource::Workspace => "workspace",
                 };
 
                 println!("Skill: {}", skill.name);
@@ -1236,7 +1236,7 @@ fn cmd_skill(
 }
 
 fn resolve_skills_dir(
-    config: &spacebot::config::Config,
+    config: &agentspace::config::Config,
     agent_id: Option<&str>,
     instance: bool,
 ) -> anyhow::Result<std::path::PathBuf> {
@@ -1250,7 +1250,7 @@ fn resolve_skills_dir(
 }
 
 fn resolve_skill_dirs(
-    config: &spacebot::config::Config,
+    config: &agentspace::config::Config,
     agent_id: Option<&str>,
 ) -> anyhow::Result<(std::path::PathBuf, std::path::PathBuf)> {
     let agent_config = get_agent_config(config, agent_id)?;
@@ -1259,9 +1259,9 @@ fn resolve_skill_dirs(
 }
 
 fn get_agent_config<'a>(
-    config: &'a spacebot::config::Config,
+    config: &'a agentspace::config::Config,
     agent_id: Option<&str>,
-) -> anyhow::Result<&'a spacebot::config::AgentConfig> {
+) -> anyhow::Result<&'a agentspace::config::AgentConfig> {
     let agent_id = match agent_id {
         Some(id) => id,
         None => {
@@ -1281,12 +1281,12 @@ fn get_agent_config<'a>(
 
 fn load_config(
     config_path: &Option<std::path::PathBuf>,
-) -> anyhow::Result<spacebot::config::Config> {
+) -> anyhow::Result<agentspace::config::Config> {
     if let Some(path) = config_path {
-        spacebot::config::Config::load_from_path(path)
+        agentspace::config::Config::load_from_path(path)
             .with_context(|| format!("failed to load config from {}", path.display()))
     } else {
-        spacebot::config::Config::load().with_context(|| "failed to load configuration")
+        agentspace::config::Config::load().with_context(|| "failed to load configuration")
     }
 }
 
@@ -1311,11 +1311,11 @@ const KEYSTORE_INSTANCE_ID: &str = "instance";
 /// per-agent model), secrets are migrated from the first non-empty agent store.
 fn bootstrap_secrets_store(
     config_path: &Option<std::path::PathBuf>,
-) -> Option<Arc<spacebot::secrets::store::SecretsStore>> {
+) -> Option<Arc<agentspace::secrets::store::SecretsStore>> {
     // Probe kernel keyring support before any workers spawn. If keyctl is
     // blocked (restrictive seccomp, gVisor, etc.), worker keyring isolation
     // is disabled but workers still start normally.
-    spacebot::secrets::keystore::probe_keyring_support();
+    agentspace::secrets::keystore::probe_keyring_support();
 
     let instance_dir = resolve_instance_dir(config_path);
 
@@ -1328,7 +1328,7 @@ fn bootstrap_secrets_store(
     let secrets_path = data_dir.join("secrets.redb");
     let is_new_store = !secrets_path.exists();
 
-    let store = match spacebot::secrets::store::SecretsStore::new(&secrets_path) {
+    let store = match agentspace::secrets::store::SecretsStore::new(&secrets_path) {
         Ok(store) => Arc::new(store),
         Err(error) => {
             eprintln!("warning: failed to open secrets store: {error}");
@@ -1343,9 +1343,9 @@ fn bootstrap_secrets_store(
 
     // Try to auto-unlock if encrypted.
     if store.is_encrypted() {
-        let keystore = spacebot::secrets::keystore::platform_keystore();
+        let keystore = agentspace::secrets::keystore::platform_keystore();
         let tmpfs_paths = [
-            std::path::Path::new("/run/spacebot/master_key"),
+            std::path::Path::new("/run/agentspace/master_key"),
             std::path::Path::new("/run/secrets/master_key"),
         ];
 
@@ -1433,7 +1433,7 @@ fn bootstrap_secrets_store(
     }
 
     // Set the store into the thread-local for config resolution.
-    spacebot::config::set_resolve_secrets_store(store.clone());
+    agentspace::config::set_resolve_secrets_store(store.clone());
 
     Some(store)
 }
@@ -1442,7 +1442,7 @@ fn bootstrap_secrets_store(
 /// store. Only runs once when the instance-level store is first created.
 fn migrate_legacy_agent_stores(
     instance_dir: &std::path::Path,
-    target_store: &spacebot::secrets::store::SecretsStore,
+    target_store: &agentspace::secrets::store::SecretsStore,
 ) {
     let agents_dir = instance_dir.join("agents");
     let entries = match std::fs::read_dir(&agents_dir) {
@@ -1462,7 +1462,7 @@ fn migrate_legacy_agent_stores(
         }
 
         // Open the legacy agent store (read-only access).
-        let legacy_store = match spacebot::secrets::store::SecretsStore::new(&secrets_path) {
+        let legacy_store = match agentspace::secrets::store::SecretsStore::new(&secrets_path) {
             Ok(store) => store,
             Err(_) => continue,
         };
@@ -1470,7 +1470,7 @@ fn migrate_legacy_agent_stores(
         // If the legacy store is encrypted, try to unlock it with OS keystore.
         if legacy_store.is_encrypted() {
             let agent_id = entry.file_name().to_string_lossy().to_string();
-            let keystore = spacebot::secrets::keystore::platform_keystore();
+            let keystore = agentspace::secrets::keystore::platform_keystore();
             if let Some(key) = keystore.load_key(&agent_id).ok().flatten() {
                 let _ = legacy_store.unlock(&key);
             } else {
@@ -1510,7 +1510,7 @@ fn migrate_legacy_agent_stores(
 fn load_legacy_keystore_key(instance_dir: &std::path::Path) -> Option<Vec<u8>> {
     let agents_dir = instance_dir.join("agents");
     let entries = std::fs::read_dir(&agents_dir).ok()?;
-    let keystore = spacebot::secrets::keystore::platform_keystore();
+    let keystore = agentspace::secrets::keystore::platform_keystore();
 
     for entry in entries.flatten() {
         if !entry.file_type().is_ok_and(|ft| ft.is_dir()) {
@@ -1527,19 +1527,19 @@ fn load_legacy_keystore_key(instance_dir: &std::path::Path) -> Option<Vec<u8>> {
 }
 
 fn has_provider_credentials(
-    llm_config: &spacebot::config::LlmConfig,
+    llm_config: &agentspace::config::LlmConfig,
     instance_dir: &std::path::Path,
 ) -> bool {
     llm_config.has_any_key()
-        || spacebot::auth::credentials_path(instance_dir).exists()
-        || spacebot::openai_auth::credentials_path(instance_dir).exists()
+        || agentspace::auth::credentials_path(instance_dir).exists()
+        || agentspace::openai_auth::credentials_path(instance_dir).exists()
 }
 
-fn configured_agent_infos(config: &spacebot::config::Config) -> Vec<spacebot::api::AgentInfo> {
+fn configured_agent_infos(config: &agentspace::config::Config) -> Vec<agentspace::api::AgentInfo> {
     config
         .resolve_agents()
         .into_iter()
-        .map(|agent| spacebot::api::AgentInfo {
+        .map(|agent| agentspace::api::AgentInfo {
             id: agent.id,
             display_name: agent.display_name,
             role: agent.role,
@@ -1555,40 +1555,40 @@ fn configured_agent_infos(config: &spacebot::config::Config) -> Vec<spacebot::ap
 }
 
 async fn run(
-    config: spacebot::config::Config,
+    config: agentspace::config::Config,
     foreground: bool,
     otel_provider: Option<opentelemetry_sdk::trace::SdkTracerProvider>,
-    bootstrapped_store: Option<Arc<spacebot::secrets::store::SecretsStore>>,
+    bootstrapped_store: Option<Arc<agentspace::secrets::store::SecretsStore>>,
 ) -> anyhow::Result<()> {
-    let paths = spacebot::daemon::DaemonPaths::new(&config.instance_dir);
+    let paths = agentspace::daemon::DaemonPaths::new(&config.instance_dir);
 
-    tracing::info!("starting spacebot");
+    tracing::info!("starting agentspace");
     tracing::info!(instance_dir = %config.instance_dir.display(), "configuration loaded");
 
     // Start the IPC server for stop/status commands
-    let (mut shutdown_rx, _ipc_handle) = spacebot::daemon::start_ipc_server(&paths)
+    let (mut shutdown_rx, _ipc_handle) = agentspace::daemon::start_ipc_server(&paths)
         .await
         .context("failed to start IPC server")?;
 
     // Create the provider setup channel so API handlers can signal the main loop
-    let (provider_tx, mut provider_rx) = mpsc::channel::<spacebot::ProviderSetupEvent>(1);
+    let (provider_tx, mut provider_rx) = mpsc::channel::<agentspace::ProviderSetupEvent>(1);
     // Channel for newly created agents to be registered in the main event loop
-    let (agent_tx, mut agent_rx) = mpsc::channel::<spacebot::Agent>(8);
+    let (agent_tx, mut agent_rx) = mpsc::channel::<agentspace::Agent>(8);
     // Channel for removing agents from the main event loop
     let (agent_remove_tx, mut agent_remove_rx) = mpsc::channel::<String>(8);
 
     // Channel for cross-agent message injection (e.g. delegated task completion notifications).
     // The sender is shared with all agents via AgentDeps; the receiver is polled in the main loop.
     let (injection_tx, mut injection_rx) =
-        tokio::sync::mpsc::channel::<spacebot::ChannelInjection>(64);
+        tokio::sync::mpsc::channel::<agentspace::ChannelInjection>(64);
 
     // Shared cross-agent task store registry. Populated after all agents are initialized.
     let task_store_registry: Arc<
-        ArcSwap<std::collections::HashMap<String, Arc<spacebot::tasks::TaskStore>>>,
+        ArcSwap<std::collections::HashMap<String, Arc<agentspace::tasks::TaskStore>>>,
     > = Arc::new(ArcSwap::from_pointee(std::collections::HashMap::new()));
 
     // Start HTTP API server if enabled
-    let mut api_state = spacebot::api::ApiState::new_with_provider_sender(
+    let mut api_state = agentspace::api::ApiState::new_with_provider_sender(
         provider_tx,
         agent_tx,
         agent_remove_tx,
@@ -1605,13 +1605,13 @@ async fn run(
     }
 
     // Start background update checker
-    spacebot::update::spawn_update_checker(api_state.update_status.clone());
+    agentspace::update::spawn_update_checker(api_state.update_status.clone());
 
     // Start metrics server if enabled (requires `metrics` cargo feature)
     #[cfg(feature = "metrics")]
     let _metrics_handle = if config.metrics.enabled {
         Some(
-            spacebot::telemetry::start_metrics_server(&config.metrics, shutdown_rx.clone())
+            agentspace::telemetry::start_metrics_server(&config.metrics, shutdown_rx.clone())
                 .await
                 .context("failed to start metrics server")?,
         )
@@ -1634,7 +1634,7 @@ async fn run(
         let bind: std::net::SocketAddr = bind_str.parse().context("invalid API bind address")?;
         let http_shutdown = shutdown_rx.clone();
         Some(
-            spacebot::api::start_http_server(bind, api_state.clone(), http_shutdown)
+            agentspace::api::start_http_server(bind, api_state.clone(), http_shutdown)
                 .await
                 .context("failed to start HTTP server")?,
         )
@@ -1660,7 +1660,7 @@ async fn run(
     // This works even without keys; it will fail later at call time if no keys exist.
     // Loads OAuth credentials from auth.json if available.
     let llm_manager = Arc::new(
-        spacebot::llm::LlmManager::with_instance_dir(
+        agentspace::llm::LlmManager::with_instance_dir(
             config.llm.clone(),
             config.instance_dir.clone(),
         )
@@ -1671,22 +1671,22 @@ async fn run(
     // Shared embedding model (stateless, agent-agnostic)
     let embedding_cache_dir = config.instance_dir.join("embedding_cache");
     let embedding_model = Arc::new(
-        spacebot::memory::EmbeddingModel::new(&embedding_cache_dir)
+        agentspace::memory::EmbeddingModel::new(&embedding_cache_dir)
             .context("failed to initialize embedding model")?,
     );
 
     tracing::info!("shared resources initialized");
 
     // Initialize the language for all text lookups (must happen before PromptEngine/tools)
-    spacebot::prompts::text::init("en").with_context(|| "failed to initialize language")?;
+    agentspace::prompts::text::init("en").with_context(|| "failed to initialize language")?;
 
     // Create the PromptEngine with bundled templates (no file watching, no user overrides)
-    let prompt_engine = spacebot::prompts::PromptEngine::new("en")
+    let prompt_engine = agentspace::prompts::PromptEngine::new("en")
         .with_context(|| "failed to initialize prompt engine")?;
 
     // Parse config links into shared agent links (hot-reloadable via ArcSwap)
     let agent_links = Arc::new(ArcSwap::from_pointee(
-        spacebot::links::AgentLink::from_config(&config.links)?,
+        agentspace::links::AgentLink::from_config(&config.links)?,
     ));
     if !config.links.is_empty() {
         tracing::info!(count = config.links.len(), "loaded agent links from config");
@@ -1696,17 +1696,17 @@ async fn run(
     let agent_humans = Arc::new(ArcSwap::from_pointee(config.humans.clone()));
 
     // These hold the initialized subsystems. Empty until agents are initialized.
-    let mut agents: HashMap<spacebot::AgentId, spacebot::Agent> = HashMap::new();
-    let mut messaging_manager: Arc<spacebot::messaging::MessagingManager> =
-        Arc::new(spacebot::messaging::MessagingManager::new());
+    let mut agents: HashMap<agentspace::AgentId, agentspace::Agent> = HashMap::new();
+    let mut messaging_manager: Arc<agentspace::messaging::MessagingManager> =
+        Arc::new(agentspace::messaging::MessagingManager::new());
     // Use an Option to represent "no inbound stream yet" (setup mode)
     let mut inbound_stream: Option<
-        std::pin::Pin<Box<dyn futures::Stream<Item = spacebot::InboundMessage> + Send>>,
+        std::pin::Pin<Box<dyn futures::Stream<Item = agentspace::InboundMessage> + Send>>,
     > = None;
-    let mut cron_schedulers_for_shutdown: Vec<Arc<spacebot::cron::Scheduler>> = Vec::new();
+    let mut cron_schedulers_for_shutdown: Vec<Arc<agentspace::cron::Scheduler>> = Vec::new();
     let mut _ingestion_handles: Vec<tokio::task::JoinHandle<()>> = Vec::new();
     let mut _cortex_handles: Vec<tokio::task::JoinHandle<()>> = Vec::new();
-    let bindings: Arc<ArcSwap<Vec<spacebot::config::Binding>>> =
+    let bindings: Arc<ArcSwap<Vec<agentspace::config::Binding>>> =
         Arc::new(ArcSwap::from_pointee(config.bindings.clone()));
     api_state.set_bindings(bindings.clone()).await;
     let default_agent_id = config.default_agent_id().to_string();
@@ -1766,7 +1766,7 @@ async fn run(
         agents_initialized = true;
 
         // Start file watcher with populated agent data
-        _file_watcher = spacebot::config::spawn_file_watcher(
+        _file_watcher = agentspace::config::spawn_file_watcher(
             config_path.clone(),
             config.instance_dir.clone(),
             watcher_agents,
@@ -1783,7 +1783,7 @@ async fn run(
         );
     } else {
         // Start file watcher in setup mode (no agents to watch yet)
-        _file_watcher = spacebot::config::spawn_file_watcher(
+        _file_watcher = agentspace::config::spawn_file_watcher(
             config_path.clone(),
             config.instance_dir.clone(),
             Vec::new(),
@@ -1802,11 +1802,11 @@ async fn run(
 
     if foreground {
         eprintln!(
-            "spacebot running in foreground (pid {})",
+            "agentspace running in foreground (pid {})",
             std::process::id()
         );
     } else {
-        tracing::info!(pid = std::process::id(), "spacebot daemon started");
+        tracing::info!(pid = std::process::id(), "agentspace daemon started");
     }
 
     // Active conversation channels: conversation_id -> ActiveChannel
@@ -1817,7 +1817,7 @@ async fn run(
     // the resumed worker into its state so follow-ups route correctly.
     if agents_initialized {
         for (agent_id, agent) in agents.iter() {
-            let run_logger = spacebot::conversation::ProcessRunLogger::new(agent.db.sqlite.clone());
+            let run_logger = agentspace::conversation::ProcessRunLogger::new(agent.db.sqlite.clone());
             let idle_workers = match run_logger
                 .get_idle_interactive_workers(&agent.config.id)
                 .await
@@ -1840,7 +1840,7 @@ async fn run(
             // Group idle workers by channel_id
             let mut by_channel: HashMap<
                 String,
-                Vec<&spacebot::conversation::history::IdleWorkerRow>,
+                Vec<&agentspace::conversation::history::IdleWorkerRow>,
             > = HashMap::new();
             for worker in &idle_workers {
                 if let Some(channel_id) = &worker.channel_id {
@@ -1866,7 +1866,7 @@ async fn run(
                     // First pass: retire any workers whose sessions can't be
                     // reconnected. Only create the channel if at least one
                     // worker has a chance of resuming.
-                    let mut resumable: Vec<&spacebot::conversation::history::IdleWorkerRow> =
+                    let mut resumable: Vec<&agentspace::conversation::history::IdleWorkerRow> =
                         Vec::new();
                     for idle_worker in &workers {
                         if idle_worker.worker_type == "opencode"
@@ -1896,9 +1896,9 @@ async fn run(
                     }
 
                     let (response_tx, mut response_rx) =
-                        mpsc::channel::<spacebot::RoutedResponse>(32);
+                        mpsc::channel::<agentspace::RoutedResponse>(32);
                     let event_rx = agent.deps.event_tx.subscribe();
-                    let channel_id: spacebot::ChannelId = Arc::from(conversation_id.as_str());
+                    let channel_id: agentspace::ChannelId = Arc::from(conversation_id.as_str());
 
                     let snapshot_store = agent
                         .deps
@@ -1907,7 +1907,7 @@ async fn run(
                         .load()
                         .as_ref()
                         .clone();
-                    let (mut channel, channel_tx) = spacebot::agent::channel::Channel::new(
+                    let (mut channel, channel_tx) = agentspace::agent::channel::Channel::new(
                         channel_id,
                         agent.deps.clone(),
                         response_tx,
@@ -1967,7 +1967,7 @@ async fn run(
                     // Resume workers into the channel state before spawning the event loop.
                     let mut any_resumed = false;
                     for idle_worker in &resumable {
-                        match spacebot::agent::channel_dispatch::resume_idle_worker_into_state(
+                        match agentspace::agent::channel_dispatch::resume_idle_worker_into_state(
                             &channel.state,
                             idle_worker,
                         )
@@ -2011,7 +2011,7 @@ async fn run(
                         if let Err(error) = channel.run().await {
                             tracing::error!(%error, "channel event loop failed");
                         }
-                        let scoped_channel_id: spacebot::ChannelId =
+                        let scoped_channel_id: agentspace::ChannelId =
                             Arc::from(cleanup_channel_id.as_str());
                         process_control_registry
                             .unregister_channel(&scoped_channel_id, channel_registration_id)
@@ -2030,7 +2030,7 @@ async fn run(
                     let sse_channel_id = conversation_id.clone();
                     let outbound_handle = tokio::spawn(async move {
                         while let Some(routed) = response_rx.recv().await {
-                            let spacebot::RoutedResponse { response, target } = routed;
+                            let agentspace::RoutedResponse { response, target } = routed;
                             forward_sse_event(
                                 &api_event_tx,
                                 &sse_agent_id,
@@ -2075,7 +2075,7 @@ async fn run(
                     existing.clone()
                 } else {
                     let current_bindings = bindings.load();
-                    let Some(resolved) = spacebot::config::resolve_agent_for_message(
+                    let Some(resolved) = agentspace::config::resolve_agent_for_message(
                         &current_bindings,
                         &message,
                         &default_agent_id,
@@ -2101,12 +2101,12 @@ async fn run(
                     };
 
                     // Create outbound response channel
-                    let (response_tx, mut response_rx) = mpsc::channel::<spacebot::RoutedResponse>(32);
+                    let (response_tx, mut response_rx) = mpsc::channel::<agentspace::RoutedResponse>(32);
 
                     // Subscribe to the agent's event bus
                     let event_rx = agent.deps.event_tx.subscribe();
 
-                    let channel_id: spacebot::ChannelId = Arc::from(conversation_id.as_str());
+                    let channel_id: agentspace::ChannelId = Arc::from(conversation_id.as_str());
 
                     let snapshot_store = agent
                         .deps
@@ -2115,7 +2115,7 @@ async fn run(
                         .load()
                         .as_ref()
                         .clone();
-                    let (mut channel, channel_tx) = spacebot::agent::channel::Channel::new(
+                    let (mut channel, channel_tx) = agentspace::agent::channel::Channel::new(
                         channel_id,
                         agent.deps.clone(),
                         response_tx,
@@ -2178,7 +2178,7 @@ async fn run(
                             tracing::error!(%error, "channel event loop failed");
                         }
 
-                        let scoped_channel_id: spacebot::ChannelId =
+                        let scoped_channel_id: agentspace::ChannelId =
                             Arc::from(cleanup_channel_id.as_str());
                         process_control_registry
                             .unregister_channel(&scoped_channel_id, channel_registration_id)
@@ -2200,7 +2200,7 @@ async fn run(
                     let sse_channel_id = conversation_id.clone();
                     let outbound_handle = tokio::spawn(async move {
                         while let Some(routed) = response_rx.recv().await {
-                            let spacebot::RoutedResponse { response, target } = routed;
+                            let agentspace::RoutedResponse { response, target } = routed;
                             forward_sse_event(&api_event_tx, &sse_agent_id, &sse_channel_id, &response);
                             route_outbound(&messaging_for_outbound, &target, response).await;
                         }
@@ -2232,7 +2232,7 @@ async fn run(
                             .and_then(|v| v.as_str())
                             .map(|s| s.to_string())
                     });
-                    api_state.event_tx.send(spacebot::api::ApiEvent::InboundMessage {
+                    api_state.event_tx.send(agentspace::api::ApiEvent::InboundMessage {
                         agent_id: agent_id.to_string(),
                         channel_id: conversation_id.clone(),
                         sender_name,
@@ -2255,7 +2255,7 @@ async fn run(
                 agents.insert(agent.id.clone(), agent);
             }
             Some(agent_id) = agent_remove_rx.recv() => {
-                let key: spacebot::AgentId = Arc::from(agent_id.as_str());
+                let key: agentspace::AgentId = Arc::from(agent_id.as_str());
                 if let Some(agent) = agents.remove(&key) {
                     agent.deps.mcp_manager.disconnect_all().await;
                     tracing::info!(agent_id = %agent_id, "removed agent from main loop");
@@ -2294,12 +2294,12 @@ async fn run(
 
                 // Reload config from disk to pick up new keys
                 let new_config = if config_path.exists() {
-                    spacebot::config::Config::load_from_path(&config_path)
+                    agentspace::config::Config::load_from_path(&config_path)
                 } else {
                     let instance_dir = config_path.parent()
                         .map(|p| p.to_path_buf())
                         .unwrap_or_else(|| std::path::PathBuf::from("."));
-                    spacebot::config::Config::load_from_env(&instance_dir)
+                    agentspace::config::Config::load_from_env(&instance_dir)
                 };
 
                 match new_config {
@@ -2312,7 +2312,7 @@ async fn run(
                         api_state.set_defaults_config(new_config.defaults.clone()).await;
 
                         // Rebuild LlmManager with the new keys
-                        match spacebot::llm::LlmManager::with_instance_dir(
+                        match agentspace::llm::LlmManager::with_instance_dir(
                             new_config.llm.clone(),
                             new_config.instance_dir.clone(),
                         )
@@ -2357,7 +2357,7 @@ async fn run(
                                     Ok(()) => {
                                         agents_initialized = true;
                                         // Restart file watcher with the new agent data
-                                        _file_watcher = spacebot::config::spawn_file_watcher(
+                                        _file_watcher = agentspace::config::spawn_file_watcher(
                                             config_path.clone(),
                                             new_config.instance_dir.clone(),
                                             new_watcher_agents,
@@ -2419,7 +2419,7 @@ async fn run(
         agent.db.close().await;
     }
 
-    tracing::info!("spacebot stopped");
+    tracing::info!("agentspace stopped");
 
     // Flush buffered OTLP spans before the process exits. Without this the
     // batch exporter drops any spans recorded in the last export interval.
@@ -2429,7 +2429,7 @@ async fn run(
         tracing::warn!(%error, "failed to flush OTel spans on shutdown");
     }
 
-    spacebot::daemon::cleanup(&paths);
+    agentspace::daemon::cleanup(&paths);
 
     // Force exit — detached tasks (e.g. the serenity gateway client) may keep
     // the tokio runtime alive after all owned resources have been cleaned up.
@@ -2464,38 +2464,38 @@ async fn wait_for_startup_warmup_tasks(
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
 async fn initialize_agents(
-    config: &spacebot::config::Config,
-    llm_manager: &Arc<spacebot::llm::LlmManager>,
-    embedding_model: &Arc<spacebot::memory::EmbeddingModel>,
-    prompt_engine: &spacebot::prompts::PromptEngine,
-    api_state: &Arc<spacebot::api::ApiState>,
-    agents: &mut HashMap<spacebot::AgentId, spacebot::Agent>,
-    messaging_manager: &mut Arc<spacebot::messaging::MessagingManager>,
+    config: &agentspace::config::Config,
+    llm_manager: &Arc<agentspace::llm::LlmManager>,
+    embedding_model: &Arc<agentspace::memory::EmbeddingModel>,
+    prompt_engine: &agentspace::prompts::PromptEngine,
+    api_state: &Arc<agentspace::api::ApiState>,
+    agents: &mut HashMap<agentspace::AgentId, agentspace::Agent>,
+    messaging_manager: &mut Arc<agentspace::messaging::MessagingManager>,
     inbound_stream: &mut Option<
-        std::pin::Pin<Box<dyn futures::Stream<Item = spacebot::InboundMessage> + Send>>,
+        std::pin::Pin<Box<dyn futures::Stream<Item = agentspace::InboundMessage> + Send>>,
     >,
-    cron_schedulers_for_shutdown: &mut Vec<Arc<spacebot::cron::Scheduler>>,
+    cron_schedulers_for_shutdown: &mut Vec<Arc<agentspace::cron::Scheduler>>,
     ingestion_handles: &mut Vec<tokio::task::JoinHandle<()>>,
     cortex_handles: &mut Vec<tokio::task::JoinHandle<()>>,
     watcher_agents: &mut Vec<(
         String,
         std::path::PathBuf,
         std::path::PathBuf,
-        Arc<spacebot::config::RuntimeConfig>,
-        Arc<spacebot::mcp::McpManager>,
+        Arc<agentspace::config::RuntimeConfig>,
+        Arc<agentspace::mcp::McpManager>,
     )>,
-    discord_permissions: &mut Option<Arc<ArcSwap<spacebot::config::DiscordPermissions>>>,
-    slack_permissions: &mut Option<Arc<ArcSwap<spacebot::config::SlackPermissions>>>,
-    telegram_permissions: &mut Option<Arc<ArcSwap<spacebot::config::TelegramPermissions>>>,
-    twitch_permissions: &mut Option<Arc<ArcSwap<spacebot::config::TwitchPermissions>>>,
-    signal_permissions: &mut Option<Arc<ArcSwap<spacebot::config::SignalPermissions>>>,
-    agent_links: Arc<ArcSwap<Vec<spacebot::links::AgentLink>>>,
-    agent_humans: Arc<ArcSwap<Vec<spacebot::config::HumanDef>>>,
-    injection_tx: tokio::sync::mpsc::Sender<spacebot::ChannelInjection>,
+    discord_permissions: &mut Option<Arc<ArcSwap<agentspace::config::DiscordPermissions>>>,
+    slack_permissions: &mut Option<Arc<ArcSwap<agentspace::config::SlackPermissions>>>,
+    telegram_permissions: &mut Option<Arc<ArcSwap<agentspace::config::TelegramPermissions>>>,
+    twitch_permissions: &mut Option<Arc<ArcSwap<agentspace::config::TwitchPermissions>>>,
+    signal_permissions: &mut Option<Arc<ArcSwap<agentspace::config::SignalPermissions>>>,
+    agent_links: Arc<ArcSwap<Vec<agentspace::links::AgentLink>>>,
+    agent_humans: Arc<ArcSwap<Vec<agentspace::config::HumanDef>>>,
+    injection_tx: tokio::sync::mpsc::Sender<agentspace::ChannelInjection>,
     task_store_registry: Arc<
-        ArcSwap<std::collections::HashMap<String, Arc<spacebot::tasks::TaskStore>>>,
+        ArcSwap<std::collections::HashMap<String, Arc<agentspace::tasks::TaskStore>>>,
     >,
-    bootstrapped_store: &Option<Arc<spacebot::secrets::store::SecretsStore>>,
+    bootstrapped_store: &Option<Arc<agentspace::secrets::store::SecretsStore>>,
 ) -> anyhow::Result<()> {
     let resolved_agents = config.resolve_agents();
 
@@ -2552,7 +2552,7 @@ async fn initialize_agents(
         })?;
 
         // Per-agent database connections
-        let db = spacebot::db::Db::connect(&agent_config.data_dir)
+        let db = agentspace::db::Db::connect(&agent_config.data_dir)
             .await
             .with_context(|| {
                 format!(
@@ -2561,11 +2561,11 @@ async fn initialize_agents(
                 )
             })?;
 
-        let run_logger = spacebot::conversation::ProcessRunLogger::new(db.sqlite.clone());
+        let run_logger = agentspace::conversation::ProcessRunLogger::new(db.sqlite.clone());
         let orphaned_workers = run_logger
             .reconcile_running_workers_for_agent(
                 &agent_config.id,
-                "Worker interrupted: Spacebot restarted before completion.",
+                "Worker interrupted: Agentspace restarted before completion.",
             )
             .await
             .with_context(|| {
@@ -2585,7 +2585,7 @@ async fn initialize_agents(
         // Per-agent settings store (redb-backed)
         let settings_path = agent_config.data_dir.join("settings.redb");
         let settings_store = Arc::new(
-            spacebot::settings::SettingsStore::new(&settings_path).with_context(|| {
+            agentspace::settings::SettingsStore::new(&settings_path).with_context(|| {
                 format!(
                     "failed to initialize settings store for agent '{}'",
                     agent_config.id
@@ -2597,7 +2597,7 @@ async fn initialize_agents(
         // Non-fatal: a corrupt/unwritable DB disables snapshotting for this agent.
         let snapshot_path = agent_config.data_dir.join("prompt_snapshots.redb");
         let prompt_snapshot_store =
-            match spacebot::agent::prompt_snapshot::PromptSnapshotStore::new(&snapshot_path) {
+            match agentspace::agent::prompt_snapshot::PromptSnapshotStore::new(&snapshot_path) {
                 Ok(store) => Some(Arc::new(store)),
                 Err(error) => {
                     tracing::warn!(
@@ -2612,10 +2612,10 @@ async fn initialize_agents(
 
         // Per-agent memory system
         let memory_store =
-            spacebot::memory::MemoryStore::with_agent_id(db.sqlite.clone(), &agent_config.id);
-        let task_store = Arc::new(spacebot::tasks::TaskStore::new(db.sqlite.clone()));
-        let project_store = Arc::new(spacebot::projects::ProjectStore::new(db.sqlite.clone()));
-        let embedding_table = spacebot::memory::EmbeddingTable::open_or_create(&db.lance)
+            agentspace::memory::MemoryStore::with_agent_id(db.sqlite.clone(), &agent_config.id);
+        let task_store = Arc::new(agentspace::tasks::TaskStore::new(db.sqlite.clone()));
+        let project_store = Arc::new(agentspace::projects::ProjectStore::new(db.sqlite.clone()));
+        let embedding_table = agentspace::memory::EmbeddingTable::open_or_create(&db.lance)
             .await
             .with_context(|| {
                 format!("failed to init embeddings for agent '{}'", agent_config.id)
@@ -2626,7 +2626,7 @@ async fn initialize_agents(
             tracing::warn!(%error, agent = %agent_config.id, "failed to create FTS index");
         }
 
-        let memory_search = Arc::new(spacebot::memory::MemorySearch::new(
+        let memory_search = Arc::new(agentspace::memory::MemorySearch::new(
             memory_store,
             embedding_table,
             embedding_model.clone(),
@@ -2642,19 +2642,19 @@ async fn initialize_agents(
                 .unwrap_or(chrono_tz::Tz::UTC)
         };
         let working_memory =
-            spacebot::memory::WorkingMemoryStore::new(db.sqlite.clone(), working_memory_timezone);
+            agentspace::memory::WorkingMemoryStore::new(db.sqlite.clone(), working_memory_timezone);
 
         // Per-agent control and memory event buses (broadcast fan-out).
-        let (event_tx, memory_event_tx) = spacebot::create_process_event_buses();
+        let (event_tx, memory_event_tx) = agentspace::create_process_event_buses();
 
-        let agent_id: spacebot::AgentId = Arc::from(agent_config.id.as_str());
-        let mcp_manager = Arc::new(spacebot::mcp::McpManager::new(agent_config.mcp.clone()));
+        let agent_id: agentspace::AgentId = Arc::from(agent_config.id.as_str());
+        let mcp_manager = Arc::new(agentspace::mcp::McpManager::new(agent_config.mcp.clone()));
         mcp_manager.connect_all().await;
 
         // Scaffold identity templates if missing, then load.
         // Identity files live in the agent root (identity_dir), outside the
         // workspace sandbox boundary.
-        spacebot::identity::scaffold_identity_files(&agent_config.identity_dir)
+        agentspace::identity::scaffold_identity_files(&agent_config.identity_dir)
             .await
             .with_context(|| {
                 format!(
@@ -2662,15 +2662,15 @@ async fn initialize_agents(
                     agent_config.id
                 )
             })?;
-        let identity = spacebot::identity::Identity::load(&agent_config.identity_dir).await;
+        let identity = agentspace::identity::Identity::load(&agent_config.identity_dir).await;
 
         // Load skills (instance-level, then workspace overrides)
         let skills =
-            spacebot::skills::SkillSet::load(&config.skills_dir(), &agent_config.skills_dir())
+            agentspace::skills::SkillSet::load(&config.skills_dir(), &agent_config.skills_dir())
                 .await;
 
         // Build the RuntimeConfig with all hot-reloadable values
-        let runtime_config = Arc::new(spacebot::config::RuntimeConfig::new(
+        let runtime_config = Arc::new(agentspace::config::RuntimeConfig::new(
             &config.instance_dir,
             agent_config,
             &config.defaults,
@@ -2696,7 +2696,7 @@ async fn initialize_agents(
         // Share the instance-level secrets store with this agent.
         if let Some(secrets_store) = bootstrapped_store {
             runtime_config.set_secrets(secrets_store.clone());
-            spacebot::config::set_resolve_secrets_store(secrets_store.clone());
+            agentspace::config::set_resolve_secrets_store(secrets_store.clone());
         }
 
         watcher_agents.push((
@@ -2708,7 +2708,7 @@ async fn initialize_agents(
         ));
 
         let sandbox = std::sync::Arc::new(
-            spacebot::sandbox::Sandbox::new(
+            agentspace::sandbox::Sandbox::new(
                 runtime_config.sandbox.clone(),
                 agent_config.workspace.clone(),
                 &config.instance_dir,
@@ -2724,10 +2724,10 @@ async fn initialize_agents(
 
         // Inject active project root paths into the sandbox allowlist so
         // workers can access project directories even outside the workspace.
-        spacebot::projects::refresh_sandbox_project_paths(&project_store, &agent_id, &sandbox)
+        agentspace::projects::refresh_sandbox_project_paths(&project_store, &agent_id, &sandbox)
             .await;
 
-        let deps = spacebot::AgentDeps {
+        let deps = agentspace::AgentDeps {
             agent_id: agent_id.clone(),
             memory_search,
             llm_manager: llm_manager.clone(),
@@ -2746,13 +2746,13 @@ async fn initialize_agents(
             humans: agent_humans.clone(),
             task_store_registry: task_store_registry.clone(),
             process_control_registry: Arc::new(
-                spacebot::agent::process_control::ProcessControlRegistry::new(),
+                agentspace::agent::process_control::ProcessControlRegistry::new(),
             ),
             injection_tx: injection_tx.clone(),
             working_memory,
         };
 
-        let agent = spacebot::Agent {
+        let agent = agentspace::Agent {
             id: agent_id.clone(),
             config: agent_config.clone(),
             db,
@@ -2765,7 +2765,7 @@ async fn initialize_agents(
 
     // Populate the cross-agent task store registry now that all agents exist.
     {
-        let registry: std::collections::HashMap<String, Arc<spacebot::tasks::TaskStore>> = agents
+        let registry: std::collections::HashMap<String, Arc<agentspace::tasks::TaskStore>> = agents
             .iter()
             .map(|(agent_id, agent)| (agent_id.to_string(), agent.deps.task_store.clone()))
             .collect();
@@ -2784,11 +2784,11 @@ async fn initialize_agents(
             let to_channel = link.channel_id_for(&link.to_agent_id);
 
             if let Some(agent) = agents.get(&Arc::from(link.from_agent_id.as_str())) {
-                let store = spacebot::conversation::ChannelStore::new(agent.db.sqlite.clone());
+                let store = agentspace::conversation::ChannelStore::new(agent.db.sqlite.clone());
                 store.upsert(&from_channel, &empty_meta);
             }
             if let Some(agent) = agents.get(&Arc::from(link.to_agent_id.as_str())) {
-                let store = spacebot::conversation::ChannelStore::new(agent.db.sqlite.clone());
+                let store = agentspace::conversation::ChannelStore::new(agent.db.sqlite.clone());
                 store.upsert(&to_channel, &empty_meta);
             }
         }
@@ -2805,7 +2805,7 @@ async fn initialize_agents(
             .deps
             .working_memory
             .emit(
-                spacebot::memory::WorkingMemoryEventType::System,
+                agentspace::memory::WorkingMemoryEventType::System,
                 format!("Agent started ({})", agent.config.id),
             )
             .importance(0.3)
@@ -2838,7 +2838,7 @@ async fn initialize_agents(
             agent_data_dirs.insert(agent_id.to_string(), agent.config.data_dir.clone());
             runtime_configs.insert(agent_id.to_string(), agent.deps.runtime_config.clone());
             sandboxes.insert(agent_id.to_string(), agent.deps.sandbox.clone());
-            agent_configs.push(spacebot::api::AgentInfo {
+            agent_configs.push(agentspace::api::AgentInfo {
                 id: agent.config.id.clone(),
                 display_name: agent.config.display_name.clone(),
                 role: agent.config.role.clone(),
@@ -2880,8 +2880,8 @@ async fn initialize_agents(
             let sqlite_pool = agent.db.sqlite.clone();
             let agent_id = agent_id.clone();
             startup_warmup.spawn(async move {
-                let logger = spacebot::agent::cortex::CortexLogger::new(sqlite_pool);
-                spacebot::agent::cortex::run_warmup_once(
+                let logger = agentspace::agent::cortex::CortexLogger::new(sqlite_pool);
+                agentspace::agent::cortex::run_warmup_once(
                     &deps,
                     &logger,
                     "startup_pre_adapter",
@@ -2914,12 +2914,12 @@ async fn initialize_agents(
     }
 
     // Initialize messaging adapters
-    let new_messaging_manager = spacebot::messaging::MessagingManager::new();
+    let new_messaging_manager = agentspace::messaging::MessagingManager::new();
 
     // Shared Discord permissions (hot-reloadable via file watcher)
     *discord_permissions = config.messaging.discord.as_ref().map(|discord_config| {
         let perms =
-            spacebot::config::DiscordPermissions::from_config(discord_config, &config.bindings);
+            agentspace::config::DiscordPermissions::from_config(discord_config, &config.bindings);
         Arc::new(ArcSwap::from_pointee(perms))
     });
     if let Some(perms) = &*discord_permissions {
@@ -2930,7 +2930,7 @@ async fn initialize_agents(
         && discord_config.enabled
     {
         if !discord_config.token.is_empty() {
-            let adapter = spacebot::messaging::discord::DiscordAdapter::new(
+            let adapter = agentspace::messaging::discord::DiscordAdapter::new(
                 "discord",
                 &discord_config.token,
                 discord_permissions.clone().ok_or_else(|| {
@@ -2949,17 +2949,17 @@ async fn initialize_agents(
                 tracing::warn!(adapter = %instance.name, "skipping enabled discord instance with empty token");
                 continue;
             }
-            let runtime_key = spacebot::config::binding_runtime_adapter_key(
+            let runtime_key = agentspace::config::binding_runtime_adapter_key(
                 "discord",
                 Some(instance.name.as_str()),
             );
             let perms = Arc::new(ArcSwap::from_pointee(
-                spacebot::config::DiscordPermissions::from_instance_config(
+                agentspace::config::DiscordPermissions::from_instance_config(
                     instance,
                     &config.bindings,
                 ),
             ));
-            let adapter = spacebot::messaging::discord::DiscordAdapter::new(
+            let adapter = agentspace::messaging::discord::DiscordAdapter::new(
                 runtime_key,
                 &instance.token,
                 perms,
@@ -2970,7 +2970,7 @@ async fn initialize_agents(
 
     // Shared Slack permissions (hot-reloadable via file watcher)
     *slack_permissions = config.messaging.slack.as_ref().map(|slack_config| {
-        let perms = spacebot::config::SlackPermissions::from_config(slack_config, &config.bindings);
+        let perms = agentspace::config::SlackPermissions::from_config(slack_config, &config.bindings);
         Arc::new(ArcSwap::from_pointee(perms))
     });
     if let Some(perms) = &*slack_permissions {
@@ -2981,7 +2981,7 @@ async fn initialize_agents(
         && slack_config.enabled
     {
         if !slack_config.bot_token.is_empty() && !slack_config.app_token.is_empty() {
-            match spacebot::messaging::slack::SlackAdapter::new(
+            match agentspace::messaging::slack::SlackAdapter::new(
                 "slack",
                 &slack_config.bot_token,
                 &slack_config.app_token,
@@ -3008,17 +3008,17 @@ async fn initialize_agents(
                 tracing::warn!(adapter = %instance.name, "skipping enabled slack instance with missing tokens");
                 continue;
             }
-            let runtime_key = spacebot::config::binding_runtime_adapter_key(
+            let runtime_key = agentspace::config::binding_runtime_adapter_key(
                 "slack",
                 Some(instance.name.as_str()),
             );
             let perms = Arc::new(ArcSwap::from_pointee(
-                spacebot::config::SlackPermissions::from_instance_config(
+                agentspace::config::SlackPermissions::from_instance_config(
                     instance,
                     &config.bindings,
                 ),
             ));
-            match spacebot::messaging::slack::SlackAdapter::new(
+            match agentspace::messaging::slack::SlackAdapter::new(
                 runtime_key,
                 &instance.bot_token,
                 &instance.app_token,
@@ -3038,7 +3038,7 @@ async fn initialize_agents(
     // Shared Telegram permissions (hot-reloadable via file watcher)
     *telegram_permissions = config.messaging.telegram.as_ref().map(|telegram_config| {
         let perms =
-            spacebot::config::TelegramPermissions::from_config(telegram_config, &config.bindings);
+            agentspace::config::TelegramPermissions::from_config(telegram_config, &config.bindings);
         Arc::new(ArcSwap::from_pointee(perms))
     });
 
@@ -3046,7 +3046,7 @@ async fn initialize_agents(
         && telegram_config.enabled
     {
         if !telegram_config.token.is_empty() {
-            let adapter = spacebot::messaging::telegram::TelegramAdapter::new(
+            let adapter = agentspace::messaging::telegram::TelegramAdapter::new(
                 "telegram",
                 &telegram_config.token,
                 telegram_permissions.clone().ok_or_else(|| {
@@ -3065,17 +3065,17 @@ async fn initialize_agents(
                 tracing::warn!(adapter = %instance.name, "skipping enabled telegram instance with empty token");
                 continue;
             }
-            let runtime_key = spacebot::config::binding_runtime_adapter_key(
+            let runtime_key = agentspace::config::binding_runtime_adapter_key(
                 "telegram",
                 Some(instance.name.as_str()),
             );
             let perms = Arc::new(ArcSwap::from_pointee(
-                spacebot::config::TelegramPermissions::from_instance_config(
+                agentspace::config::TelegramPermissions::from_instance_config(
                     instance,
                     &config.bindings,
                 ),
             ));
-            let adapter = spacebot::messaging::telegram::TelegramAdapter::new(
+            let adapter = agentspace::messaging::telegram::TelegramAdapter::new(
                 runtime_key,
                 &instance.token,
                 perms,
@@ -3088,7 +3088,7 @@ async fn initialize_agents(
         && email_config.enabled
     {
         if !email_config.imap_host.is_empty() {
-            match spacebot::messaging::email::EmailAdapter::from_config(email_config) {
+            match agentspace::messaging::email::EmailAdapter::from_config(email_config) {
                 Ok(adapter) => {
                     new_messaging_manager.register(adapter).await;
                 }
@@ -3107,11 +3107,11 @@ async fn initialize_agents(
                 tracing::warn!(adapter = %instance.name, "skipping enabled email instance with empty credentials");
                 continue;
             }
-            let runtime_key = spacebot::config::binding_runtime_adapter_key(
+            let runtime_key = agentspace::config::binding_runtime_adapter_key(
                 "email",
                 Some(instance.name.as_str()),
             );
-            match spacebot::messaging::email::EmailAdapter::from_instance_config(
+            match agentspace::messaging::email::EmailAdapter::from_instance_config(
                 runtime_key,
                 instance,
             ) {
@@ -3128,7 +3128,7 @@ async fn initialize_agents(
     if let Some(webhook_config) = &config.messaging.webhook
         && webhook_config.enabled
     {
-        let adapter = spacebot::messaging::webhook::WebhookAdapter::new(
+        let adapter = agentspace::messaging::webhook::WebhookAdapter::new(
             webhook_config.port,
             &webhook_config.bind,
             webhook_config.auth_token.clone(),
@@ -3139,7 +3139,7 @@ async fn initialize_agents(
     // Shared Twitch permissions (hot-reloadable via file watcher)
     *twitch_permissions = config.messaging.twitch.as_ref().map(|twitch_config| {
         let perms =
-            spacebot::config::TwitchPermissions::from_config(twitch_config, &config.bindings);
+            agentspace::config::TwitchPermissions::from_config(twitch_config, &config.bindings);
         Arc::new(ArcSwap::from_pointee(perms))
     });
 
@@ -3148,7 +3148,7 @@ async fn initialize_agents(
     {
         let twitch_token_path = config.instance_dir.join("twitch_token.json");
         if !twitch_config.username.is_empty() && !twitch_config.oauth_token.is_empty() {
-            let adapter = spacebot::messaging::twitch::TwitchAdapter::new(
+            let adapter = agentspace::messaging::twitch::TwitchAdapter::new(
                 "twitch",
                 &twitch_config.username,
                 &twitch_config.oauth_token,
@@ -3174,7 +3174,7 @@ async fn initialize_agents(
                 tracing::warn!(adapter = %instance.name, "skipping enabled twitch instance with missing credentials");
                 continue;
             }
-            let runtime_key = spacebot::config::binding_runtime_adapter_key(
+            let runtime_key = agentspace::config::binding_runtime_adapter_key(
                 "twitch",
                 Some(instance.name.as_str()),
             );
@@ -3194,12 +3194,12 @@ async fn initialize_agents(
             };
             let token_path = config.instance_dir.join(token_file_name);
             let perms = Arc::new(ArcSwap::from_pointee(
-                spacebot::config::TwitchPermissions::from_instance_config(
+                agentspace::config::TwitchPermissions::from_instance_config(
                     instance,
                     &config.bindings,
                 ),
             ));
-            let adapter = spacebot::messaging::twitch::TwitchAdapter::new(
+            let adapter = agentspace::messaging::twitch::TwitchAdapter::new(
                 runtime_key,
                 &instance.username,
                 &instance.oauth_token,
@@ -3217,7 +3217,7 @@ async fn initialize_agents(
 
     // Shared Signal permissions (hot-reloadable via file watcher)
     *signal_permissions = config.messaging.signal.as_ref().map(|signal_config| {
-        let perms = spacebot::config::SignalPermissions::from_config(signal_config);
+        let perms = agentspace::config::SignalPermissions::from_config(signal_config);
         Arc::new(ArcSwap::from_pointee(perms))
     });
 
@@ -3226,7 +3226,7 @@ async fn initialize_agents(
     {
         let tmp_dir = config.instance_dir.join("tmp");
         if !signal_config.http_url.is_empty() && !signal_config.account.is_empty() {
-            let adapter = spacebot::messaging::signal::SignalAdapter::new(
+            let adapter = agentspace::messaging::signal::SignalAdapter::new(
                 "signal",
                 &signal_config.http_url,
                 &signal_config.account,
@@ -3248,14 +3248,14 @@ async fn initialize_agents(
                 tracing::warn!(adapter = %instance.name, "skipping enabled signal instance with missing credentials");
                 continue;
             }
-            let runtime_key = spacebot::config::binding_runtime_adapter_key(
+            let runtime_key = agentspace::config::binding_runtime_adapter_key(
                 "signal",
                 Some(instance.name.as_str()),
             );
             let perms = Arc::new(ArcSwap::from_pointee(
-                spacebot::config::SignalPermissions::from_instance_config(instance),
+                agentspace::config::SignalPermissions::from_instance_config(instance),
             ));
-            let adapter = spacebot::messaging::signal::SignalAdapter::new(
+            let adapter = agentspace::messaging::signal::SignalAdapter::new(
                 runtime_key,
                 &instance.http_url,
                 &instance.account,
@@ -3271,7 +3271,7 @@ async fn initialize_agents(
         .iter()
         .map(|(agent_id, agent)| (agent_id.to_string(), agent.db.sqlite.clone()))
         .collect();
-    let webchat_adapter = Arc::new(spacebot::messaging::webchat::WebChatAdapter::new(
+    let webchat_adapter = Arc::new(agentspace::messaging::webchat::WebChatAdapter::new(
         webchat_agent_pools,
     ));
     webchat_adapter.set_event_tx(api_state.event_tx.clone());
@@ -3299,12 +3299,12 @@ async fn initialize_agents(
     let mut cron_schedulers_map = std::collections::HashMap::new();
 
     for (agent_id, agent) in agents.iter_mut() {
-        let store = Arc::new(spacebot::cron::CronStore::new(agent.db.sqlite.clone()));
+        let store = Arc::new(agentspace::cron::CronStore::new(agent.db.sqlite.clone()));
         agent.deps.messaging_manager = Some(messaging_manager.clone());
 
         // Seed cron jobs from config into the database
         for cron_def in &agent.config.cron {
-            let cron_config = spacebot::cron::CronConfig {
+            let cron_config = agentspace::cron::CronConfig {
                 id: cron_def.id.clone(),
                 prompt: cron_def.prompt.clone(),
                 cron_expr: cron_def.cron_expr.clone(),
@@ -3326,7 +3326,7 @@ async fn initialize_agents(
         }
 
         // Load all enabled cron jobs and start the scheduler
-        let cron_context = spacebot::cron::CronContext {
+        let cron_context = agentspace::cron::CronContext {
             deps: agent.deps.clone(),
             screenshot_dir: agent.config.screenshot_dir(),
             logs_dir: agent.config.logs_dir(),
@@ -3334,7 +3334,7 @@ async fn initialize_agents(
             store: store.clone(),
         };
 
-        let scheduler = Arc::new(spacebot::cron::Scheduler::new(cron_context));
+        let scheduler = Arc::new(agentspace::cron::Scheduler::new(cron_context));
 
         // Make cron store and scheduler available via RuntimeConfig
         agent
@@ -3366,7 +3366,7 @@ async fn initialize_agents(
         }
 
         // Store cron tool on deps so each channel can register it on its own tool server
-        let cron_tool = spacebot::tools::CronTool::new(store.clone(), scheduler.clone());
+        let cron_tool = agentspace::tools::CronTool::new(store.clone(), scheduler.clone());
         agent.deps.cron_tool = Some(cron_tool);
 
         cron_stores_map.insert(agent_id.to_string(), store);
@@ -3384,7 +3384,7 @@ async fn initialize_agents(
     for (agent_id, agent) in agents.iter() {
         let ingestion_config = **agent.deps.runtime_config.ingestion.load();
         if ingestion_config.enabled {
-            let handle = spacebot::agent::ingestion::spawn_ingestion_loop(
+            let handle = agentspace::agent::ingestion::spawn_ingestion_loop(
                 agent.config.ingest_dir(),
                 agent.deps.clone(),
             );
@@ -3395,25 +3395,25 @@ async fn initialize_agents(
 
     // Start cortex warmup, runtime, and association loops for each agent
     for (agent_id, agent) in agents.iter() {
-        let cortex_logger = spacebot::agent::cortex::CortexLogger::new(agent.db.sqlite.clone());
+        let cortex_logger = agentspace::agent::cortex::CortexLogger::new(agent.db.sqlite.clone());
         let warmup_handle =
-            spacebot::agent::cortex::spawn_warmup_loop(agent.deps.clone(), cortex_logger.clone());
+            agentspace::agent::cortex::spawn_warmup_loop(agent.deps.clone(), cortex_logger.clone());
         cortex_handles.push(warmup_handle);
         tracing::info!(agent_id = %agent_id, "warmup loop started");
 
         let cortex_handle =
-            spacebot::agent::cortex::spawn_cortex_loop(agent.deps.clone(), cortex_logger.clone());
+            agentspace::agent::cortex::spawn_cortex_loop(agent.deps.clone(), cortex_logger.clone());
         cortex_handles.push(cortex_handle);
         tracing::info!(agent_id = %agent_id, "cortex loop started");
 
         let association_handle =
-            spacebot::agent::cortex::spawn_association_loop(agent.deps.clone(), cortex_logger);
+            agentspace::agent::cortex::spawn_association_loop(agent.deps.clone(), cortex_logger);
         cortex_handles.push(association_handle);
         tracing::info!(agent_id = %agent_id, "cortex association loop started");
 
-        let ready_task_handle = spacebot::agent::cortex::spawn_ready_task_loop(
+        let ready_task_handle = agentspace::agent::cortex::spawn_ready_task_loop(
             agent.deps.clone(),
-            spacebot::agent::cortex::CortexLogger::new(agent.db.sqlite.clone()),
+            agentspace::agent::cortex::CortexLogger::new(agent.db.sqlite.clone()),
         );
         cortex_handles.push(ready_task_handle);
         tracing::info!(agent_id = %agent_id, "cortex ready-task loop started");
@@ -3426,11 +3426,11 @@ async fn initialize_agents(
             let browser_config = (**agent.deps.runtime_config.browser_config.load()).clone();
             let brave_search_key = (**agent.deps.runtime_config.brave_search_key.load()).clone();
             let conversation_logger =
-                spacebot::conversation::history::ConversationLogger::new(agent.db.sqlite.clone());
-            let channel_store = spacebot::conversation::ChannelStore::new(agent.db.sqlite.clone());
-            let run_logger = spacebot::conversation::ProcessRunLogger::new(agent.db.sqlite.clone());
-            let cortex_ctx = spacebot::agent::cortex_chat::CortexChatSession::create_context();
-            let tool_server = spacebot::tools::create_cortex_chat_tool_server(
+                agentspace::conversation::history::ConversationLogger::new(agent.db.sqlite.clone());
+            let channel_store = agentspace::conversation::ChannelStore::new(agent.db.sqlite.clone());
+            let run_logger = agentspace::conversation::ProcessRunLogger::new(agent.db.sqlite.clone());
+            let cortex_ctx = agentspace::agent::cortex_chat::CortexChatSession::create_context();
+            let tool_server = agentspace::tools::create_cortex_chat_tool_server(
                 agent.deps.agent_id.clone(),
                 agent.deps.clone(),
                 agent.deps.task_store.clone(),
@@ -3449,7 +3449,7 @@ async fn initialize_agents(
                 Some(cortex_ctx.clone()),
             );
             // Add factory tools to the cortex chat tool server
-            let factory_enabled = match spacebot::tools::add_factory_tools(
+            let factory_enabled = match agentspace::tools::add_factory_tools(
                 &tool_server,
                 api_state.clone(),
                 agent.deps.memory_search.clone(),
@@ -3463,8 +3463,8 @@ async fn initialize_agents(
                 }
             };
 
-            let store = spacebot::agent::cortex_chat::CortexChatStore::new(agent.db.sqlite.clone());
-            let session = spacebot::agent::cortex_chat::CortexChatSession::new(
+            let store = agentspace::agent::cortex_chat::CortexChatStore::new(agent.db.sqlite.clone());
+            let session = agentspace::agent::cortex_chat::CortexChatSession::new(
                 agent.deps.clone(),
                 tool_server,
                 store,

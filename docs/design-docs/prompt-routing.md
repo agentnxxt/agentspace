@@ -1,16 +1,16 @@
 # Prompt-Level Routing
 
-Design for adding prompt complexity analysis to Spacebot's existing model routing system.
+Design for adding prompt complexity analysis to Agentspace's existing model routing system.
 
 ## Context
 
-Spacebot already routes by process type and task type (see [routing.md](../routing.md)). A channel gets sonnet, a compaction worker gets haiku, a coding worker gets sonnet. This covers the structural axis — we know what kind of process is running and pick a model tier accordingly.
+Agentspace already routes by process type and task type (see [routing.md](../routing.md)). A channel gets sonnet, a compaction worker gets haiku, a coding worker gets sonnet. This covers the structural axis — we know what kind of process is running and pick a model tier accordingly.
 
 What we don't do is route by prompt complexity *within* a process type. A channel handling "what's 2+2" and "design a distributed consensus algorithm" both get sonnet. The simple query wastes money. The complex query is fine.
 
 ClawRouter (TypeScript, OpenClaw ecosystem) solves this with a 15-dimension weighted keyword scorer that classifies prompts into four tiers and picks the cheapest model per tier. The scoring runs in <1ms with no external calls. It's crude (keyword matching, not semantic understanding) but effective for the common cases and the cost savings are real.
 
-This doc proposes integrating prompt-level complexity scoring natively into Spacebot's existing routing system.
+This doc proposes integrating prompt-level complexity scoring natively into Agentspace's existing routing system.
 
 ## What ClawRouter Does
 
@@ -65,14 +65,14 @@ Weights are configurable. Default weights sum to ~1.0. Score is mapped to tiers 
 - **Keyword-only** — no semantic understanding. "Write a poem about algorithms" scores both creative and technical, producing a muddled tier.
 - **Inconsistent prompt scoping** — reasoning markers are scored against user prompt only, but all other dimensions score against system + user prompt concatenated. System prompts are keyword-rich by nature, which biases non-reasoning dimensions.
 - **No conversation awareness** — scores each prompt in isolation. A follow-up "yes, do that" scores as SIMPLE even if the conversation is about distributed systems.
-- **Multilingual bloat** — keyword lists in 5 languages. Useful for a general-purpose router, overhead for Spacebot's use case.
+- **Multilingual bloat** — keyword lists in 5 languages. Useful for a general-purpose router, overhead for Agentspace's use case.
 - **LLM fallback classifier** — for ambiguous cases, sends a classification request to a cheap model. Adds 200-400ms latency for marginal accuracy improvement.
 
-## Design for Spacebot
+## Design for Agentspace
 
 ### Where It Fits
 
-Spacebot's routing has three levels: process-type defaults, task-type overrides, and fallback chains. Prompt-level routing adds a fourth level between process-type defaults and task-type overrides:
+Agentspace's routing has three levels: process-type defaults, task-type overrides, and fallback chains. Prompt-level routing adds a fourth level between process-type defaults and task-type overrides:
 
 ```
 1. Task-type override (explicit, highest priority)
@@ -89,14 +89,14 @@ Workers already get a focused task and a task type. Compactors and cortex are fi
 
 ### Scoring: Simplified
 
-ClawRouter's 15 dimensions are overkill for Spacebot. We know more about the context than a generic router does:
+ClawRouter's 15 dimensions are overkill for Agentspace. We know more about the context than a generic router does:
 
 - We know the process type (channel vs branch vs worker)
 - We have conversation history (not just the current prompt)
 - We have the memory bulletin (what the agent knows about)
 - System prompts are excluded from scoring (they're ours, not the user's)
 
-A simplified scorer for Spacebot:
+A simplified scorer for Agentspace:
 
 **Score only the user message.** System prompts, memory bulletins, and compaction summaries are excluded. ClawRouter partially does this (reasoning markers check user prompt only) but inconsistently applies it — most dimensions still score against the concatenated system + user text. We score user message only across all dimensions.
 
@@ -112,17 +112,17 @@ A simplified scorer for Spacebot:
 | Multi-step | First...then, step N, numbered lists | 0.10 |
 | Constraint complexity | At most, O(n), maximum | 0.10 |
 
-Drop creative markers (Spacebot is task-oriented), domain specificity (too niche), imperative verbs (too noisy in an agent context where everything is imperative), reference complexity (the agent always has references), negation (too common in instructions), and agentic task detection (redundant — Spacebot already knows when it's in agentic mode because it spawns workers explicitly).
+Drop creative markers (Agentspace is task-oriented), domain specificity (too niche), imperative verbs (too noisy in an agent context where everything is imperative), reference complexity (the agent always has references), negation (too common in instructions), and agentic task detection (redundant — Agentspace already knows when it's in agentic mode because it spawns workers explicitly).
 
 **Three tiers, not four:**
 
-| Tier | Spacebot Mapping |
+| Tier | Agentspace Mapping |
 |------|-----------------|
 | LIGHT | Cheapest capable model (haiku-class) |
 | STANDARD | Default process-type model (sonnet-class) |
 | HEAVY | Strongest available model (opus-class) |
 
-ClawRouter separates COMPLEX and REASONING because different models handle them differently. That's valid for a generic router, but Spacebot's task-type system already handles this — a `deep_reasoning` task type routes to an appropriate model. Three tiers keeps prompt routing focused on cost optimization.
+ClawRouter separates COMPLEX and REASONING because different models handle them differently. That's valid for a generic router, but Agentspace's task-type system already handles this — a `deep_reasoning` task type routes to an appropriate model. Three tiers keeps prompt routing focused on cost optimization.
 
 ### Configuration
 
@@ -254,7 +254,7 @@ The change to `resolve()` is additive. An `Option<&str>` parameter for the user 
 
 ### Routing Profiles
 
-ClawRouter's routing profiles (eco/auto/premium) are a good idea. Each profile swaps the entire tier-to-model mapping. In Spacebot, profiles could be per-agent:
+ClawRouter's routing profiles (eco/auto/premium) are a good idea. Each profile swaps the entire tier-to-model mapping. In Agentspace, profiles could be per-agent:
 
 ```toml
 [agents.budget-bot]
@@ -274,21 +274,21 @@ This is orthogonal to prompt routing — profiles change what models the tiers m
 
 ### Cost Tracking
 
-ClawRouter tracks cost savings per request and exposes a `/stats` command. Spacebot should track this too:
+ClawRouter tracks cost savings per request and exposes a `/stats` command. Agentspace should track this too:
 
 - Per-request: model used, tier selected, estimated cost, baseline cost (what the process default would have cost)
 - Per-agent: aggregate savings over time
 - Exposed via the status block or a stats command
 
-This is a reporting concern — `SpacebotHook` already tracks model usage per request. Adding cost estimates from the model's pricing metadata is straightforward.
+This is a reporting concern — `AgentspaceHook` already tracks model usage per request. Adding cost estimates from the model's pricing metadata is straightforward.
 
 ### What We Skip
 
 - **LLM classifier fallback** — ambiguous prompts get the process-type default (STANDARD tier). No secondary LLM call. The cost of a wrong classification (sending a medium prompt to sonnet instead of haiku) is much lower than the latency of a classifier call.
 - **Multilingual keyword lists** — English only for now. Configurable keyword lists mean operators can add their own.
-- **Agentic detection** — Spacebot knows when it's agentic because workers are explicitly spawned. No need to infer this from keywords.
+- **Agentic detection** — Agentspace knows when it's agentic because workers are explicitly spawned. No need to infer this from keywords.
 - **Session pinning** — processes already have a fixed model for their lifetime. No need for session-level model persistence.
-- **x402 payment integration** — Spacebot uses standard API keys.
+- **x402 payment integration** — Agentspace uses standard API keys.
 
 ## Phasing
 
@@ -312,4 +312,4 @@ Aggregate cost tracking and savings reporting. Expose via status block, CLI stat
 
 - **Should branches inherit the channel's tier?** A branch forks from the channel's context. If the channel downgraded to haiku for a simple message, should the branch also use haiku? Probably not — branches do memory recall and curation, which benefits from a stronger model regardless of the triggering message's complexity.
 - **Compaction workers** — these are already on the cheapest tier. Prompt routing wouldn't help. But if we ever run compaction on a stronger model by default, prompt routing could downgrade simple compaction tasks.
-- **Model quality feedback** — ClawRouter has no feedback loop. If haiku gives a bad answer, it doesn't learn. Should Spacebot track response quality (user reactions, follow-up corrections) and adjust tier boundaries? This is a much harder problem and probably not worth solving early.
+- **Model quality feedback** — ClawRouter has no feedback loop. If haiku gives a bad answer, it doesn't learn. Should Agentspace track response quality (user reactions, follow-up corrections) and adjust tier boundaries? This is a much harder problem and probably not worth solving early.

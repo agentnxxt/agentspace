@@ -12,8 +12,8 @@ use crate::AgentDeps;
 use crate::ProcessId;
 use crate::ProcessType;
 use crate::config::IngestionConfig;
-use crate::hooks::SpacebotHook;
-use crate::llm::SpacebotModel;
+use crate::hooks::AgentspaceHook;
+use crate::llm::AgentspaceModel;
 use crate::tools::MemoryPersistenceContractState;
 
 use anyhow::Context as _;
@@ -478,7 +478,7 @@ async fn process_chunk(
 
     let routing = deps.runtime_config.routing.load();
     let model_name = routing.resolve(ProcessType::Branch, None).to_string();
-    let model = SpacebotModel::make(&deps.llm_manager, &model_name)
+    let model = AgentspaceModel::make(&deps.llm_manager, &model_name)
         .with_context(&*deps.agent_id, "branch")
         .with_worker_type("ingestion")
         .with_routing((**routing).clone());
@@ -510,7 +510,7 @@ async fn process_chunk(
         .tool_server_handle(tool_server)
         .build();
 
-    let hook = SpacebotHook::new(
+    let hook = AgentspaceHook::new(
         deps.agent_id.clone(),
         ProcessId::Branch(Uuid::new_v4()),
         ProcessType::Branch,

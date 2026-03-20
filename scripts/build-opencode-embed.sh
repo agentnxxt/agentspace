@@ -3,7 +3,7 @@
 #
 # Clones opencode at the pinned commit, copies our embed entry points
 # into the tree, builds with Vite, and copies the output into
-# interface/public/opencode-embed/ for the Spacebot interface to serve.
+# interface/public/opencode-embed/ for the Agentspace interface to serve.
 #
 # Requirements:
 #   - git, node (v22+), bun
@@ -86,7 +86,7 @@ APP_DIR="${CACHE_DIR}/packages/app"
 echo "[opencode-embed] Copying embed source files..."
 cp "${EMBED_SRC}/embed.tsx"            "${APP_DIR}/src/embed.tsx"
 cp "${EMBED_SRC}/embed-entry.tsx"      "${APP_DIR}/src/embed-entry.tsx"
-cp "${EMBED_SRC}/spacebot-theme.json"  "${APP_DIR}/src/spacebot-theme.json"
+cp "${EMBED_SRC}/agentspace-theme.json"  "${APP_DIR}/src/agentspace-theme.json"
 cp "${EMBED_SRC}/vite.config.embed.ts" "${APP_DIR}/vite.config.embed.ts"
 cp "${EMBED_SRC}/index-embed.html"     "${APP_DIR}/index-embed.html"
 

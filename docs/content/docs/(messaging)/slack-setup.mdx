@@ -1,11 +1,11 @@
 ---
 title: Slack Setup
-description: Connect Spacebot to Slack.
+description: Connect Agentspace to Slack.
 ---
 
 # Slack Setup
 
-Connect Spacebot to your Slack workspace. Takes about 5 minutes.
+Connect Agentspace to your Slack workspace. Takes about 5 minutes.
 
 You need two tokens from a Slack app: a **Bot Token** (`xoxb-...`) and an **App Token** (`xapp-...`).
 
@@ -19,7 +19,7 @@ Name it whatever you want and select your workspace.
 
 In your Slack app settings, go to **Socket Mode** and **toggle it on**.
 
-You'll be prompted to create an **App-Level Token**. Give it a name (e.g. "spacebot") and add the `connections:write` scope. Click **Generate**.
+You'll be prompted to create an **App-Level Token**. Give it a name (e.g. "agentspace") and add the `connections:write` scope. Click **Generate**.
 
 Copy the token — this is your **App Token**.
 
@@ -57,7 +57,7 @@ In your Slack app settings, go to **Event Subscriptions** and make sure it's tog
 - `message.im` — DMs
 - `message.mpim` — group DMs
 
-These tell Slack which message events to send to Spacebot. Without them, the bot won't see messages in the corresponding channel types.
+These tell Slack which message events to send to Agentspace. Without them, the bot won't see messages in the corresponding channel types.
 
 ## Step 5: Install to Workspace
 
@@ -69,18 +69,18 @@ Copy the **Bot User OAuth Token** — this is your **Bot Token**. It starts with
 
 In Slack, go to any channel you want the bot in and run `/invite @YourBotName`.
 
-## Step 7: Add Tokens to Spacebot
+## Step 7: Add Tokens to Agentspace
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
-1. Open your Spacebot dashboard
+1. Open your Agentspace dashboard
 2. Go to **Settings** → **Messaging Platforms**
 3. Click **Setup** on the Slack card
 4. Paste your **Bot Token** (`xoxb-...`) and **App Token** (`xapp-...`)
 5. Click **Save**
 
-Spacebot connects immediately — no restart needed.
+Agentspace connects immediately — no restart needed.
 
 </Tab>
 <Tab value="TOML Config">
@@ -120,8 +120,8 @@ The Slack card on the Settings page shows a green status dot when connected. Sen
 
 By default the bot responds in every channel it's been invited to. To limit it, add channel IDs to your binding.
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Go to **Settings** → **Bindings** tab and add channel IDs to your Slack binding.
 
@@ -147,8 +147,8 @@ The workspace ID is the `T`-prefixed string in your Slack URL: `https://app.slac
 
 By default, all DMs are ignored. To allow specific users, add their Slack user IDs.
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 Go to **Settings** → **Messaging Platforms** → Slack card and add user IDs to the **DM Allowed Users** list.
 

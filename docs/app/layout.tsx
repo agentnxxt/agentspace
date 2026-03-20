@@ -8,12 +8,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Spacebot Docs',
+  title: 'Agentspace Docs',
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ??
       (process.env.RAILWAY_PUBLIC_DOMAIN
         ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-        : 'https://docs.spacebot.sh'),
+        : 'https://docs.space.agnxxt.com'),
   ),
 };
 

@@ -2,4 +2,4 @@ Execute a shell command. Use this for file operations, running scripts, building
 
 Use the optional `env` parameter to set per-command environment variables (e.g. `[{"key": "RUST_LOG", "value": "debug"}]`). Dangerous variables that enable library injection (LD_PRELOAD, NODE_OPTIONS, etc.) are blocked.
 
-To install tools that persist across restarts, place binaries in the persistent tools directory at $SPACEBOT_DIR/tools/bin (already on PATH). For example: `curl -fsSL https://example.com/tool -o $SPACEBOT_DIR/tools/bin/tool && chmod +x $SPACEBOT_DIR/tools/bin/tool`
+To install tools that persist across restarts, place binaries in the persistent tools directory at $AGENTSPACE_DIR/tools/bin (already on PATH). For example: `curl -fsSL https://example.com/tool -o $AGENTSPACE_DIR/tools/bin/tool && chmod +x $AGENTSPACE_DIR/tools/bin/tool`

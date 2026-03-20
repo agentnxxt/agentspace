@@ -1,6 +1,6 @@
 # Autonomy Loop
 
-Today Spacebot is reactive. It responds to messages, executes cron jobs from scratch, and runs four hardcoded cortex loops (warmup, bulletin, association, ready-task pickup). It has no mechanism for proactive, self-directed cognition — the kind where the agent works overnight tracking issues, processing emails, monitoring repos, and surfaces curated intelligence when you ask for it in the morning.
+Today Agentspace is reactive. It responds to messages, executes cron jobs from scratch, and runs four hardcoded cortex loops (warmup, bulletin, association, ready-task pickup). It has no mechanism for proactive, self-directed cognition — the kind where the agent works overnight tracking issues, processing emails, monitoring repos, and surfaces curated intelligence when you ask for it in the morning.
 
 The [custom cortex loops](./custom-cortex-loops.md) design proposed solving this with user-created, per-topic cortex processes. This doc supersedes that approach. The core objection: the cortex should be something the user never thinks about. It is the system's internal monologue, not a user-configurable surface. Exposing "cortex loops" as a concept — with a creation tool, dashboard tab, and per-loop settings — turns internal cognition into just a fancier cron job.
 
@@ -299,7 +299,7 @@ ALTER TABLE cron_jobs ADD COLUMN stateful INTEGER NOT NULL DEFAULT 0;
 
 In the custom cortex loops design, the suggested approach for a "morning briefing" was:
 
-1. Create cortex loop `track-spacebot-repo` (monitors repo every 30 min)
+1. Create cortex loop `track-agentspace-repo` (monitors repo every 30 min)
 2. Create cortex loop `monitor-email` (monitors email every 15 min)
 3. Create cron job `morning-briefing` (delivers at 9am, recalls loop memories)
 
@@ -352,12 +352,12 @@ Autonomy Loop (runs every 30 min)
 ### Scenario 1: Overnight Monitoring + Morning Briefing
 
 **Setup:**
-- ROLE.md says: "You are the engineering assistant for the Spacebot project. You monitor the spacebot repo, track CI status, and keep the team informed."
+- ROLE.md says: "You are the engineering assistant for the Agentspace project. You monitor the agentspace repo, track CI status, and keep the team informed."
 - User creates a stateful cron job: "Every morning at 9am, give me a briefing of what happened overnight"
 
 **Overnight:**
 - Autonomy loop runs every 30 min:
-  - Cycle 1: Recalls no previous findings (first run). Reads role.md — should monitor spacebot repo. Spawns worker to check GitHub. Finds 2 new issues, 1 merged PR. Saves as memories.
+  - Cycle 1: Recalls no previous findings (first run). Reads role.md — should monitor agentspace repo. Spawns worker to check GitHub. Finds 2 new issues, 1 merged PR. Saves as memories.
   - Cycle 2: Recalls cycle 1 findings. Spawns worker to check CI — main build passing. Checks issues again — 1 new comment on issue #423. Saves findings.
   - Cycle 3: Recalls cycles 1-2. CI still passing. No new issues. Defers to next cycle.
   - Cycle 4: Recalls previous cycles. New email from Alice about contract renewal (surfaced via email channel memories in bulletin). Notes this is important. Saves observation: "Alice's contract renewal needs attention by Friday."
@@ -367,7 +367,7 @@ Autonomy Loop (runs every 30 min)
 - Recalls its own previous briefing memories (context from last briefing)
 - Bulletin has been refreshed with autonomy loop findings
 - Channel branches to recall — autonomy memories surface by relevance
-- Delivers: "Good morning. Overnight: 2 new issues on spacebot (#423 memory leak, #424 docs update), PR #420 merged (email adapter). CI is green. Alice emailed about her contract renewal — deadline is Friday."
+- Delivers: "Good morning. Overnight: 2 new issues on agentspace (#423 memory leak, #424 docs update), PR #420 merged (email adapter). CI is green. Alice emailed about her contract renewal — deadline is Friday."
 
 ### Scenario 2: Proactive Task Creation
 

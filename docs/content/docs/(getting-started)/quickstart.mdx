@@ -1,31 +1,31 @@
 ---
 title: Quickstart
-description: Get Spacebot running locally in under 5 minutes.
+description: Get Agentspace running locally in under 5 minutes.
 ---
 
 # Quickstart
 
-Get Spacebot running locally in under 5 minutes.
+Get Agentspace running locally in under 5 minutes.
 
 ## Docker (fastest)
 
 ```bash
 docker run -d \
-  --name spacebot \
-  -v spacebot-data:/data \
+  --name agentspace \
+  -v agentspace-data:/data \
   -p 19898:19898 \
-  ghcr.io/spacedriveapp/spacebot:latest
+  ghcr.io/agentnxxt/agentspace:latest
 ```
 
 The web UI is available at `http://localhost:19898`. On first launch with no API keys configured, the UI will prompt you to add a provider key in Settings. You can also pass keys as environment variables:
 
 ```bash
 docker run -d \
-  --name spacebot \
+  --name agentspace \
   -e ANTHROPIC_API_KEY="sk-ant-..." \
-  -v spacebot-data:/data \
+  -v agentspace-data:/data \
   -p 19898:19898 \
-  ghcr.io/spacedriveapp/spacebot:latest
+  ghcr.io/agentnxxt/agentspace:latest
 ```
 
 See [Docker deployment](/docs/docker) for image tags, compose files, and configuration options.
@@ -33,8 +33,8 @@ See [Docker deployment](/docs/docker) for image tags, compose files, and configu
 To update Docker installs, pull and recreate the container:
 
 ```bash
-docker pull ghcr.io/spacedriveapp/spacebot:latest
-docker stop spacebot && docker rm spacebot
+docker pull ghcr.io/agentnxxt/agentspace:latest
+docker stop agentspace && docker rm agentspace
 # re-run your docker run command
 ```
 
@@ -52,8 +52,8 @@ You can also manage updates from **Settings → Updates** in the web UI.
 ### Install
 
 ```bash
-git clone https://github.com/spacedriveapp/spacebot.git
-cd spacebot
+git clone https://github.com/agentnxxt/agentspace.git
+cd agentspace
 
 # Optional: build the web UI (React + Vite, embedded into the binary)
 cd interface && bun install && cd ..
@@ -72,7 +72,7 @@ The OpenCode embed step (`build-opencode-embed.sh`) clones OpenCode at a pinned 
 
 ## Configure
 
-Spacebot needs at least one LLM provider key. You can either set an environment variable or create a config file.
+Agentspace needs at least one LLM provider key. You can either set an environment variable or create a config file.
 
 ### Option A: Environment variable (fastest)
 
@@ -80,15 +80,15 @@ Spacebot needs at least one LLM provider key. You can either set an environment 
 export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
-This is enough. Spacebot will create a default `main` agent with sensible defaults and no messaging adapters. The web UI and HTTP API will be available on `http://localhost:19898`.
+This is enough. Agentspace will create a default `main` agent with sensible defaults and no messaging adapters. The web UI and HTTP API will be available on `http://localhost:19898`.
 
 ### Option B: Interactive onboarding
 
-Just run `spacebot` with no config file and no API key env var set. It will walk you through provider selection, API key entry, agent naming, and optional Discord setup.
+Just run `agentspace` with no config file and no API key env var set. It will walk you through provider selection, API key entry, agent naming, and optional Discord setup.
 
 ### Option C: Config file
 
-Create `~/.spacebot/config.toml`:
+Create `~/.agentspace/config.toml`:
 
 ```toml
 [llm]
@@ -119,36 +119,36 @@ See [Configuration](/docs/config) for the full config reference.
 
 ```bash
 # Background daemon (default)
-spacebot
+agentspace
 
 # Foreground with debug logging (recommended for first run / development)
-spacebot start -f -d
+agentspace start -f -d
 
 # During development with cargo
 cargo run -- start -f -d
 ```
 
-On first launch, Spacebot automatically creates:
+On first launch, Agentspace automatically creates:
 
-- `~/.spacebot/` — instance directory
-- `~/.spacebot/agents/main/data/` — SQLite, LanceDB, and redb databases
-- `~/.spacebot/agents/main/` — identity files (`SOUL.md`, `IDENTITY.md`, `ROLE.md`)
-- `~/.spacebot/agents/main/workspace/` — working files and ingest directory (sandbox boundary for worker file tools)
+- `~/.agentspace/` — instance directory
+- `~/.agentspace/agents/main/data/` — SQLite, LanceDB, and redb databases
+- `~/.agentspace/agents/main/` — identity files (`SOUL.md`, `IDENTITY.md`, `ROLE.md`)
+- `~/.agentspace/agents/main/workspace/` — working files and ingest directory (sandbox boundary for worker file tools)
 
 ## Daemon management
 
 ```bash
-spacebot status    # show pid and uptime
-spacebot stop      # graceful shutdown
-spacebot restart   # stop + start
-spacebot restart -f -d  # restart in foreground with debug
+agentspace status    # show pid and uptime
+agentspace stop      # graceful shutdown
+agentspace restart   # stop + start
+agentspace restart -f -d  # restart in foreground with debug
 ```
 
-Logs go to `~/.spacebot/agents/{id}/data/logs/` in daemon mode, or stderr in foreground mode.
+Logs go to `~/.agentspace/agents/{id}/data/logs/` in daemon mode, or stderr in foreground mode.
 
 ## Identity files
 
-Each agent has optional identity files in its root directory (`~/.spacebot/agents/{id}/`):
+Each agent has optional identity files in its root directory (`~/.agentspace/agents/{id}/`):
 
 | File          | Purpose                                  |
 | ------------- | ---------------------------------------- |
@@ -160,17 +160,17 @@ Template files are created on first run. Edit them to shape the agent's personal
 
 ## Development setup
 
-To run a dev instance from source alongside an installed production instance, use `SPACEBOT_DIR` to give each its own data directory. Each instance gets separate databases, PID file, Unix socket, and logs — fully isolated.
+To run a dev instance from source alongside an installed production instance, use `AGENTSPACE_DIR` to give each its own data directory. Each instance gets separate databases, PID file, Unix socket, and logs — fully isolated.
 
 ### 1. Create a dev instance directory
 
 ```bash
-mkdir -p ~/.spacebot/dev
+mkdir -p ~/.agentspace/dev
 ```
 
 ### 2. Add a dev config with different ports
 
-Create `~/.spacebot/dev/config.toml`:
+Create `~/.agentspace/dev/config.toml`:
 
 ```toml
 [llm]
@@ -190,26 +190,26 @@ port = 18790
 ### 3. Run both instances
 
 ```bash
-# Production (installed binary, default ~/.spacebot)
-spacebot start
+# Production (installed binary, default ~/.agentspace)
+agentspace start
 
 # Dev (from source, separate data directory)
-SPACEBOT_DIR=~/.spacebot/dev cargo run -- start -f -d
+AGENTSPACE_DIR=~/.agentspace/dev cargo run -- start -f -d
 ```
 
-The dev instance uses `~/.spacebot/dev/` for all data, and the production instance uses `~/.spacebot/` — they won't interfere with each other.
+The dev instance uses `~/.agentspace/dev/` for all data, and the production instance uses `~/.agentspace/` — they won't interfere with each other.
 
-You can also set `SPACEBOT_DIR` in a direnv `.envrc` so it applies automatically when you're in the project directory:
+You can also set `AGENTSPACE_DIR` in a direnv `.envrc` so it applies automatically when you're in the project directory:
 
 ```bash
-# .envrc in your spacebot source checkout
-export SPACEBOT_DIR="$HOME/.spacebot/dev"
+# .envrc in your agentspace source checkout
+export AGENTSPACE_DIR="$HOME/.agentspace/dev"
 ```
 
 Alternatively, use the `-c` flag to point at a specific config file (the instance directory is inferred as its parent):
 
 ```bash
-cargo run -- -c ~/.spacebot/dev/config.toml start -f -d
+cargo run -- -c ~/.agentspace/dev/config.toml start -f -d
 ```
 
 ## Web UI
@@ -238,12 +238,12 @@ For desktop app development, see [Desktop app](/docs/desktop). A single `just de
 | Telegram | Supported | [Telegram setup](/docs/telegram-setup) |
 | Webhook  | Supported | [Config reference](/docs/config)        |
 
-No messaging adapters are required. Without them, Spacebot is accessible via the web UI and HTTP API.
+No messaging adapters are required. Without them, Agentspace is accessible via the web UI and HTTP API.
 
 ## CLI flags reference
 
 ```
-spacebot [OPTIONS] [COMMAND]
+agentspace [OPTIONS] [COMMAND]
 
 Commands:
   start     Start the daemon [default]

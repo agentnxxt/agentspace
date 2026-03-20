@@ -2,7 +2,7 @@
 @import 'fumadocs-ui/css/purple.css';
 @import 'fumadocs-ui/css/preset.css';
 
-/* Spacebot Light Theme */
+/* Agentspace Light Theme */
 :root {
   --color-fd-background: hsl(0, 0%, 100%);
   --color-fd-foreground: hsl(230, 15%, 10%);

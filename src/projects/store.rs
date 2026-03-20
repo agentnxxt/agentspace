@@ -647,17 +647,17 @@ mod tests {
         let project = store
             .create_project(CreateProjectInput {
                 agent_id: "agent-1".into(),
-                name: "Spacebot".into(),
-                description: "The Spacebot monorepo".into(),
+                name: "Agentspace".into(),
+                description: "The Agentspace monorepo".into(),
                 icon: "".into(),
                 tags: vec!["rust".into(), "agent".into()],
-                root_path: "/home/user/Projects/spacebot".into(),
+                root_path: "/home/user/Projects/agentspace".into(),
                 settings: Value::Object(Default::default()),
             })
             .await
             .expect("failed to create project");
 
-        assert_eq!(project.name, "Spacebot");
+        assert_eq!(project.name, "Agentspace");
         assert_eq!(project.tags, vec!["rust", "agent"]);
         assert_eq!(project.status, ProjectStatus::Active);
 
@@ -690,9 +690,9 @@ mod tests {
         let repo = store
             .create_repo(CreateRepoInput {
                 project_id: project.id.clone(),
-                name: "spacebot".into(),
-                path: "spacebot".into(),
-                remote_url: "https://github.com/spacedriveapp/spacebot.git".into(),
+                name: "agentspace".into(),
+                path: "agentspace".into(),
+                remote_url: "https://github.com/agentnxxt/agentspace.git".into(),
                 default_branch: "main".into(),
                 current_branch: Some("feat/projects".into()),
                 description: "Core agent".into(),
@@ -700,7 +700,7 @@ mod tests {
             .await
             .expect("failed to create repo");
 
-        assert_eq!(repo.name, "spacebot");
+        assert_eq!(repo.name, "agentspace");
 
         let worktree = store
             .create_worktree(CreateWorktreeInput {
@@ -722,7 +722,7 @@ mod tests {
             .await
             .expect("failed to list worktrees with repos");
         assert_eq!(with_repos.len(), 1);
-        assert_eq!(with_repos[0].repo_name, "spacebot");
+        assert_eq!(with_repos[0].repo_name, "agentspace");
     }
 
     #[tokio::test]

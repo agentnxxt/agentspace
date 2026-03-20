@@ -1,4 +1,4 @@
-//! SpacebotModel: Custom CompletionModel implementation that routes through LlmManager.
+//! AgentspaceModel: Custom CompletionModel implementation that routes through LlmManager.
 
 use crate::config::{ApiType, ProviderConfig};
 use crate::llm::manager::LlmManager;
@@ -44,7 +44,7 @@ impl GetTokenUsage for RawStreamingResponse {
 /// Optionally holds a RoutingConfig for fallback behavior. When present,
 /// completion() will try fallback models on retriable errors.
 #[derive(Clone)]
-pub struct SpacebotModel {
+pub struct AgentspaceModel {
     llm_manager: Arc<LlmManager>,
     model_name: String,
     provider: String,
@@ -55,7 +55,7 @@ pub struct SpacebotModel {
     worker_type: Option<String>,
 }
 
-impl SpacebotModel {
+impl AgentspaceModel {
     pub fn provider(&self) -> &str {
         &self.provider
     }
@@ -168,8 +168,8 @@ impl SpacebotModel {
                     &endpoint,
                     Some(provider_config.api_key.clone()),
                     &[
-                        ("HTTP-Referer", "https://github.com/spacedriveapp/spacebot"),
-                        ("X-Title", "spacebot"),
+                        ("HTTP-Referer", "https://github.com/agentnxxt/agentspace"),
+                        ("X-Title", "agentspace"),
                     ],
                 )
                 .await
@@ -196,7 +196,7 @@ impl SpacebotModel {
         let model = if model_name == self.full_model_name {
             self.clone()
         } else {
-            SpacebotModel::make(&self.llm_manager, model_name)
+            AgentspaceModel::make(&self.llm_manager, model_name)
         };
 
         let mut last_error = None;
@@ -242,7 +242,7 @@ impl SpacebotModel {
     }
 }
 
-impl CompletionModel for SpacebotModel {
+impl CompletionModel for AgentspaceModel {
     type Response = RawResponse;
     type StreamingResponse = RawStreamingResponse;
     type Client = Arc<LlmManager>;
@@ -531,8 +531,8 @@ impl CompletionModel for SpacebotModel {
                     &endpoint,
                     Some(provider_config.api_key.clone()),
                     &[
-                        ("HTTP-Referer", "https://github.com/spacedriveapp/spacebot"),
-                        ("X-Title", "spacebot"),
+                        ("HTTP-Referer", "https://github.com/agentnxxt/agentspace"),
+                        ("X-Title", "agentspace"),
                     ],
                 )
                 .await
@@ -549,7 +549,7 @@ impl CompletionModel for SpacebotModel {
     }
 }
 
-impl SpacebotModel {
+impl AgentspaceModel {
     async fn call_anthropic(
         &self,
         request: CompletionRequest,
@@ -754,7 +754,7 @@ impl SpacebotModel {
             body["instructions"] = serde_json::json!(preamble);
         } else if is_chatgpt_codex {
             body["instructions"] = serde_json::json!(
-                "You are Spacebot. Follow instructions exactly and respond concisely."
+                "You are Agentspace. Follow instructions exactly and respond concisely."
             );
         }
 
@@ -807,11 +807,11 @@ impl SpacebotModel {
                 .header("originator", "opencode")
                 .header(
                     "session_id",
-                    format!("spacebot-{}", chrono::Utc::now().timestamp()),
+                    format!("agentspace-{}", chrono::Utc::now().timestamp()),
                 )
                 .header(
                     "user-agent",
-                    format!("spacebot/{}", env!("CARGO_PKG_VERSION")),
+                    format!("agentspace/{}", env!("CARGO_PKG_VERSION")),
                 );
         }
 

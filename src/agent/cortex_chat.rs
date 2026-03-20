@@ -6,8 +6,8 @@
 //! into the system prompt as context.
 
 use crate::conversation::history::ProcessRunLogger;
-use crate::hooks::SpacebotHook;
-use crate::llm::SpacebotModel;
+use crate::hooks::AgentspaceHook;
+use crate::llm::AgentspaceModel;
 use crate::{AgentDeps, ProcessEvent, ProcessId, ProcessType};
 
 use rig::agent::{AgentBuilder, HookAction, PromptHook, ToolCallHookAction};
@@ -102,7 +102,7 @@ pub enum CortexChatSendError {
 #[derive(Clone)]
 struct CortexChatHook {
     event_tx: mpsc::Sender<CortexChatEvent>,
-    spacebot_hook: SpacebotHook,
+    agentspace_hook: AgentspaceHook,
     /// Accumulated tool calls during this response (shared with the spawned task).
     tool_calls: Arc<Mutex<Vec<CortexChatToolCall>>>,
 }
@@ -110,12 +110,12 @@ struct CortexChatHook {
 impl CortexChatHook {
     fn new(
         event_tx: mpsc::Sender<CortexChatEvent>,
-        spacebot_hook: SpacebotHook,
+        agentspace_hook: AgentspaceHook,
         tool_calls: Arc<Mutex<Vec<CortexChatToolCall>>>,
     ) -> Self {
         Self {
             event_tx,
-            spacebot_hook,
+            agentspace_hook,
             tool_calls,
         }
     }
@@ -155,8 +155,8 @@ impl<M: CompletionModel> PromptHook<M> for CortexChatHook {
         internal_call_id: &str,
         args: &str,
     ) -> ToolCallHookAction {
-        let action = <SpacebotHook as PromptHook<M>>::on_tool_call(
-            &self.spacebot_hook,
+        let action = <AgentspaceHook as PromptHook<M>>::on_tool_call(
+            &self.agentspace_hook,
             tool_name,
             tool_call_id,
             internal_call_id,
@@ -198,16 +198,16 @@ impl<M: CompletionModel> PromptHook<M> for CortexChatHook {
         args: &str,
         result: &str,
     ) -> HookAction {
-        let guard_action = self.spacebot_hook.guard_tool_result(tool_name, result);
+        let guard_action = self.agentspace_hook.guard_tool_result(tool_name, result);
         if !matches!(guard_action, HookAction::Continue) {
-            self.spacebot_hook
+            self.agentspace_hook
                 .record_tool_result_metrics(tool_name, internal_call_id);
             return guard_action;
         }
         let preview = crate::tools::truncate_utf8_ellipsis(result, 200);
-        self.spacebot_hook
+        self.agentspace_hook
             .emit_tool_completed_event_from_capped(tool_name, preview.clone());
-        self.spacebot_hook
+        self.agentspace_hook
             .record_tool_result_metrics(tool_name, internal_call_id);
 
         let call_id = internal_call_id.to_string();
@@ -233,7 +233,7 @@ impl<M: CompletionModel> PromptHook<M> for CortexChatHook {
     }
 
     async fn on_completion_call(&self, prompt: &Message, history: &[Message]) -> HookAction {
-        <SpacebotHook as PromptHook<M>>::on_completion_call(&self.spacebot_hook, prompt, history)
+        <AgentspaceHook as PromptHook<M>>::on_completion_call(&self.agentspace_hook, prompt, history)
             .await
     }
 
@@ -242,8 +242,8 @@ impl<M: CompletionModel> PromptHook<M> for CortexChatHook {
         prompt: &Message,
         response: &CompletionResponse<M::Response>,
     ) -> HookAction {
-        <SpacebotHook as PromptHook<M>>::on_completion_response(
-            &self.spacebot_hook,
+        <AgentspaceHook as PromptHook<M>>::on_completion_response(
+            &self.agentspace_hook,
             prompt,
             response,
         )
@@ -677,7 +677,7 @@ impl CortexChatSession {
         // Resolve model and build agent
         let routing = self.deps.runtime_config.routing.load();
         let model_name = routing.resolve(ProcessType::Cortex, None).to_string();
-        let model = SpacebotModel::make(&self.deps.llm_manager, &model_name)
+        let model = AgentspaceModel::make(&self.deps.llm_manager, &model_name)
             .with_context(self.deps.agent_id.as_ref(), "cortex")
             .with_routing(routing.as_ref().clone());
 
@@ -688,7 +688,7 @@ impl CortexChatSession {
             .build();
 
         let (event_tx, event_rx) = mpsc::channel(256);
-        let spacebot_hook = SpacebotHook::new(
+        let agentspace_hook = AgentspaceHook::new(
             self.deps.agent_id.clone(),
             ProcessId::Worker(uuid::Uuid::new_v4()),
             ProcessType::Cortex,
@@ -696,7 +696,7 @@ impl CortexChatSession {
             self.deps.event_tx.clone(),
         );
         let tool_calls = Arc::new(Mutex::new(Vec::new()));
-        let hook = CortexChatHook::new(event_tx.clone(), spacebot_hook, tool_calls.clone());
+        let hook = CortexChatHook::new(event_tx.clone(), agentspace_hook, tool_calls.clone());
 
         // Clone what the spawned task needs
         let user_text = user_text.to_string();

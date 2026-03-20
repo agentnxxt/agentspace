@@ -650,7 +650,7 @@ async fn fetch_registry_skill_description(
             let url = format!("https://raw.githubusercontent.com/{source}/{branch}/{path}");
             let response = match client
                 .get(&url)
-                .header(reqwest::header::USER_AGENT, "spacebot-registry-client")
+                .header(reqwest::header::USER_AGENT, "agentspace-registry-client")
                 .timeout(Duration::from_secs(3))
                 .send()
                 .await
@@ -708,7 +708,7 @@ async fn fetch_registry_skill_content(
             let url = format!("https://raw.githubusercontent.com/{source}/{branch}/{path}");
             let response = match client
                 .get(&url)
-                .header(reqwest::header::USER_AGENT, "spacebot-registry-client")
+                .header(reqwest::header::USER_AGENT, "agentspace-registry-client")
                 .timeout(Duration::from_secs(5))
                 .send()
                 .await

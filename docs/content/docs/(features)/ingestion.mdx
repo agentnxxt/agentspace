@@ -5,11 +5,11 @@ description: Bulk-import text files into structured, graph-connected memories.
 
 # Ingestion
 
-Spacebot can bulk-import text files into structured memories. Drop files into an agent's ingest directory (or drag them into the UI), and a background loop picks them up, chunks them, runs each chunk through an LLM with memory tools, and produces typed, graph-connected memories. The original file is deleted when processing finishes.
+Agentspace can bulk-import text files into structured memories. Drop files into an agent's ingest directory (or drag them into the UI), and a background loop picks them up, chunks them, runs each chunk through an LLM with memory tools, and produces typed, graph-connected memories. The original file is deleted when processing finishes.
 
 ## How It Works
 
-The ingestion system is a polling loop per agent. Every 30 seconds (configurable), it scans `~/.spacebot/agents/{id}/workspace/ingest/` for text files, sorted oldest-first.
+The ingestion system is a polling loop per agent. Every 30 seconds (configurable), it scans `~/.agentspace/agents/{id}/workspace/ingest/` for text files, sorted oldest-first.
 
 ```
 File lands in ingest/

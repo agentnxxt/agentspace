@@ -2,7 +2,7 @@
 //!
 //! Forwards requests from `/api/opencode/{port}/{path}` to the OpenCode
 //! server running on `127.0.0.1:{port}`. The embedded OpenCode SPA (mounted
-//! via Shadow DOM in the Spacebot interface) makes all API and SSE calls
+//! via Shadow DOM in the Agentspace interface) makes all API and SSE calls
 //! through this same-origin proxy, avoiding CORS issues and working on
 //! hosted Fly instances where the OpenCode server is on localhost inside
 //! the VM.

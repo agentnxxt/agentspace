@@ -1,10 +1,10 @@
 # Working Memory: Problem Analysis
 
-This document is a comprehensive analysis of why Spacebot's current memory and context assembly system fails to provide situational awareness, particularly in multi-user, multi-channel environments. It catalogs every failure mode with evidence from live system prompts and conversation transcripts. It is the prerequisite to a design document.
+This document is a comprehensive analysis of why Agentspace's current memory and context assembly system fails to provide situational awareness, particularly in multi-user, multi-channel environments. It catalogs every failure mode with evidence from live system prompts and conversation transcripts. It is the prerequisite to a design document.
 
 ## Executive Summary
 
-Users report Spacebot feels "stupid and forgetful." People are churning. The root cause is not the LLM -- it is that the context assembly system starves the LLM of the information it needs to be smart. The agent has no concept of what happened today, no awareness of activity in other channels, no per-user adaptation, and no proactive memory capture. The bulletin system -- the agent's primary knowledge injection mechanism -- is a single LLM-synthesized blob regenerated on a timer whether anything changed or not, identical for every channel and every user.
+Users report Agentspace feels "stupid and forgetful." People are churning. The root cause is not the LLM -- it is that the context assembly system starves the LLM of the information it needs to be smart. The agent has no concept of what happened today, no awareness of activity in other channels, no per-user adaptation, and no proactive memory capture. The bulletin system -- the agent's primary knowledge injection mechanism -- is a single LLM-synthesized blob regenerated on a timer whether anything changed or not, identical for every channel and every user.
 
 The problems fall into seven categories:
 
@@ -50,8 +50,8 @@ Each channel operates in complete isolation. The system prompt's Conversation Co
 
 ```
 Platform: discord
-Server: Spacedrive / Spacebot / Voicebox
-Channel: #talk-to-spacebot
+Server: Spacedrive / Agentspace / Voicebox
+Channel: #talk-to-agentspace
 Multiple users may be present.
 ```
 
@@ -135,7 +135,7 @@ The bulletin mentions events with no dates. "v0.3.3 is live" -- when? "A formatt
 
 ### What users expect
 
-Users coming from tools like the triage document (`2026-03-18-SPACEBOT-TRIAGE.md`) expect the agent to have equivalent awareness. That document is structured temporally: here is what matters today, here are the immediate priorities, here is the backlog. The agent should be able to maintain and surface this kind of temporal structure autonomously.
+Users coming from tools like the triage document (`2026-03-18-AGENTSPACE-TRIAGE.md`) expect the agent to have equivalent awareness. That document is structured temporally: here is what matters today, here are the immediate priorities, here is the backlog. The agent should be able to maintain and surface this kind of temporal structure autonomously.
 
 ---
 
@@ -157,7 +157,7 @@ Additionally, the bulletin re-synthesizes information that is already present el
 | Information | Where it appears |
 |------------|-----------------|
 | Agent's role (COO, community ambassador) | Soul, Identity, Role, Bulletin |
-| Product descriptions (Spacebot, Spacedrive, Voicebox) | Soul, Identity, Bulletin |
+| Product descriptions (Agentspace, Spacedrive, Voicebox) | Soul, Identity, Bulletin |
 | GitHub star counts | Soul, Identity, Bulletin |
 | Operational philosophy | Soul, Identity, Role, Bulletin |
 | Authority/escalation rules | Identity, Role |
@@ -197,9 +197,9 @@ Neither design integrates with the bulletin. Both add parallel injection points 
 
 ### Why this is a problem
 
-**The agent cannot adapt to who it is talking to.** When bergabman (a power user debugging OAuth) sends a message, the agent gets the same context as when a new user asks "what is Spacebot?" There is no mechanism to surface bergabman's prior conversations, his technical level, his specific configuration, or his recent activity.
+**The agent cannot adapt to who it is talking to.** When bergabman (a power user debugging OAuth) sends a message, the agent gets the same context as when a new user asks "what is Agentspace?" There is no mechanism to surface bergabman's prior conversations, his technical level, his specific configuration, or his recent activity.
 
-**In multi-user channels, the agent cross-contaminates context.** When Kael, bergabman, and okuna are all talking in `#talk-to-spacebot` simultaneously, the agent is tracking three interleaved conversations with no separation. It may reference Kael's consciousness research when replying to okuna's Docker question.
+**In multi-user channels, the agent cross-contaminates context.** When Kael, bergabman, and okuna are all talking in `#talk-to-agentspace` simultaneously, the agent is tracking three interleaved conversations with no separation. It may reference Kael's consciousness research when replying to okuna's Docker question.
 
 **The bulletin's user profile section scales terribly.** With 7 profiles at ~50 words each, that is 350 words -- 70% of a 500-word bulletin -- dedicated to user descriptions that are only relevant when that specific user is talking. In a server with 100 users, this section would need to be 50x larger to cover everyone, which is obviously impossible within token budgets.
 

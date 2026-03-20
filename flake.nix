@@ -1,5 +1,5 @@
 {
-  description = "Spacebot - An AI agent for teams, communities, and multi-user environments";
+  description = "Agentspace - An AI agent for teams, communities, and multi-user environments";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -62,15 +62,15 @@
           ];
         };
 
-        spacebotPackages = import ./nix {
+        agentspacePackages = import ./nix {
           inherit pkgs craneLib cargoSrc runtimeAssetsSrc frontendSrc;
         };
 
-        inherit (spacebotPackages) frontend spacebot spacebot-full spacebot-tests;
+        inherit (agentspacePackages) frontend agentspace agentspace-full agentspace-tests;
       in {
         packages = {
-          default = spacebot;
-          inherit frontend spacebot spacebot-full;
+          default = agentspace;
+          inherit frontend agentspace agentspace-full;
         };
 
         devShells = {
@@ -115,13 +115,13 @@
         };
 
         checks = {
-          inherit spacebot spacebot-full spacebot-tests;
+          inherit agentspace agentspace-full agentspace-tests;
         };
       }
     )
     // {
       overlays.default = final: {
-        inherit (self.packages.${final.system}) spacebot spacebot-full;
+        inherit (self.packages.${final.system}) agentspace agentspace-full;
       };
 
       nixosModules.default = import ./nix/module.nix self;

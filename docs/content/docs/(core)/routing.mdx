@@ -5,13 +5,13 @@ description: Model routing system for optimizing LLM usage across process types.
 
 # Model Routing
 
-How Spacebot decides which LLM to use for each process.
+How Agentspace decides which LLM to use for each process.
 
 ## Why Route
 
 Different processes have different needs. A channel talking to a user needs the best conversational model. A compaction worker summarizing old turns needs something fast and cheap. A coding worker needs strong tool use. Running everything on the same expensive model wastes money. Running everything on a cheap model degrades quality where it matters.
 
-Routing decisions in Spacebot are explicit, not inferred. We know the process type, the task type, and the purpose at spawn time. No keyword scoring, no LLM classifier, no content analysis.
+Routing decisions in Agentspace are explicit, not inferred. We know the process type, the task type, and the purpose at spawn time. No keyword scoring, no LLM classifier, no content analysis.
 
 ## Three Levels
 
@@ -146,7 +146,7 @@ impl RoutingConfig {
 }
 ```
 
-### SpacebotModel Construction
+### AgentspaceModel Construction
 
 When spawning a process, the model is resolved from the agent's routing config:
 
@@ -155,12 +155,12 @@ let routing = &agent.config.routing;
 
 // Channel gets its configured model
 let model_name = routing.resolve(ProcessType::Channel, None);
-let model = SpacebotModel::make(&llm_manager, model_name)
+let model = AgentspaceModel::make(&llm_manager, model_name)
     .with_routing(routing.clone());
 
 // Worker gets task-type-specific model
 let model_name = routing.resolve(ProcessType::Worker, Some("coding"));
-let model = SpacebotModel::make(&llm_manager, model_name)
+let model = AgentspaceModel::make(&llm_manager, model_name)
     .with_routing(routing.clone());
 ```
 
@@ -168,7 +168,7 @@ The `.with_routing()` call attaches the fallback config to the model so it can t
 
 ### Fallback on Error
 
-Fallback is built into `SpacebotModel::completion()`. When the primary model returns a retriable error:
+Fallback is built into `AgentspaceModel::completion()`. When the primary model returns a retriable error:
 
 1. Record the rate limit on `LlmManager` (shared state across agents)
 2. Get the fallback chain from the attached `RoutingConfig`
@@ -184,7 +184,7 @@ match self.attempt_completion(request.clone()).await {
         self.llm_manager.record_rate_limit(&self.full_model_name).await;
 
         for fallback_name in routing.get_fallbacks(&self.full_model_name) {
-            let fallback = SpacebotModel::make(&self.llm_manager, fallback_name);
+            let fallback = AgentspaceModel::make(&self.llm_manager, fallback_name);
             match fallback.attempt_completion(request.clone()).await {
                 Ok(response) => return Ok(response),
                 Err(e) if is_retriable_error(&e) => continue,

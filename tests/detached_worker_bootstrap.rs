@@ -3,10 +3,10 @@
 //! Verifies that supervision control entries are not leaked when task bootstrap
 //! fails after registration.
 
-use spacebot::AgentId;
-use spacebot::agent::cortex::register_detached_worker_for_pickup;
-use spacebot::agent::process_control::ProcessControlRegistry;
-use spacebot::tasks::TaskStore;
+use agentspace::AgentId;
+use agentspace::agent::cortex::register_detached_worker_for_pickup;
+use agentspace::agent::process_control::ProcessControlRegistry;
+use agentspace::tasks::TaskStore;
 use sqlx::sqlite::SqlitePoolOptions;
 
 #[tokio::test]

@@ -5,7 +5,7 @@
 
 use futures::StreamExt;
 use reqwest::Client;
-use spacebot::opencode::types::*;
+use agentspace::opencode::types::*;
 
 /// Find a running OpenCode server by checking common ports.
 async fn find_server() -> Option<(String, String)> {

@@ -792,7 +792,7 @@ const toolRenderers: Record<string, ToolRenderer> = {
 		},
 	},
 
-	spacebot_docs: {
+	agentspace_docs: {
 		summary(pair) {
 			if (pair.title) return pair.title;
 			const action = pair.args?.action;
@@ -1005,7 +1005,7 @@ function formatToolName(name: string): string {
 		todowrite: "Todo",
 		read_skill: "Read Skill",
 		web_search: "Web Search",
-		spacebot_docs: "Docs",
+		agentspace_docs: "Docs",
 	};
 	if (overrides[name]) return overrides[name];
 

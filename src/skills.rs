@@ -359,7 +359,7 @@ fn parse_frontmatter(content: &str) -> anyhow::Result<(HashMap<String, String>, 
     // Use serde_yaml-compatible line-based parsing for the simple cases
     // (name, description, homepage, user-invocable, etc.)
     // The metadata field can be complex JSON but we don't need to parse it — we just
-    // need name and description for Spacebot's purposes.
+    // need name and description for Agentspace's purposes.
     for line in frontmatter_str.lines() {
         let line = line.trim();
         if line.is_empty() || line.starts_with('#') {

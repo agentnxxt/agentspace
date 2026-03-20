@@ -6,7 +6,7 @@ fn main() {
     #[cfg(target_os = "macos")]
     {
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
-        let icon_source = format!("{}/../assets/Spacebot.icon", manifest_dir);
+        let icon_source = format!("{}/../assets/Agentspace.icon", manifest_dir);
         let gen_dir = format!("{}/gen/icon", manifest_dir);
 
         std::fs::create_dir_all(&gen_dir).expect("Failed to create gen/icon directory");
@@ -28,7 +28,7 @@ fn main() {
                     "--output-partial-info-plist",
                     &format!("{}/partial.plist", gen_dir),
                     "--app-icon",
-                    "Spacebot",
+                    "Agentspace",
                     "--include-all-app-icons",
                     "--enable-on-demand-resources",
                     "NO",
@@ -47,12 +47,12 @@ fn main() {
             if !output.status.success() {
                 eprintln!("actool stderr: {}", String::from_utf8_lossy(&output.stderr));
                 eprintln!("actool stdout: {}", String::from_utf8_lossy(&output.stdout));
-                println!("cargo:warning=actool failed to compile Spacebot.icon");
+                println!("cargo:warning=actool failed to compile Agentspace.icon");
             } else {
-                println!("cargo:warning=Compiled Spacebot.icon to Assets.car");
+                println!("cargo:warning=Compiled Agentspace.icon to Assets.car");
             }
         } else {
-            println!("cargo:warning=Spacebot.icon not found at {}", icon_source);
+            println!("cargo:warning=Agentspace.icon not found at {}", icon_source);
         }
     }
 

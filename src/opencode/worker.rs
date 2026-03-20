@@ -322,7 +322,7 @@ impl OpenCodeWorker {
                 let session = {
                     let guard = server.lock().await;
                     guard
-                        .create_session(Some(format!("spacebot-worker-{}", self.id)))
+                        .create_session(Some(format!("agentspace-worker-{}", self.id)))
                         .await?
                 };
                 let session_id = session.id.clone();
@@ -886,7 +886,7 @@ impl OpenCodeWorker {
 
     /// Persist a snapshot of the transcript built from accumulated SSE parts.
     ///
-    /// Called each time the worker goes idle so that if spacebot restarts
+    /// Called each time the worker goes idle so that if agentspace restarts
     /// while the worker is waiting for follow-up, the transcript survives.
     /// Awaited directly so "idle implies persisted" — no out-of-order writes.
     async fn persist_transcript_snapshot(&self, event_state: &EventState) {

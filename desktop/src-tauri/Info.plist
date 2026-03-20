@@ -3,8 +3,8 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIconFile</key>
-    <string>Spacebot</string>
+    <string>Agentspace</string>
     <key>CFBundleIconName</key>
-    <string>Spacebot</string>
+    <string>Agentspace</string>
 </dict>
 </plist>

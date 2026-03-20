@@ -1,6 +1,6 @@
 # Multi-Agent Communication Graph
 
-Agents on a single Spacebot instance are completely isolated. They share an LLM provider pool and a messaging pipeline, but have no way to talk to each other. The `send_message_to_another_channel` tool sends messages to platform channels (Discord, Slack, etc.), not to other agents. Two agents watching the same Discord server can't coordinate, delegate, escalate, or share context.
+Agents on a single Agentspace instance are completely isolated. They share an LLM provider pool and a messaging pipeline, but have no way to talk to each other. The `send_message_to_another_channel` tool sends messages to platform channels (Discord, Slack, etc.), not to other agents. Two agents watching the same Discord server can't coordinate, delegate, escalate, or share context.
 
 The fix: an explicit communication graph between agents. Directed edges define who can message whom, with policy flags controlling the relationship. Messages flow through a shared internal channel visible to both agents and to humans in the dashboard. The graph models organizational hierarchy — superiors, subordinates, peers — so agents can be wired into company-like structures with clear chains of delegation and reporting.
 
@@ -138,9 +138,9 @@ New shared SQLite database at `{instance_dir}/instance.db`. Contains only cross-
     instance.db              ← new: agent_links, shared_notes (future)
     agents/
         agent-a/
-            data/spacebot.db ← existing per-agent database
+            data/agentspace.db ← existing per-agent database
         agent-b/
-            data/spacebot.db
+            data/agentspace.db
 ```
 
 This keeps per-agent data isolated while giving links a home that both agents can reference.
@@ -235,7 +235,7 @@ New identity file alongside `SOUL.md` and `IDENTITY.md`. Defines what the agent 
 
 In single-agent setups, `ROLE.md` separates identity from operational responsibilities. In multi-agent setups, it's what differentiates agents operationally — each agent sees its position in the hierarchy via org context, and `ROLE.md` tells it what to actually do in that position. Structure vs scope.
 
-Loaded the same way as the other identity files — from the agent root directory (`~/.spacebot/agents/{id}/`), injected into the system prompt by `identity/files.rs`.
+Loaded the same way as the other identity files — from the agent root directory (`~/.agentspace/agents/{id}/`), injected into the system prompt by `identity/files.rs`.
 
 ### Organizational Awareness
 

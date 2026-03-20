@@ -221,12 +221,12 @@ The working memory section is assembled from synthesis blocks + a raw event tail
 ### Today (Wednesday, March 18)
 [morning] Shipped PR #447 fix to staging. Set up task board for 30 open PRs
 after disabling sandbox for gh cli access. OAuth research confirmed device-code
-flow works for ChatGPT. bergabman active in #talk-to-spacebot with OAuth
+flow works for ChatGPT. bergabman active in #talk-to-agentspace with OAuth
 config questions.
 
 [afternoon] Shifted to working memory implementation. Phase 1 complete --
 event store, types, and all emission points wired. Decided to sunset
-compaction-based memory extraction. Three users active in #talk-to-spacebot
+compaction-based memory extraction. Three users active in #talk-to-agentspace
 discussing provider config.
 
 **Since last synthesis (14:20):**
@@ -304,7 +304,7 @@ Fully programmatic. SQL queries against `conversation_messages` and the channel'
 ```
 ## Other Channels
 #development -- 12m ago, vsumner: discussing PR #447 fix
-#talk-to-spacebot -- 3m ago, bergabman + okuna: ChatGPT OAuth config
+#talk-to-agentspace -- 3m ago, bergabman + okuna: ChatGPT OAuth config
 #general -- 2h ago, release timeline discussion
 #random -- 1d ago, inactive
 ```
@@ -361,13 +361,13 @@ The participant summary (2-3 sentences about who this person is) is augmented wi
 ```
 ## Participants
 
-**bergabman** -- Power user, runs modified Spacebot with reasoning effort support.
+**bergabman** -- Power user, runs modified Agentspace with reasoning effort support.
   Previously built ChatGPT OAuth integration. Prefers technical responses.
-  Recent: asked about OAuth config in #talk-to-spacebot 2h ago, submitted PR #441 yesterday.
+  Recent: asked about OAuth config in #talk-to-agentspace 2h ago, submitted PR #441 yesterday.
 
 **okuna** -- New user, joined 3 days ago. Has been asking setup questions.
   Background in Docker and DevOps.
-  Recent: asked about Docker runtime deps in #talk-to-spacebot 10m ago.
+  Recent: asked about Docker runtime deps in #talk-to-agentspace 10m ago.
 ```
 
 The "Recent:" line is programmatic -- a query against `working_memory_events WHERE user_id = X ORDER BY timestamp DESC LIMIT 3`. The summary paragraph is the cached cortex-generated profile from the participant-awareness design. No additional LLM call.
@@ -495,7 +495,7 @@ The majority of working memory events are captured programmatically, with zero L
 | Cron executed    | Cron scheduler after job completes           | Write event with cron name + outcome                                 |
 | Memory saved     | `memory_save` tool handler                   | Write event with memory type + content preview                       |
 | Task updated     | Task tool handlers                           | Write event with task title + new status                             |
-| Error            | SpacebotHook on tool failure, worker failure | Write event with error description                                   |
+| Error            | AgentspaceHook on tool failure, worker failure | Write event with error description                                   |
 | System           | Startup, config change, maintenance          | Write event with description                                         |
 
 Each emitter calls `working_memory_store.record_event()` as a fire-and-forget `tokio::spawn`. The message processing pipeline never waits on event recording.
@@ -958,7 +958,7 @@ Remove `memory_save` from the compactor's tool set. The compactor's only output 
 | `src/tools/spawn_worker.rs`                         | Emit `WorkerSpawned` working memory event                                                                              |
 | `src/tools/memory_persistence_complete.rs`          | Accept optional `events` field, write to working memory                                                                |
 | `src/cron/scheduler.rs`                             | Emit `CronExecuted` working memory event after job completes                                                           |
-| `src/hooks/spacebot.rs`                             | Emit `Error` working memory event on tool failure                                                                      |
+| `src/hooks/agentspace.rs`                             | Emit `Error` working memory event on tool failure                                                                      |
 | `src/main.rs`                                       | Initialize `WorkingMemoryStore`, wire into `AgentDeps`                                                                 |
 | `src/lib.rs`                                        | Re-export working memory types                                                                                         |
 | `prompts/en/channel.md.j2`                          | Replace `memory_bulletin` with layered sections                                                                        |
@@ -978,7 +978,7 @@ Remove `memory_save` from the compactor's tool set. The compactor's only output 
 - Migration for `working_memory_events` and `working_memory_daily_summaries`
 - `WorkingMemoryStore` with `record()`, `get_events_for_day()`, `get_events_for_channel()`, `get_recent_events()`, `has_daily_summary()`, `save_daily_summary()`
 - Wire `WorkingMemoryStore` into `AgentDeps`
-- Emit events from: worker state machine (spawned, completed), branch return path, cron scheduler, `memory_save` tool, `SpacebotHook` (errors), startup/config change
+- Emit events from: worker state machine (spawned, completed), branch return path, cron scheduler, `memory_save` tool, `AgentspaceHook` (errors), startup/config change
 - Fire-and-forget on all emission paths
 
 **Verification:** Events accumulate in the database. `SELECT count(*) FROM working_memory_events` grows during normal operation. No performance regression on message processing (all writes are fire-and-forget).

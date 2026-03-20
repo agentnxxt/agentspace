@@ -1,7 +1,7 @@
 use std::process::Command;
 
 fn main() {
-    if std::env::var("SPACEBOT_SKIP_FRONTEND_BUILD").is_ok() {
+    if std::env::var("AGENTSPACE_SKIP_FRONTEND_BUILD").is_ok() {
         return;
     }
     // Re-run if interface source files change

@@ -5,13 +5,13 @@ description: System-level observer that maintains memory bulletins, runs mainten
 
 # The Cortex
 
-The cortex is the system's awareness of itself. Every other process in Spacebot is focused on a specific job — channels talk to users, branches think, workers execute, compactors manage context. None of them see the whole picture. The cortex does.
+The cortex is the system's awareness of itself. Every other process in Agentspace is focused on a specific job — channels talk to users, branches think, workers execute, compactors manage context. None of them see the whole picture. The cortex does.
 
 ## The Memory Bulletin
 
 The cortex's primary responsibility is generating the **memory bulletin** — a periodically refreshed, LLM-curated summary of what the agent currently knows. This bulletin is injected into every channel's system prompt, giving all conversations ambient awareness without needing to explicitly recall memories.
 
-This is what makes Spacebot feel like it actually *knows* you. Without the bulletin, a fresh conversation would start cold — the agent would need a branch to recall memories before it could reference anything about the user, their projects, or recent decisions. With the bulletin, every conversation inherits a baseline context from the moment it starts.
+This is what makes Agentspace feel like it actually *knows* you. Without the bulletin, a fresh conversation would start cold — the agent would need a branch to recall memories before it could reference anything about the user, their projects, or recent decisions. With the bulletin, every conversation inherits a baseline context from the moment it starts.
 
 ### How It Works
 
@@ -36,7 +36,7 @@ Each bulletin generation pass does:
 
 This design avoids the problem of an LLM formulating search queries without conversation context. The retrieval phase uses `SearchMode::Typed`, `SearchMode::Recent`, and `SearchMode::Important` — metadata-based modes that query SQLite directly without needing vector embeddings or search terms. The LLM only gets involved for the part it's good at: turning structured data into readable prose.
 
-On startup, Spacebot runs a best-effort warmup pass before adapters accept traffic (bounded wait), so the first bulletin is usually already present when the first user message arrives. If generation fails, the previous bulletin is preserved. If the memory graph is empty, an empty bulletin is stored without invoking the LLM.
+On startup, Agentspace runs a best-effort warmup pass before adapters accept traffic (bounded wait), so the first bulletin is usually already present when the first user message arrives. If generation fails, the previous bulletin is preserved. If the memory graph is empty, an empty bulletin is stored without invoking the LLM.
 
 ### What Channels See
 
@@ -72,7 +72,7 @@ OpenClaw (and systems like it) use a `MEMORY.md` file that the LLM manually main
 - Different conversations fight over the same file
 - It's a single flat document trying to capture a graph of relationships
 
-Spacebot's approach separates storage from presentation. Memories are structured objects in a graph database with typed metadata, associations, and importance scores. The bulletin is a *view* of that graph — a periodically refreshed snapshot curated by an LLM that can search, rank, and contextualize. The underlying graph is rich and queryable; the bulletin is the digestible summary.
+Agentspace's approach separates storage from presentation. Memories are structured objects in a graph database with typed metadata, associations, and importance scores. The bulletin is a *view* of that graph — a periodically refreshed snapshot curated by an LLM that can search, rank, and contextualize. The underlying graph is rich and queryable; the bulletin is the digestible summary.
 
 ### Bulletin vs Branch Recall
 
@@ -153,12 +153,12 @@ The cortex is the only singleton in the system (per agent). There's one cortex p
 
 ## Interactive Cortex Chat
 
-Spacebot also exposes a direct admin chat session with the cortex. This is intentionally self-referential and diagnostic-focused:
+Agentspace also exposes a direct admin chat session with the cortex. This is intentionally self-referential and diagnostic-focused:
 
 - The system prompt includes embedded architecture context (`AGENTS.md`) and changelog highlights.
 - The prompt includes a live redacted runtime-config snapshot so behavior can be diagnosed against current resolved values.
 - `config_inspect` returns live hot-reloaded config sections on demand.
-- `spacebot_docs` reads embedded Spacebot docs/changelog/AGENTS content directly from the binary.
+- `agentspace_docs` reads embedded Agentspace docs/changelog/AGENTS content directly from the binary.
 
 This makes cortex chat a practical control-room interface for troubleshooting, validation, and operations — not a user-facing conversation mode.
 
@@ -264,7 +264,7 @@ Branch, worker, and cron dispatch paths consult a derived `ready_for_work` signa
 - embedding model is ready
 - bulletin age is fresh (`<= max(60s, refresh_secs * 2)`)
 
-If dispatch arrives while not ready, Spacebot does **not** block the channel or scheduler:
+If dispatch arrives while not ready, Agentspace does **not** block the channel or scheduler:
 
 - dispatch continues in degraded-safe mode
 - a forced warmup pass is queued in the background
@@ -272,8 +272,8 @@ If dispatch arrives while not ready, Spacebot does **not** block the channel or 
 
 Metrics:
 
-- `spacebot_dispatch_while_cold_count{agent_id,dispatch_type,reason}`
-- `spacebot_warmup_recovery_latency_ms{agent_id,dispatch_type}`
+- `agentspace_dispatch_while_cold_count{agent_id,dispatch_type,reason}`
+- `agentspace_warmup_recovery_latency_ms{agent_id,dispatch_type}`
 
 ## Failure Modes
 

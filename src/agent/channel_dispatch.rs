@@ -8,7 +8,7 @@ use crate::agent::branch::{Branch, BranchExecutionConfig};
 use crate::agent::channel::ChannelState;
 use crate::agent::channel_prompt::TemporalContext;
 use crate::agent::worker::Worker;
-use crate::error::{AgentError, Error as SpacebotError};
+use crate::error::{AgentError, Error as AgentspaceError};
 use crate::tools::{BranchToolProfile, MemoryPersistenceContractState};
 use crate::{AgentDeps, BranchId, ChannelId, ProcessEvent, WorkerId};
 use futures::FutureExt as _;
@@ -52,9 +52,9 @@ impl WorkerCompletionError {
         }
     }
 
-    fn from_spacebot_error(error: SpacebotError) -> Self {
+    fn from_agentspace_error(error: AgentspaceError) -> Self {
         match error {
-            SpacebotError::Agent(agent_error) => match *agent_error {
+            AgentspaceError::Agent(agent_error) => match *agent_error {
                 AgentError::Cancelled { reason } => Self::Cancelled { reason },
                 other => Self::Failed {
                     message: other.to_string(),
@@ -729,7 +729,7 @@ async fn spawn_opencode_worker_inner(
         oc_secrets_store,
         "opencode",
         async move {
-            let result = worker.run().await.map_err(SpacebotError::from);
+            let result = worker.run().await.map_err(AgentspaceError::from);
 
             // Release the directory claim regardless of success or failure.
             release_pool.release_directory(&release_directory).await;
@@ -760,7 +760,7 @@ async fn spawn_opencode_worker_inner(
                 });
             }
 
-            Ok::<String, SpacebotError>(result.result_text)
+            Ok::<String, AgentspaceError>(result.result_text)
         }
         .instrument(worker_span),
     );
@@ -850,7 +850,7 @@ where
                 Ok(scrubbed)
             }
             Ok(Err(error)) => {
-                let failure = WorkerCompletionError::from_spacebot_error(error);
+                let failure = WorkerCompletionError::from_agentspace_error(error);
                 match failure {
                     WorkerCompletionError::Cancelled { .. } => Err(failure),
                     WorkerCompletionError::Failed { message } => {
@@ -993,7 +993,7 @@ pub async fn resume_idle_worker_into_state(
                 oc_secrets_store,
                 "opencode",
                 async move {
-                    let result = worker.run().await.map_err(SpacebotError::from)?;
+                    let result = worker.run().await.map_err(AgentspaceError::from)?;
                     // Persist final transcript.
                     if !result.transcript.is_empty() {
                         let blob = crate::conversation::worker_transcript::serialize_steps(
@@ -1016,7 +1016,7 @@ pub async fn resume_idle_worker_into_state(
                             }
                         });
                     }
-                    Ok::<String, SpacebotError>(result.result_text)
+                    Ok::<String, AgentspaceError>(result.result_text)
                 }
                 .instrument(worker_span),
             );

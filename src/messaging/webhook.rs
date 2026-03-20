@@ -3,7 +3,7 @@
 //! Exposes an HTTP server that accepts inbound messages via POST and
 //! delivers responses via a per-conversation polling endpoint. This is
 //! the integration point for scripts, CI pipelines, and other programs
-//! that need to interact with Spacebot programmatically.
+//! that need to interact with Agentspace programmatically.
 
 use std::collections::HashMap;
 use std::sync::Arc;

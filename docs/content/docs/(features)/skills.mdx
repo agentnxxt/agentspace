@@ -5,13 +5,13 @@ description: Domain-specific knowledge and capabilities via skills.sh integratio
 
 # Skills
 
-How Spacebot extends agent capabilities with reusable skills from skills.sh.
+How Agentspace extends agent capabilities with reusable skills from skills.sh.
 
 ## Overview
 
 Skills are packaged instructions and workflows that give agents domain-specific knowledge. They're markdown files with frontmatter containing procedural knowledge, tool usage patterns, and bundled resources.
 
-Spacebot's skill system is fully compatible with [skills.sh](https://skills.sh) — the open agent skills ecosystem. Install any skill from the registry or create your own.
+Agentspace's skill system is fully compatible with [skills.sh](https://skills.sh) — the open agent skills ecosystem. Install any skill from the registry or create your own.
 
 **Key characteristics:**
 
@@ -31,7 +31,7 @@ Most external tool integrations follow the same pattern: **add a credential, ins
 2. **Store it as a tool secret** so workers can authenticate:
 
    ```bash
-   spacebot secrets set GH_TOKEN
+   agentspace secrets set GH_TOKEN
    # Paste your token when prompted
    ```
 
@@ -40,7 +40,7 @@ Most external tool integrations follow the same pattern: **add a credential, ins
 3. **Install a GitHub skill** that teaches workers how to use the `gh` CLI:
 
    ```bash
-   spacebot skill add anthropics/skills/github
+   agentspace skill add anthropics/skills/github
    ```
 
    Or browse the **Skills** tab in the dashboard and search for "github".
@@ -63,22 +63,22 @@ Install skills from GitHub repos using the `skills.sh` owner/repo format:
 
 ```bash
 # Install all skills from a repo
-spacebot skill add vercel-labs/agent-skills
+agentspace skill add vercel-labs/agent-skills
 
 # Install a specific skill from a repo
-spacebot skill add anthropics/skills/pdf
+agentspace skill add anthropics/skills/pdf
 
 # Install to instance-level (shared across all agents)
-spacebot skill add vercel-labs/agent-skills --instance
+agentspace skill add vercel-labs/agent-skills --instance
 
 # Install to a specific agent
-spacebot skill add remotion-dev/skills --agent my-agent
+agentspace skill add remotion-dev/skills --agent my-agent
 ```
 
 Install from a `.skill` file:
 
 ```bash
-spacebot skill install path/to/skill.skill
+agentspace skill install path/to/skill.skill
 ```
 
 ### Via Web Interface
@@ -90,7 +90,7 @@ Navigate to the agent's **Skills** tab in the dashboard. The Browse Registry vie
 ### List installed skills
 
 ```bash
-spacebot skill list
+agentspace skill list
 ```
 
 **Output:**
@@ -111,7 +111,7 @@ Installed skills (3):
 ### View skill details
 
 ```bash
-spacebot skill info pdf
+agentspace skill info pdf
 ```
 
 **Output:**
@@ -132,7 +132,7 @@ Use this skill when working with PDF documents...
 ### Remove a skill
 
 ```bash
-spacebot skill remove pdf
+agentspace skill remove pdf
 ```
 
 ## How Skills Work
@@ -292,8 +292,8 @@ If both locations have a skill named `pdf`, the workspace version wins.
 Create a new skill directory:
 
 ```bash
-mkdir -p ~/.spacebot/agents/my-agent/workspace/skills/my-skill
-cd ~/.spacebot/agents/my-agent/workspace/skills/my-skill
+mkdir -p ~/.agentspace/agents/my-agent/workspace/skills/my-skill
+cd ~/.agentspace/agents/my-agent/workspace/skills/my-skill
 ```
 
 Create `SKILL.md`:
@@ -337,10 +337,10 @@ Browse the public skills registry at [skills.sh](https://skills.sh).
 
 | Skill | Description | Install |
 |-------|-------------|---------|
-| `vercel-labs/agent-skills` | React best practices, web design guidelines | `spacebot skill add vercel-labs/agent-skills` |
-| `anthropics/skills/pdf` | PDF creation, editing, extraction | `spacebot skill add anthropics/skills/pdf` |
-| `remotion-dev/skills` | Video generation with Remotion | `spacebot skill add remotion-dev/skills` |
-| `supabase/agent-skills` | Postgres best practices for Supabase | `spacebot skill add supabase/agent-skills` |
+| `vercel-labs/agent-skills` | React best practices, web design guidelines | `agentspace skill add vercel-labs/agent-skills` |
+| `anthropics/skills/pdf` | PDF creation, editing, extraction | `agentspace skill add anthropics/skills/pdf` |
+| `remotion-dev/skills` | Video generation with Remotion | `agentspace skill add remotion-dev/skills` |
+| `supabase/agent-skills` | Postgres best practices for Supabase | `agentspace skill add supabase/agent-skills` |
 
 **Search skills:**
 
@@ -457,7 +457,7 @@ Proxy to skills.sh search. Query must be at least 2 characters.
 **Check file structure:**
 
 ```bash
-ls -la ~/.spacebot/agents/my-agent/workspace/skills/my-skill/
+ls -la ~/.agentspace/agents/my-agent/workspace/skills/my-skill/
 # Should show SKILL.md
 ```
 
@@ -475,7 +475,7 @@ description: ...
 **Check logs:**
 
 ```bash
-spacebot status
+agentspace status
 # Look for skill loading errors in logs
 ```
 
@@ -498,7 +498,7 @@ Show the exact tool calls needed rather than describing them.
 If two skills with the same name exist at instance and workspace level, the workspace version wins. To use the instance version, delete the workspace copy:
 
 ```bash
-rm -rf ~/.spacebot/agents/my-agent/workspace/skills/conflicting-skill
+rm -rf ~/.agentspace/agents/my-agent/workspace/skills/conflicting-skill
 ```
 
 ## Implementation Notes

@@ -1,4 +1,4 @@
-//! Domain type definitions for Spacebot configuration.
+//! Domain type definitions for Agentspace configuration.
 
 use crate::error::{ConfigError, Result};
 use crate::llm::routing::RoutingConfig;
@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-pub(super) const CRON_TIMEZONE_ENV_VAR: &str = "SPACEBOT_CRON_TIMEZONE";
-pub(super) const USER_TIMEZONE_ENV_VAR: &str = "SPACEBOT_USER_TIMEZONE";
+pub(super) const CRON_TIMEZONE_ENV_VAR: &str = "AGENTSPACE_CRON_TIMEZONE";
+pub(super) const USER_TIMEZONE_ENV_VAR: &str = "AGENTSPACE_USER_TIMEZONE";
 
 /// OpenTelemetry export configuration.
 ///
@@ -32,10 +32,10 @@ pub struct TelemetryConfig {
     pub sample_rate: f64,
 }
 
-/// Top-level Spacebot configuration.
+/// Top-level Agentspace configuration.
 #[derive(Debug, Clone)]
 pub struct Config {
-    /// Instance root directory (~/.spacebot or SPACEBOT_DIR).
+    /// Instance root directory (~/.agentspace or AGENTSPACE_DIR).
     pub instance_dir: PathBuf,
     /// LLM provider credentials (shared across all agents).
     pub llm: LlmConfig,
@@ -1371,7 +1371,7 @@ impl AgentConfig {
 
 impl ResolvedAgentConfig {
     pub fn sqlite_path(&self) -> PathBuf {
-        self.data_dir.join("spacebot.db")
+        self.data_dir.join("agentspace.db")
     }
     pub fn lancedb_path(&self) -> PathBuf {
         self.data_dir.join("lancedb")

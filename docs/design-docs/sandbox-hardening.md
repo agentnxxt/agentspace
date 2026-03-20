@@ -125,7 +125,7 @@ The `writable_paths` field is removed from the struct. Paths are read from the A
 
 ```rust
 let sandbox = std::sync::Arc::new(
-    spacebot::sandbox::Sandbox::new(
+    agentspace::sandbox::Sandbox::new(
         runtime_config.sandbox.clone(),  // Arc<ArcSwap<SandboxConfig>>
         agent_config.workspace.clone(),
         &config.instance_dir,
@@ -184,7 +184,7 @@ Sandbox `wrap()` must call `env_clear()` (or the bwrap equivalent `--clearenv`) 
 - See `docs/design-docs/secret-store.md` "Env Passthrough for Self-Hosted" for details.
 
 **Always stripped:**
-- All `SPACEBOT_*` internal vars (the master key is never in the environment — it lives in the OS credential store; see `docs/design-docs/secret-store.md`)
+- All `AGENTSPACE_*` internal vars (the master key is never in the environment — it lives in the OS credential store; see `docs/design-docs/secret-store.md`)
 - All system secrets (LLM API keys, messaging tokens — see `docs/design-docs/secret-store.md`)
 - Any env var not in the above three categories
 
@@ -213,7 +213,7 @@ On hosted instances, binaries installed via `apt-get` land on the root filesyste
 
 The durable path already works:
 
-- `{instance_dir}/tools/bin` exists — hosted boot flow creates it (`mkdir -p "$SPACEBOT_DIR/tools/bin"`).
+- `{instance_dir}/tools/bin` exists — hosted boot flow creates it (`mkdir -p "$AGENTSPACE_DIR/tools/bin"`).
 - `Sandbox` already prepends `tools/bin` to `PATH` for worker subprocesses (`sandbox.rs:138-149`).
 - `/data` survives hosted machine image rollouts.
 
@@ -265,7 +265,7 @@ Just a directory listing — no state machine, no install locks, no checksums. T
 
 ### Problem
 
-OpenCode workers auto-allow all permission prompts (`opencode/worker.rs:429-432`). When OpenCode asks permission to run a bash command, the worker replies `PermissionReply::Once` unconditionally. OpenCode worker output is also not scanned by SpacebotHook, so leak detection doesn't apply.
+OpenCode workers auto-allow all permission prompts (`opencode/worker.rs:429-432`). When OpenCode asks permission to run a bash command, the worker replies `PermissionReply::Once` unconditionally. OpenCode worker output is also not scanned by AgentspaceHook, so leak detection doesn't apply.
 
 This is an independent bug regardless of the other sections — OpenCode workers operate with no policy checks at all.
 
@@ -275,7 +275,7 @@ The auto-allow behavior is intentional for now (OpenCode needs to run commands t
 
 1. **Output scrubbing (exact match)** — `StreamScrubber` from `src/secrets/scrub.rs` (see `secret-store.md`, Output Scrubbing). Replaces tool secret values with `[REDACTED:<name>]` in SSE events before they're forwarded. Uses the rolling buffer strategy to handle secrets split across SSE chunks. This runs first — proactive redaction.
 
-2. **Leak detection (regex)** — shared regex patterns from `SpacebotHook` (see `src/hooks/spacebot.rs`). Scans for known API key formats (`sk-ant-*`, `ghp_*`, etc.) in the scrubbed output. If a match is found after scrubbing, it's a leak of a secret not in the store — kill the agent. This runs second — reactive safety net.
+2. **Leak detection (regex)** — shared regex patterns from `AgentspaceHook` (see `src/hooks/agentspace.rs`). Scans for known API key formats (`sk-ant-*`, `ghp_*`, etc.) in the scrubbed output. If a match is found after scrubbing, it's a leak of a secret not in the store — kill the agent. This runs second — reactive safety net.
 
 The sequencing matters: scrubbing first means stored tool secrets are redacted before leak detection runs, so leak detection only fires on unknown/unstored secrets. Without this order, leak detection would fire on every tool secret value (which is expected in worker output) and kill the agent unnecessarily.
 
@@ -287,7 +287,7 @@ Longer term, OpenCode's permission model could be integrated with the sandbox �
 |------|--------|
 | `src/opencode/worker.rs` | Wire SSE output through `StreamScrubber` (exact-match redaction) then leak detection (regex) before forwarding |
 | `src/secrets/scrub.rs` | `StreamScrubber` — rolling buffer scrubber for chunked output (shared with other streaming paths) |
-| `src/hooks/spacebot.rs` | Extract leak detection regex into a shared function callable from OpenCode worker |
+| `src/hooks/agentspace.rs` | Extract leak detection regex into a shared function callable from OpenCode worker |
 
 ---
 
@@ -319,7 +319,7 @@ Current state of protection across all tool paths, with sandbox disabled:
 | `exec` | Working dir validation only | Sandbox wraps subprocess — but disabled | Full parent env | Yes (args + output scanned) | Leak detection + dangerous env var blocklist |
 | `send_file` | **None** — any absolute path | No (in-process read) | N/A | Yes (output scanned) | Leak detection only |
 | `browser` | N/A | N/A | N/A | Yes (output scanned) | SSRF protection (blocks metadata endpoints, private IPs) |
-| OpenCode workers | Workspace-scoped by OpenCode | Not sandboxed | Full parent env via OpenCode subprocess | No (OpenCode output not scanned by SpacebotHook) | Auto-allow on all permissions |
+| OpenCode workers | Workspace-scoped by OpenCode | Not sandboxed | Full parent env via OpenCode subprocess | No (OpenCode output not scanned by AgentspaceHook) | Auto-allow on all permissions |
 
 ### Key Observations
 
@@ -365,7 +365,7 @@ Add the persistent binary location instruction to worker prompts and optional da
 Wire OpenCode worker output through both protection layers (output scrubbing + leak detection) that cover builtin workers.
 
 1. Wire SSE output through `StreamScrubber` (exact-match redaction of tool secret values, rolling buffer for split secrets). Runs first — proactive.
-2. Extract leak detection regex from SpacebotHook into a shared function.
+2. Extract leak detection regex from AgentspaceHook into a shared function.
 3. Scan scrubbed SSE output through leak detection. Runs second — reactive safety net for secrets not in the store.
 4. Verify: a stored tool secret in OpenCode output is redacted to `[REDACTED:<name>]`; an unknown secret pattern triggers the same kill behavior as builtin workers.
 
@@ -445,9 +445,9 @@ This is not ready to implement. Key gaps from the stereOS integration research:
 
 2. **Architecture.** stereOS is aarch64-linux only. Fly Machines are predominantly x86_64. Cross-compilation in Nix is straightforward but untested for stereOS.
 
-3. **Control plane protocol.** `stereosd` speaks a custom vsock protocol. `spacebot-platform` would need a Rust client, or stereOS would need an HTTP API layer. The protocol isn't documented publicly yet.
+3. **Control plane protocol.** `stereosd` speaks a custom vsock protocol. `agentspace-platform` would need a Rust client, or stereOS would need an HTTP API layer. The protocol isn't documented publicly yet.
 
-4. **Workspace persistence.** stereOS VMs are ephemeral by design. Spacebot needs persistent storage (SQLite, LanceDB, workspace files). Requires virtio-fs mounts to persistent volumes, which stereOS supports but the Fly integration path would need to map to Fly volumes.
+4. **Workspace persistence.** stereOS VMs are ephemeral by design. Agentspace needs persistent storage (SQLite, LanceDB, workspace files). Requires virtio-fs mounts to persistent volumes, which stereOS supports but the Fly integration path would need to map to Fly volumes.
 
 ### Relationship to Current Work
 
@@ -457,5 +457,5 @@ The phases above (1-5) are prerequisites, not alternatives:
 - **Phase 3** (durable binary instruction) applies inside the VM too — the VM image would include `tools/bin` on the persistent volume mount.
 - **Phases 4-5** (OpenCode leak detection, send_file fix) are bug fixes that apply regardless of sandbox backend.
 
-bubblewrap remains the default sandbox backend for all deployments. VM isolation would be an opt-in upgrade for the hosted platform where multi-tenant security justifies the resource overhead. Self-hosted users who want maximum isolation could run a `spacebot-mixtape` directly (NixOS image, no Docker) as an alternative deployment path.
+bubblewrap remains the default sandbox backend for all deployments. VM isolation would be an opt-in upgrade for the hosted platform where multi-tenant security justifies the resource overhead. Self-hosted users who want maximum isolation could run a `agentspace-mixtape` directly (NixOS image, no Docker) as an alternative deployment path.
 

@@ -5,7 +5,7 @@
 //! with via its HTTP API. Servers are reused across worker tasks targeting
 //! the same directory.
 //!
-//! Port mappings are persisted to disk so that after a spacebot restart, we can
+//! Port mappings are persisted to disk so that after a agentspace restart, we can
 //! reattach to OpenCode servers that are still running from the previous session.
 
 use crate::opencode::types::*;
@@ -32,7 +32,7 @@ const MAX_RESTART_RETRIES: u32 = 5;
 pub struct OpenCodeServer {
     directory: PathBuf,
     port: u16,
-    /// None for reattached servers (process was spawned by a previous spacebot run).
+    /// None for reattached servers (process was spawned by a previous agentspace run).
     process: Option<Child>,
     base_url: String,
     client: Client,
@@ -44,7 +44,7 @@ pub struct OpenCodeServer {
 impl OpenCodeServer {
     /// Spawn a new OpenCode server for the given directory.
     /// Uses a deterministic port derived from the directory path so that
-    /// servers can be rediscovered after a spacebot restart.
+    /// servers can be rediscovered after a agentspace restart.
     pub async fn spawn(
         directory: PathBuf,
         opencode_path: &str,
@@ -537,7 +537,7 @@ impl Drop for OpenCodeServer {
 /// Pool of OpenCode server processes, one per working directory.
 ///
 /// Uses deterministic ports derived from directory paths so that after a
-/// spacebot restart, we can rediscover servers that are still running.
+/// agentspace restart, we can rediscover servers that are still running.
 /// No file persistence needed -- just health-check the expected port.
 pub struct OpenCodeServerPool {
     servers: Mutex<HashMap<PathBuf, Arc<Mutex<OpenCodeServer>>>>,
@@ -596,7 +596,7 @@ impl OpenCodeServerPool {
         }
 
         // Not in pool yet. Try reattaching to an existing server on the
-        // deterministic port (left over from a previous spacebot run).
+        // deterministic port (left over from a previous agentspace run).
         if let Some(reattached) =
             OpenCodeServer::reattach(canonical.clone(), &self.opencode_path, &self.permissions)
                 .await

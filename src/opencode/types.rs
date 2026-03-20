@@ -1,6 +1,6 @@
 //! Types for communicating with OpenCode's HTTP API.
 //!
-//! Only the subset of the API surface that Spacebot needs is modeled here.
+//! Only the subset of the API surface that Agentspace needs is modeled here.
 //! OpenCode has a much larger API (PTY, LSP, TUI, MCP, etc.) that we ignore.
 //!
 //! Every SSE event from OpenCode follows the envelope: `{ type: "...", properties: { ... } }`.

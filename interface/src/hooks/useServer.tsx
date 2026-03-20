@@ -12,11 +12,11 @@ import { setServerUrl as setClientServerUrl } from "@/api/client";
 export type ServerState = "checking" | "connected" | "disconnected";
 
 const DEFAULT_SERVER_URL = "http://localhost:19898";
-const STORAGE_KEY = "spacebot_server_url";
+const STORAGE_KEY = "agentspace_server_url";
 const HEALTH_CHECK_INTERVAL = 5000;
 
 interface ServerContextValue {
-	/** The full base URL of the spacebot server, e.g. "http://localhost:19898" */
+	/** The full base URL of the agentspace server, e.g. "http://localhost:19898" */
 	serverUrl: string;
 	/** Current connection state */
 	state: ServerState;
@@ -112,18 +112,18 @@ async function loadPersistedUrl(): Promise<string | null> {
 }
 
 /**
- * Detect whether the SPA is served from the spacebot server itself
+ * Detect whether the SPA is served from the agentspace server itself
  * (same-origin) rather than from Tauri or a separate dev server.
  *
  * In same-origin mode (embedded via rust_embed, or behind the hosted
- * proxy with __SPACEBOT_BASE_PATH), API calls use relative paths and
+ * proxy with __AGENTSPACE_BASE_PATH), API calls use relative paths and
  * no server URL picker is needed.
  */
 function isSameOriginMode(): boolean {
 	// Hosted deployment with a base path prefix
-	if ((window as any).__SPACEBOT_BASE_PATH) return true;
+	if ((window as any).__AGENTSPACE_BASE_PATH) return true;
 	// Not Tauri, and served from a normal HTTP origin (not a dev server
-	// with a Vite proxy). In production the spacebot binary embeds the
+	// with a Vite proxy). In production the agentspace binary embeds the
 	// SPA at the same origin, so relative API paths just work.
 	// In Vite dev mode, the proxy handles /api, so same-origin is also fine.
 	if (!IS_TAURI) return true;

@@ -8400,7 +8400,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "spacebot"
+name = "agentspace"
 version = "0.3.3"
 dependencies = [
  "aes-gcm",

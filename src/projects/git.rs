@@ -8,7 +8,7 @@ use tokio::process::Command;
 /// Information about a discovered git repository.
 #[derive(Debug, Clone)]
 pub struct DiscoveredRepo {
-    /// Directory name (e.g., "spacebot-dash").
+    /// Directory name (e.g., "agentspace-dash").
     pub name: String,
     /// Path relative to the project root.
     pub relative_path: String,

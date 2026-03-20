@@ -1,11 +1,11 @@
 ---
 title: Email Setup
-description: Connect Spacebot to an inbox with IMAP + SMTP.
+description: Connect Agentspace to an inbox with IMAP + SMTP.
 ---
 
 # Email Setup
 
-Connect Spacebot to any mailbox that supports IMAP and SMTP. Inbound messages are polled over IMAP, and replies are sent over SMTP.
+Connect Agentspace to any mailbox that supports IMAP and SMTP. Inbound messages are polled over IMAP, and replies are sent over SMTP.
 
 You need:
 
@@ -25,10 +25,10 @@ In your mail provider settings:
 
 Typical defaults are IMAP `993` (TLS) and SMTP `587` (STARTTLS).
 
-## Step 2: Add Email credentials to Spacebot
+## Step 2: Add Email credentials to Agentspace
 
-<Tabs items={["Spacebot UI", "TOML Config"]}>
-<Tab value="Spacebot UI">
+<Tabs items={["Agentspace UI", "TOML Config"]}>
+<Tab value="Agentspace UI">
 
 1. Open **Settings** -> **Messaging Platforms**.
 2. Expand the **Email** card.
@@ -56,7 +56,7 @@ smtp_password = "env:EMAIL_SMTP_PASSWORD"
 smtp_use_starttls = true
 
 from_address = "bot@example.com"
-from_name = "Spacebot"
+from_name = "Agentspace"
 
 poll_interval_secs = 30
 folders = ["INBOX"]
@@ -84,7 +84,7 @@ If no Email binding exists, inbound email falls back to your default agent.
 
 Email channels are treated as intake streams, not always-on chat threads.
 
-- Spacebot triages inbound mail first.
+- Agentspace triages inbound mail first.
 - Inbound email channels are reply-disabled by default (no automatic outbound email response).
 - For non-spam mail, it is encouraged to persist key memory (sender, subject, commitments, deadlines, urgency).
 - For urgent mail, it can escalate to another active channel using cross-channel messaging.
@@ -113,7 +113,7 @@ Use specific filters (`from`, `subject`, `query`, `since_days`) to avoid broad m
 
 ## Thread behavior
 
-Spacebot keeps one conversation per email thread. It uses `References`, `In-Reply-To`, and `Message-ID` headers to map replies back to the correct conversation.
+Agentspace keeps one conversation per email thread. It uses `References`, `In-Reply-To`, and `Message-ID` headers to map replies back to the correct conversation.
 
 Outbound replies include the correct threading headers so responses stay in the same mail thread in clients like Gmail and Outlook.
 
@@ -145,7 +145,7 @@ Use a longer interval if your provider rate limits IMAP polling.
 ## Verify it's working
 
 1. Send an email to the configured mailbox from an allowed sender.
-2. Confirm a new channel appears in Spacebot with a subject-based name.
+2. Confirm a new channel appears in Agentspace with a subject-based name.
 3. Reply in the same thread and confirm the message is ingested into the same conversation thread (no automated reply by default).
 4. If direct email replies are explicitly enabled in your setup, verify outbound replies preserve threading headers.
 
@@ -156,5 +156,5 @@ Use a longer interval if your provider rate limits IMAP polling.
 | Adapter won't connect to IMAP | Wrong host/port or IMAP disabled | Recheck provider IMAP settings; verify `imap_host`, `imap_port`, TLS mode |
 | SMTP send fails | Bad SMTP credentials or blocked auth | Use provider app password; verify `smtp_host`, `smtp_port`, STARTTLS |
 | No inbound messages | Folder not polled or sender blocked | Add folder to `folders`; check `allowed_senders` rules |
-| Bot ignores automated mails | Auto-response headers detected | Expected behavior; Spacebot skips auto-generated mail loops |
+| Bot ignores automated mails | Auto-response headers detected | Expected behavior; Agentspace skips auto-generated mail loops |
 | Replies create a new thread | Missing/rewritten message headers upstream | Check provider/forwarder preserves `Message-ID`, `In-Reply-To`, `References` |
