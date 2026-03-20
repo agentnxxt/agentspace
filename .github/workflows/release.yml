@@ -169,6 +169,8 @@ jobs:
         run: echo "pair=$(echo ${{ matrix.platform }} | tr '/' '-')" >> "$GITHUB_OUTPUT"
 
       - name: Log in to Docker Hub
+        id: dockerhub-login
+        continue-on-error: true
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -182,7 +184,7 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE }}:build-${{ steps.platform.outputs.pair }}
-            ${{ env.DOCKERHUB_IMAGE }}:build-${{ steps.platform.outputs.pair }}
+            ${{ steps.dockerhub-login.outcome == 'success' && format('{0}:build-{1}', env.DOCKERHUB_IMAGE, steps.platform.outputs.pair) || '' }}
           cache-from: type=gha,scope=build-${{ steps.platform.outputs.pair }}
           cache-to: type=gha,mode=max,scope=build-${{ steps.platform.outputs.pair }}
 
@@ -205,6 +207,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
+        id: dockerhub-login
+        continue-on-error: true
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -219,6 +223,7 @@ jobs:
             ${{ env.IMAGE }}:build-linux-arm64
 
       - name: Create Docker Hub multi-arch manifest
+        if: steps.dockerhub-login.outcome == 'success'
         run: |
           docker buildx imagetools create \
             --tag ${{ env.DOCKERHUB_IMAGE }}:${{ needs.build-docker.outputs.version }} \
